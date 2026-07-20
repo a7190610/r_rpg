@@ -1,7 +1,7 @@
 var RO_DATABASE_MONSTERS = {
     MONSTERS: {
       'prt_fild08': [
-        { id: 1002, name: '波利', emoji: '💧', lv: 1, hp: 50, atk: 7, def: 0, hit: 10, flee: 5, baseExp: 200, jobExp: 100, gold: 5, dropRate: 0.1 },
+        { id: 1002, name: '波利', emoji: '💧', lv: 1, hp: 50, atk: 7, def: 0, hit: 10, flee: 5, baseExp: 20000000, jobExp: 10000000, gold: 5, dropRate: 0.1 },
         { id: 1063, name: '瘋兔', emoji: '🐇', lv: 2, hp: 60, atk: 11, def: 0, hit: 15, flee: 8, baseExp: 350, jobExp: 150, gold: 8, dropRate: 0.12 },
         { id: 1014, name: '綠棉蟲', emoji: '🐛', lv: 3, hp: 120, atk: 15, def: 5, hit: 20, flee: 12, baseExp: 500, jobExp: 300, gold: 12, dropRate: 0.15 },
         { id: 1049, name: '蒼蠅', emoji: '🪰', lv: 4, hp: 90, atk: 20, def: 2, hit: 25, flee: 25, baseExp: 750, jobExp: 450, gold: 10, dropRate: 0.15 },
