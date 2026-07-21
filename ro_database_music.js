@@ -1,3 +1,22 @@
+/*
+職業資料庫
+https://a7190610.github.io/r_rpg/ro_database_classes.js
+裝備資料庫
+https://a7190610.github.io/r_rpg/ro_database_items.js
+道具資料庫
+https://a7190610.github.io/r_rpg/ro_database_items2.js
+地圖資料庫
+https://a7190610.github.io/r_rpg/ro_database_maps.js
+怪物資料庫
+https://a7190610.github.io/r_rpg/ro_database_monsters.js
+音樂資料庫
+https://a7190610.github.io/r_rpg/ro_database_music.js
+技能資料庫
+https://a7190610.github.io/r_rpg/ro_database_skills.js
+系統資料庫
+https://a7190610.github.io/r_rpg/ro_database_system.js
+*/
+
 //https://nextly.blogspot.com/2009/07/onlineragnarok-online-bgm.html
 //https://downloads.khinsider.com/game-soundtracks/album/ragnarok-online-original-soundtrack
 export const RO_DATABASE_MUSIC = {
