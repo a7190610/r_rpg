@@ -1,3 +1,54 @@
+// === 引擎防呆預設值區 ===
+const FALLBACK_RARITY = {
+  common: { name: '普通', color: 'text-gray-300', bg: 'bg-gray-500/20', multi: 1 },
+  uncommon: { name: '優秀', color: 'text-green-400', bg: 'bg-green-500/20', multi: 1.5 },
+  rare: { name: '稀有', color: 'text-blue-400', bg: 'bg-blue-500/20', multi: 2.5 },
+  epic: { name: '史詩', color: 'text-purple-400', bg: 'bg-purple-500/20', multi: 4 },
+  legendary: { name: '傳說', color: 'text-yellow-400', bg: 'bg-yellow-500/20', multi: 7 },
+};
+
+const FALLBACK_EQUIPMENT_SLOTS = ['helm', 'armor', 'weapon', 'shield', 'garment', 'shoes', 'acc1', 'acc2'];
+const FALLBACK_SLOT_NAMES = { helm:'頭飾', armor:'鎧甲', weapon:'武器', shield:'盾牌/副手', garment:'披肩', shoes:'鞋靴', acc1:'飾品', acc2:'飾品' };
+const FALLBACK_SLOT_ICONS = { helm:'👑', armor:'👕', weapon:'⚔️', shield:'🛡️', garment:'🧥', shoes:'👢', acc1:'💍', acc2:'💍' };
+
+const FALLBACK_CLASSES_INFO = {
+  novice: { name: '初心者', icon: '🥚', primaryStat: 'str', hpMulti: 1.0, spMulti: 1.0, atkMulti: 1.0, defMulti: 1.0, advClasses: ['swordman', 'magician', 'thief', 'acolyte', 'archer', 'merchant'] },
+  swordman: { name: '劍士', icon: '🛡️', primaryStat: 'str', hpMulti: 1.5, spMulti: 0.8, atkMulti: 1.0, defMulti: 1.2, advClasses: ['knight', 'crusader'] },
+  magician: { name: '魔法師', icon: '🔮', primaryStat: 'int', hpMulti: 0.8, spMulti: 2.0, atkMulti: 1.5, defMulti: 0.7, advClasses: ['wizard', 'sage'] },
+  thief: { name: '盜賊', icon: '🗡️', primaryStat: 'agi', hpMulti: 1.0, spMulti: 1.0, atkMulti: 1.2, defMulti: 0.9 },
+  acolyte: { name: '服事', icon: '✨', primaryStat: 'int', hpMulti: 1.2, spMulti: 1.5, atkMulti: 0.9, defMulti: 1.1 },
+  archer: { name: '弓箭手', icon: '🏹', primaryStat: 'dex', hpMulti: 0.9, spMulti: 1.0, atkMulti: 1.3, defMulti: 0.8 },
+  merchant: { name: '商人', icon: '💰', primaryStat: 'str', hpMulti: 1.3, spMulti: 0.8, atkMulti: 1.1, defMulti: 1.1 }
+};
+
+const DEFAULT_SIZE_PENALTY = {
+  dagger: { small: 1.0, medium: 0.75, large: 0.5 },
+  sword: { small: 0.75, medium: 1.0, large: 0.75 },
+  twohand_sword: { small: 0.75, medium: 0.75, large: 1.0 },
+  spear: { small: 0.75, medium: 0.75, large: 1.0 },
+  axe: { small: 0.5, medium: 0.75, large: 1.0 },
+  mace: { small: 0.75, medium: 1.0, large: 1.0 },
+  bow: { small: 1.0, medium: 1.0, large: 0.75 },
+  katar: { small: 0.75, medium: 1.0, large: 0.75 },
+  book: { small: 1.0, medium: 1.0, large: 0.5 },
+  knuckle: { small: 1.0, medium: 1.0, large: 0.75 },
+  instrument: { small: 0.75, medium: 1.0, large: 0.75 },
+  whip: { small: 0.75, medium: 1.0, large: 0.5 },
+  barehand: { small: 1.0, medium: 1.0, large: 1.0 }
+};
+
+const DEFAULT_ELEMENT_MOD = {
+  fire: { earth: 1.5, undead: 1.5, water: 0.5, fire: 0.25 },
+  water: { fire: 1.5, wind: 0.5, water: 0.25 },
+  wind: { water: 1.5, earth: 0.5, wind: 0.25 },
+  earth: { wind: 1.5, fire: 0.5, earth: 0.25 },
+  holy: { undead: 1.5, dark: 1.5, holy: 0.25 },
+  dark: { holy: 1.5, angel: 1.5, dark: 0.25 },
+  poison: { earth: 1.25, fire: 1.25, wind: 1.25, poison: 0, undead: 0 },
+  ghost: { ghost: 1.5, neutral: 0.25 },
+  neutral: { ghost: 0.25 }
+};
+
 // ====== 1. 全域系統設定檔 (SETTINGS) ======
 export const SETTINGS = {
   // 裝備稀有度名稱、顏色與屬性加成倍率 (multi)
