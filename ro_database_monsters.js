@@ -1,16 +1,16 @@
 var RO_DATABASE_MONSTERS = {
     MONSTERS: {
       'prt_fild08': [
-        { id: 1002, name: '波利', emoji: '💧', lv: 1, hp: 50, atk: 7, def: 0, hit: 10, flee: 5, baseExp: 20000000, jobExp: 10000000, gold: 5, dropRate: 0.1 },
-        { id: 1063, name: '瘋兔', emoji: '🐇', lv: 2, hp: 60, atk: 11, def: 0, hit: 15, flee: 8, baseExp: 350, jobExp: 150, gold: 8, dropRate: 0.12 },
-        { id: 1014, name: '綠棉蟲', emoji: '🐛', lv: 3, hp: 120, atk: 15, def: 5, hit: 20, flee: 12, baseExp: 500, jobExp: 300, gold: 12, dropRate: 0.15 },
-        { id: 1049, name: '蒼蠅', emoji: '🪰', lv: 4, hp: 90, atk: 20, def: 2, hit: 25, flee: 25, baseExp: 750, jobExp: 450, gold: 10, dropRate: 0.15 },
-        { id: 1008, name: '蟲蛹', emoji: '🪹', lv: 4, hp: 350, atk: 0, def: 10, hit: 0, flee: 0, baseExp: 800, jobExp: 800, gold: 15, dropRate: 0.18 },
-        { id: 1031, name: '搖滾蝗蟲', emoji: '🦗', lv: 7, hp: 200, atk: 35, def: 5, hit: 35, flee: 20, baseExp: 1200, jobExp: 900, gold: 20, dropRate: 0.18 },
-        { id: 1096, name: '波波利', emoji: '🟢', lv: 14, hp: 350, atk: 55, def: 8, hit: 45, flee: 25, baseExp: 2500, jobExp: 1500, gold: 25, dropRate: 0.2 },
-        { id: 1013, name: '盜蟲', emoji: '🪳', lv: 6, hp: 180, atk: 30, def: 5, hit: 30, flee: 18, baseExp: 1000, jobExp: 700, gold: 18, dropRate: 0.15 },
-        { id: 1041, name: '大嘴鳥', emoji: '🦤', lv: 10, hp: 280, atk: 45, def: 10, hit: 38, flee: 20, baseExp: 1800, jobExp: 1200, gold: 22, dropRate: 0.18 },
-        { id: 1115, name: '小青蛙', emoji: '🐸', lv: 5, hp: 150, atk: 25, def: 3, hit: 25, flee: 15, baseExp: 900, jobExp: 600, gold: 12, dropRate: 0.15 },
+        { id: 1002, name: '波利', emoji: '💧', lv: 1, hp: 50, atk: 7, def: 0, hit: 10, flee: 5, baseExp: 20, jobExp: 10, gold: 5, dropRate: 0.1 },
+        { id: 1063, name: '瘋兔', emoji: '🐇', lv: 2, hp: 60, atk: 11, def: 0, hit: 15, flee: 8, baseExp: 35, jobExp: 15, gold: 8, dropRate: 0.12 },
+        { id: 1014, name: '綠棉蟲', emoji: '🐛', lv: 3, hp: 120, atk: 15, def: 5, hit: 20, flee: 12, baseExp: 50, jobExp: 30, gold: 12, dropRate: 0.15 },
+        { id: 1049, name: '蒼蠅', emoji: '🪰', lv: 4, hp: 90, atk: 20, def: 2, hit: 25, flee: 25, baseExp: 75, jobExp: 45, gold: 10, dropRate: 0.15 },
+        { id: 1008, name: '蟲蛹', emoji: '🪹', lv: 4, hp: 350, atk: 0, def: 10, hit: 0, flee: 0, baseExp: 80, jobExp: 80, gold: 15, dropRate: 0.18 },
+        { id: 1031, name: '搖滾蝗蟲', emoji: '🦗', lv: 7, hp: 200, atk: 35, def: 5, hit: 35, flee: 20, baseExp: 120, jobExp: 90, gold: 20, dropRate: 0.18 },
+        { id: 1096, name: '波波利', emoji: '🟢', lv: 14, hp: 350, atk: 55, def: 8, hit: 45, flee: 25, baseExp: 250, jobExp: 150, gold: 25, dropRate: 0.2 },
+        { id: 1013, name: '盜蟲', emoji: '🪳', lv: 6, hp: 180, atk: 30, def: 5, hit: 30, flee: 18, baseExp: 100, jobExp: 70, gold: 18, dropRate: 0.15 },
+        { id: 1041, name: '大嘴鳥', emoji: '🦤', lv: 10, hp: 280, atk: 45, def: 10, hit: 38, flee: 20, baseExp: 180, jobExp: 100, gold: 22, dropRate: 0.18 },
+        { id: 1115, name: '小青蛙', emoji: '🐸', lv: 5, hp: 150, atk: 25, def: 3, hit: 25, flee: 15, baseExp: 90, jobExp: 60, gold: 12, dropRate: 0.15 },
         { id: 1143, name: '天使波利 (MVP)', emoji: '👼', lv: 25, hp: 8500, atk: 250, def: 20, hit: 80, flee: 60, baseExp: 25000, jobExp: 15000, gold: 1500, dropRate: 0.6 }
       ],
       'pay_fild04': [
