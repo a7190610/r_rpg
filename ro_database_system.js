@@ -435,6 +435,27 @@ export const FORMULAS = {
       cRate: Math.floor(crt / 3)   // 每 3 點 CRT 增加 1 C.Rate
     };
   }
+  /**
+   * 19. 計算攻擊速度與實際攻擊間隔 (ASPD 系統)
+   * @param {number} aspd - 玩家的面板 ASPD (最高 193)
+   * @returns {Object} 包含每秒攻擊次數 (aps) 與攻擊間隔毫秒 (intervalMs)
+   */
+  calculateAttackSpeed: (aspd) => {
+    // 防呆：確保 ASPD 介於 1 到 193 之間 (三轉/四轉上限)
+    const cappedASPD = Math.min(Math.max(aspd, 1), 193); 
+    
+    // RO 經典公式：每秒攻擊次數 = 50 / (200 - ASPD)
+    const attacksPerSecond = 50 / (200 - cappedASPD);
+    
+    // 攻擊間隔時間 (毫秒) = 1000 / 每秒攻擊次數
+    const attackIntervalMs = Math.floor(1000 / attacksPerSecond);
+
+    return {
+      aspd: cappedASPD,
+      aps: Number(attacksPerSecond.toFixed(2)), // 取小數點後兩位，方便 UI 顯示
+      intervalMs: attackIntervalMs              // 給遊戲引擎用的毫秒延遲
+    };
+  }
 };
 
 
