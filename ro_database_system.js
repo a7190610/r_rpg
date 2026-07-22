@@ -68,7 +68,7 @@ export const SETTINGS = {
   // 創角初始狀態 (包含基本素質與四轉特性素質)
   DEFAULT_STATE: {
     name: '初心者', classType: 'novice', jobTier: 1, level: 1, exp: 0, jobLevel: 1, jobExp: 0, hp: 50, sp: 10, gold: 0, cash: 0,
-    attributes: { points: 1000, str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 },
+    attributes: { points: 48, str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 },
     traits: { points: 0, pow: 0, sta: 0, wis: 0, spl: 0, con: 0, crt: 0 }, // 四轉特性素質預設
     skills: { points: 1 }, 
     equipment: { helm: null, armor: null, weapon: null, shield: null, garment: null, shoes: null, acc1: null, acc2: null },
