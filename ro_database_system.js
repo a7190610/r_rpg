@@ -434,7 +434,7 @@ export const FORMULAS = {
       hPlus: crt,                  // 每 1 點 CRT 增加 1 H.Plus
       cRate: Math.floor(crt / 3)   // 每 3 點 CRT 增加 1 C.Rate
     };
-  }
+  },
   /**
    * 19. 計算攻擊速度與實際攻擊間隔 (ASPD 系統)
    * @param {number} aspd - 玩家的面板 ASPD (最高 193)
