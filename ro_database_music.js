@@ -17,12 +17,19 @@ https://a7190610.github.io/r_rpg/ro_database_skills.js
 https://a7190610.github.io/r_rpg/ro_database_system.js
 */
 
-//https://nextly.blogspot.com/2009/07/onlineragnarok-online-bgm.html
-//https://downloads.khinsider.com/game-soundtracks/album/ragnarok-online-original-soundtrack
+/*
+https://nextly.blogspot.com/2009/07/onlineragnarok-online-bgm.html
+https://downloads.khinsider.com/game-soundtracks/album/ragnarok-online-original-soundtrack
+https://forum.gamer.com.tw/G2.php?bsn=4212&sn=5360
+*/
+
 export const RO_DATABASE_MUSIC = {
     MUSIC: {
-        'prt_fild08': 'https://a7190610.github.io/r_rpg/1-12.%20Streamside.mp3', // 普隆德拉原野
-        'pay_fild04': 'https://你存放音樂的網址/pay_fild04.mp3', // 斐揚樹林
+        'prt_fild08': 'https://a7190610.github.io/r_rpg/12.mp3',
+        'pay_fild04': 'https://a7190610.github.io/r_rpg/03.mp3',
+        'moc_fild12': 'https://a7190610.github.io/r_rpg/37.mp3',
+        'iz_dun00': 'https://a7190610.github.io/r_rpg/29.mp3',
+        'anthell01': 'https://a7190610.github.io/r_rpg/46.mp3',
         // 依此類推對應各個地圖的 ID
     }
 };
