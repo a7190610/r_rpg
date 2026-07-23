@@ -11,7 +11,7 @@ var RO_DATABASE_MONSTERS = {
         { id: 1013, name: '盜蟲', emoji: '🪳', lv: 6, hp: 180, atk: 30, def: 5, hit: 30, flee: 18, baseExp: 100, jobExp: 70, gold: 18, dropRate: 0.15, element: 'shadow', size: 'small' },
         { id: 1041, name: '大嘴鳥', emoji: '🦤', lv: 10, hp: 280, atk: 45, def: 10, hit: 38, flee: 20, baseExp: 180, jobExp: 100, gold: 22, dropRate: 0.18, element: 'fire', size: 'large' },
         { id: 1115, name: '小青蛙', emoji: '🐸', lv: 5, hp: 150, atk: 25, def: 3, hit: 25, flee: 15, baseExp: 90, jobExp: 60, gold: 12, dropRate: 0.15, element: 'water', size: 'medium' },
-        { id: 1143, name: '天使波利 (MVP)', emoji: '👼', lv: 25, hp: 8500, atk: 250, def: 20, hit: 80, flee: 60, baseExp: 25000, jobExp: 15000, gold: 1500, dropRate: 0.6, element: 'holy', size: 'medium' }
+        ,//{ id: 1143, name: '天使波利 (MVP)', emoji: '👼', lv: 25, hp: 8500, atk: 250, def: 20, hit: 80, flee: 60, baseExp: 25000, jobExp: 15000, gold: 1500, dropRate: 0.6, element: 'holy', size: 'medium' }
       ],
       'pay_fild04': [
         { id: 1011, name: '魔菇', emoji: '🍄', lv: 12, hp: 360, atk: 45, def: 10, hit: 30, flee: 15, baseExp: 2200, jobExp: 1300, gold: 25, dropRate: 0.18, element: 'water', size: 'medium' },
