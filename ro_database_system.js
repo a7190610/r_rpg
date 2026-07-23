@@ -74,8 +74,8 @@ DEFAULT_STATE: {
     equipment: { 
       helm: null,          // 如果這個部位不想給初始裝備，就保持 null
       armor: 'a_001',      // 填寫防具庫裡的 ID，記得加單引號或雙引號！
-      weapon: 'w_001',     // 填寫武器庫裡的 ID
-      shield: 'sh_001',    // 填寫盾牌庫裡的 ID
+      weapon: 'w_002',     // 填寫武器庫裡的 ID
+      shield: 'sh_002',    // 填寫盾牌庫裡的 ID
       garment: 'g_001',    // 填寫披肩庫裡的 ID
       shoes: 's_001',      // 填寫鞋子庫裡的 ID
       acc1: null, 
