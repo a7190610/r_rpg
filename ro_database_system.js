@@ -1,3 +1,86 @@
+// ==========================================
+  // 以下為日後前端判定【技能特效與進階傷害】的核心函數
+  // 請貼入 ro_database_system.js 的 FORMULAS 裡面
+  // ==========================================
+
+  /**
+   * 1. 武器綁定驗證 (判斷被動技能或主動技能是否可發動)
+   * @param {string} weaponType - 玩家目前裝備的武器 type (例如 'sword', 'bow')
+   * @param {string|Array} requiredTypes - 技能要求的武器 (例如 'spear' 或 ['axe', 'mace'])
+   */
+  checkWeaponRequirement: (weaponType, requiredTypes) => {
+    if (!requiredTypes || requiredTypes === 'all') return true;
+    const wType = weaponType || 'barehand'; // 沒拿武器視為空手
+    if (typeof requiredTypes === 'string') return wType === requiredTypes;
+    if (Array.isArray(requiredTypes)) return requiredTypes.includes(wType);
+    return false;
+  },
+
+  /**
+   * 2. 體型懲罰計算
+   * @param {string} weaponType - 武器種類
+   * @param {string} monsterSize - 怪物體型 ('small', 'medium', 'large')
+   * @param {Object} sizeModTable - 系統的 DEFAULT_SIZE_PENALTY 表
+   */
+  calculateSizePenalty: (weaponType, monsterSize, sizeModTable) => {
+     const wType = weaponType || 'barehand';
+     const mSize = monsterSize || 'medium'; // 預設中型
+     if (!sizeModTable || !sizeModTable[wType]) return 1.0;
+     return sizeModTable[wType][mSize] || 1.0;
+  },
+
+  /**
+   * 3. 屬性相剋計算
+   * @param {string} atkElement - 攻擊方屬性 ('fire', 'water' 等)
+   * @param {string} defElement - 防禦方(怪物)屬性
+   * @param {Object} elementModTable - 系統的 DEFAULT_ELEMENT_MOD 表
+   */
+  calculateElementMultiplier: (atkElement, defElement, elementModTable) => {
+     const aEle = atkElement || 'neutral';
+     const dEle = defElement || 'neutral';
+     if (!elementModTable || !elementModTable[aEle]) return 1.0;
+     return elementModTable[aEle][dEle] || 1.0;
+  },
+
+  /**
+   * 4. 進階最終傷害計算 (處理特殊技能倍率)
+   * @param {number} baseDmg - 經過 ATK/MATK 與技能倍率 (dmgMulti) 乘算後的基礎傷害
+   * @param {number} targetDef - 目標的防禦力 (DEF 或 MDEF)
+   * @param {Object} skillConfig - 技能設定檔 (判斷是否有 ignoreDef 等屬性)
+   * @param {Object} playerStats - 玩家當前面板 (用於計算看 HP/SP 的傷害)
+   */
+  calculateAdvancedDamage: (baseDmg, targetDef, skillConfig = {}, playerStats = {}) => {
+      // 無視防禦 (如：阿修羅霸凰拳、閃電衝擊)
+      if (skillConfig.ignoreDef) {
+          return baseDmg;
+      }
+      // 防禦力轉換傷害 (如：武僧-浸透勁)
+      if (skillConfig.defScaling) {
+          return baseDmg + Math.floor(targetDef * 1.5);
+      }
+      // 根據自身 HP/SP 上限增傷 (如：龍之吐息)
+      if (skillConfig.hpSpScalingDmg) {
+          return baseDmg + Math.floor((playerStats.hp || 0) * 0.05 + (playerStats.maxSp || 0) * 0.5);
+      }
+      // 正常防禦減免公式
+      return Math.max(1, Math.floor(baseDmg * (100 / (100 + targetDef))));
+  },
+
+  /**
+   * 5. 異常狀態命中率判定 (簡單版)
+   * @param {number} baseChance - 技能設定的異常狀態機率 (0~100)
+   * @param {number} targetResistStat - 目標抵抗該狀態的屬性 (例如防暈看 VIT，防冰凍看 MDEF)
+   */
+  calculateStatusEffectChance: (baseChance, targetResistStat = 0) => {
+      // 公式：基礎機率 - (目標抗性屬性 / 2)
+      const finalChance = baseChance - Math.floor(targetResistStat / 2);
+      return Math.max(0, finalChance); // 最低機率為 0%
+  }
+
+
+
+
+
 // ====== 核心常數定義區 (合併原本的 FALLBACK 區) ======
 export const RARITY = {
   common: { name: '普通', color: 'text-gray-300', bg: 'bg-gray-500/20', multi: 1 },
@@ -234,6 +317,7 @@ export const JOBEXP_TABLE4 = [
   1355888214, 1532153682, 1731333660, 1956407036, 2210739951, 2498136145, 2822893843, 3189870043, 3604553149, 4073145058, 
   4480459564, 4928505520, 5421356072, 5963491679, 6559840847, 7543816974, 8675389520, 9976697948, 11473202640, 13194183036
 ];
+
 // ====== 5. 遊戲公式計算 (FORMULAS) ======
 export const FORMULAS = {
   // 狀態升級花費: 經典 RO 公式 (當前數值-1)/10 取整 + 2
@@ -249,16 +333,10 @@ export const FORMULAS = {
   },
 
   // ==========================================
-  //      以下為全新整合：RO 核心素質計算公式
+  //      RO 核心素質計算公式
   // ==========================================
 
-  /**
-   * 1. 計算素質物理攻擊力 (Status ATK)
-   * @param {Object} attrs - 六大基本素質 {str, agi, vit, int, dex, luk}
-   * @param {number} lv - 基礎等級 (Base Level)
-   * @param {boolean} isRanged - 是否為遠距離武器 (如長弓)
-   * @param {Object} traits - 四轉特性素質 {pow, sta, wis, spl, con, crt}
-   */
+  // 1. 計算素質物理攻擊力 (Status ATK)
   calculateStatusATK: (attrs, lv, isRanged = false, traits = {}) => {
     const str = attrs.str || 1;
     const dex = attrs.dex || 1;
@@ -267,229 +345,200 @@ export const FORMULAS = {
 
     let atk = 0;
     if (isRanged) {
-      // 遠距離武器公式：DEX + STR/5 + LUK/3 + BaseLv/4
       atk = dex + Math.floor(str / 5) + Math.floor(luk / 3) + Math.floor(lv / 4);
     } else {
-      // 近距離武器公式：STR + DEX/5 + LUK/3 + BaseLv/4
       atk = str + Math.floor(dex / 5) + Math.floor(luk / 3) + Math.floor(lv / 4);
     }
-    
-    // 四轉 POW 加成：每 1 點 POW 物理攻擊力 +5
     atk += (pow * 5);
     return atk;
   },
 
-  /**
-   * 2. 計算特性物理攻擊力 (P.Atk) - 四轉機制
-   */
+  // 2. 計算特性物理攻擊力 (P.Atk)
   calculatePAtk: (traits = {}) => {
     const pow = traits.pow || 0;
     const con = traits.con || 0;
-    // 每 3 點 POW 增加 1 P.Atk，每 5 點 CON 增加 1 P.Atk
     return Math.floor(pow / 3) + Math.floor(con / 5);
   },
 
-  /**
-   * 3. 計算素質魔法攻擊力 (Status MATK)
-   */
+  // 3. 計算素質魔法攻擊力 (Status MATK)
   calculateStatusMATK: (attrs, lv, traits = {}) => {
     const int = attrs.int || 1;
     const dex = attrs.dex || 1;
     const luk = attrs.luk || 1;
     const spl = traits.spl || 0;
 
-    // 公式：INT*1.5 + DEX/5 + LUK/3 + BaseLv/4
     let matk = Math.floor(int * 1.5) + Math.floor(dex / 5) + Math.floor(luk / 3) + Math.floor(lv / 4);
-    
-    // 四轉 SPL 加成：每 1 點 SPL 魔法攻擊力 +5
     matk += (spl * 5);
     return matk;
   },
 
-  /**
-   * 4. 計算特性魔法攻擊力 (S.Matk) - 四轉機制
-   */
+  // 4. 計算特性魔法攻擊力 (S.Matk)
   calculateSMatk: (traits = {}) => {
     const spl = traits.spl || 0;
     const con = traits.con || 0;
-    // 每 3 點 SPL 增加 1 S.Matk，每 5 點 CON 增加 1 S.Matk
     return Math.floor(spl / 3) + Math.floor(con / 5);
   },
 
-  /**
-   * 5. 計算素質物理防禦力 (Status DEF)
-   */
+  // 5. 計算素質物理防禦力 (Status DEF)
   calculateStatusDEF: (attrs, lv) => {
     const vit = attrs.vit || 1;
     const agi = attrs.agi || 1;
-    // 公式：BaseLv/2 + VIT/2 + AGI/5
     return Math.floor(lv / 2) + Math.floor(vit / 2) + Math.floor(agi / 5);
   },
 
-  /**
-   * 6. 計算物理抗性 (Res) - 四轉機制
-   */
+  // 6. 計算物理抗性 (Res)
   calculateRes: (traits = {}) => {
     const sta = traits.sta || 0;
-    // 每 1 點 STA 增加 1 Res，每 3 點 STA 額外增加 5 Res
     return sta + (Math.floor(sta / 3) * 5);
   },
 
-  /**
-   * 7. 計算素質魔法防禦力 (Status MDEF)
-   */
+  // 7. 計算素質魔法防禦力 (Status MDEF)
   calculateStatusMDEF: (attrs, lv) => {
     const int = attrs.int || 1;
     const vit = attrs.vit || 1;
     const dex = attrs.dex || 1;
-    // 公式：INT + VIT/5 + DEX/5 + BaseLv/4
     return int + Math.floor(vit / 5) + Math.floor(dex / 5) + Math.floor(lv / 4);
   },
 
-  /**
-   * 8. 計算魔法抗性 (Mres) - 四轉機制
-   */
+  // 8. 計算魔法抗性 (Mres)
   calculateMres: (traits = {}) => {
     const wis = traits.wis || 0;
-    // 每 1 點 WIS 增加 1 Mres，每 3 點 WIS 額外增加 5 Mres
     return wis + (Math.floor(wis / 3) * 5);
   },
 
-  /**
-   * 9. 計算命中率 (HIT)
-   */
+  // 9. 計算命中率 (HIT)
   calculateHIT: (attrs, lv, traits = {}) => {
     const dex = attrs.dex || 1;
     const luk = attrs.luk || 1;
     const con = traits.con || 0;
-    // 公式：BaseLv + DEX + LUK/3 + CON*2
     return lv + dex + Math.floor(luk / 3) + (con * 2);
   },
 
-  /**
-   * 10. 計算迴避率 (FLEE)
-   */
+  // 10. 計算迴避率 (FLEE)
   calculateFLEE: (attrs, lv, traits = {}) => {
     const agi = attrs.agi || 1;
     const luk = attrs.luk || 1;
     const con = traits.con || 0;
-    // 公式：BaseLv + AGI + LUK/5 + CON*2
     return lv + agi + Math.floor(luk / 5) + (con * 2);
   },
 
-  /**
-   * 11. 計算完全迴避 (Perfect Dodge)
-   */
+  // 11. 計算完全迴避 (Perfect Dodge)
   calculatePerfectDodge: (attrs) => {
     const luk = attrs.luk || 1;
-    // 每 10 點 LUK 增加 1 完全迴避
     return Math.floor(luk / 10);
   },
 
-  /**
-   * 12. 計算暴擊率 (Critical Rate)
-   */
+  // 12. 計算暴擊率 (Critical Rate)
   calculateCRIT: (attrs) => {
     const luk = attrs.luk || 1;
-    // 基礎暴擊率為 1，每 1 點 LUK 增加 0.3
     return 1 + (luk * 0.3);
   },
 
-  /**
-   * 13. 計算最大血量 (MaxHP)
-   * @param {number} lv - 當前等級
-   * @param {number} hpMulti - 職業血量倍率 (來自 CLASSES，如劍士 1.5)
-   * @param {Object} attrs - 基本素質
-   */
+  // 13. 計算最大血量 (MaxHP)
   calculateMaxHP: (lv, hpMulti, attrs) => {
     const vit = attrs.vit || 1;
-    // RO基礎血量趨勢模擬 (等級*50 + 基礎100) * 職業乘數 * (1 + VIT * 1%)
     const baseCurve = lv * 50 + 100;
     return Math.floor(baseCurve * hpMulti * (1 + vit * 0.01));
   },
 
-  /**
-   * 14. 計算最大魔力 (MaxSP)
-   * @param {number} lv - 當前等級
-   * @param {number} spMulti - 職業魔力倍率 (來自 CLASSES，如法師 2.0)
-   * @param {Object} attrs - 基本素質
-   */
+  // 14. 計算最大魔力 (MaxSP)
   calculateMaxSP: (lv, spMulti, attrs) => {
     const int = attrs.int || 1;
-    // RO基礎魔力趨勢模擬 (等級*10 + 基礎20) * 職業乘數 * (1 + INT * 1%)
     const baseCurve = lv * 10 + 20;
     return Math.floor(baseCurve * spMulti * (1 + int * 0.01));
   },
 
-  /**
-   * 15. 計算最大負重量 (Max Weight)
-   */
+  // 15. 計算最大負重量 (Max Weight)
   calculateMaxWeight: (attrs) => {
     const str = attrs.str || 1;
-    return 2000 + (str * 30); // 基礎負重 2000 + 每點 STR 增加 30
+    return 2000 + (str * 30);
   },
 
-  /**
-   * 16. 計算 HP 自然恢復量 (HP Regen)
-   */
+  // 16. 計算 HP 自然恢復量 (HP Regen)
   calculateHPRegen: (attrs, maxHP) => {
     const vit = attrs.vit || 1;
-    // 基礎 1 + VIT/5 + 每 200 最大血量額外 +1
     return 1 + Math.floor(vit / 5) + Math.floor(maxHP / 200);
   },
 
-  /**
-   * 17. 計算 SP 自然恢復量 (SP Regen)
-   */
+  // 17. 計算 SP 自然恢復量 (SP Regen)
   calculateSPRegen: (attrs, maxSP) => {
     const int = attrs.int || 1;
-    let regen = 1;
-    
-    // 每 6 點 INT 增加 1
-    regen += Math.floor(int / 6);
-    
-    // 達到 120 後的加成機制
+    let regen = 1 + Math.floor(int / 6);
     if (int >= 120) {
-      regen += 4; // 達到 120 時額外 +4
-      regen += Math.floor((int - 120) / 2); // 達到 120 後每 2 點再 +1
+      regen += 4; 
+      regen += Math.floor((int - 120) / 2); 
     }
-    
-    // 每 100 最大魔力增加 1
     regen += Math.floor(maxSP / 100);
     return regen;
   },
 
-  /**
-   * 18. 四轉其餘特性加成計算 (H.Plus 與 C.Rate)
-   */
+  // 18. 四轉其餘特性加成計算
   calculateTraitAdditions: (traits = {}) => {
     const crt = traits.crt || 0;
     return {
-      hPlus: crt,                  // 每 1 點 CRT 增加 1 H.Plus
-      cRate: Math.floor(crt / 3)   // 每 3 點 CRT 增加 1 C.Rate
+      hPlus: crt,                  
+      cRate: Math.floor(crt / 3)   
     };
   },
-  /**
-   * 19. 計算攻擊速度與實際攻擊間隔 (ASPD 系統)
-   * @param {number} aspd - 玩家的面板 ASPD (最高 193)
-   * @returns {Object} 包含每秒攻擊次數 (aps) 與攻擊間隔毫秒 (intervalMs)
-   */
-  calculateAttackSpeed: (aspd) => {
-    // 防呆：確保 ASPD 介於 1 到 193 之間 (三轉/四轉上限)
-    const cappedASPD = Math.min(Math.max(aspd, 1), 193); 
-    
-    // RO 經典公式：每秒攻擊次數 = 50 / (200 - ASPD)
-    const attacksPerSecond = 50 / (200 - cappedASPD);
-    
-    // 攻擊間隔時間 (毫秒) = 1000 / 每秒攻擊次數
-    const attackIntervalMs = Math.floor(1000 / attacksPerSecond);
 
+  // 19. 計算攻擊速度與實際攻擊間隔
+  calculateAttackSpeed: (aspd) => {
+    const cappedASPD = Math.min(Math.max(aspd, 1), 193); 
+    const attacksPerSecond = 50 / (200 - cappedASPD);
+    const attackIntervalMs = Math.floor(1000 / attacksPerSecond);
     return {
       aspd: cappedASPD,
-      aps: Number(attacksPerSecond.toFixed(2)), // 取小數點後兩位，方便 UI 顯示
-      intervalMs: attackIntervalMs              // 給遊戲引擎用的毫秒延遲
+      aps: Number(attacksPerSecond.toFixed(2)), 
+      intervalMs: attackIntervalMs              
     };
+  },
+
+  // ==========================================
+  //      技能特效與進階傷害核心函數
+  // ==========================================
+
+  // 20. 武器綁定驗證
+  checkWeaponRequirement: (weaponType, requiredTypes) => {
+    if (!requiredTypes || requiredTypes === 'all') return true;
+    const wType = weaponType || 'barehand'; 
+    if (typeof requiredTypes === 'string') return wType === requiredTypes;
+    if (Array.isArray(requiredTypes)) return requiredTypes.includes(wType);
+    return false;
+  },
+
+  // 21. 體型懲罰計算
+  calculateSizePenalty: (weaponType, monsterSize, sizeModTable) => {
+     const wType = weaponType || 'barehand';
+     const mSize = monsterSize || 'medium'; 
+     if (!sizeModTable || !sizeModTable[wType]) return 1.0;
+     return sizeModTable[wType][mSize] || 1.0;
+  },
+
+  // 22. 屬性相剋計算
+  calculateElementMultiplier: (atkElement, defElement, elementModTable) => {
+     const aEle = atkElement || 'neutral';
+     const dEle = defElement || 'neutral';
+     if (!elementModTable || !elementModTable[aEle]) return 1.0;
+     return elementModTable[aEle][dEle] || 1.0;
+  },
+
+  // 23. 進階最終傷害計算
+  calculateAdvancedDamage: (baseDmg, targetDef, skillConfig = {}, playerStats = {}) => {
+      if (skillConfig.ignoreDef) {
+          return baseDmg;
+      }
+      if (skillConfig.defScaling) {
+          return baseDmg + Math.floor(targetDef * 1.5);
+      }
+      if (skillConfig.hpSpScalingDmg) {
+          return baseDmg + Math.floor((playerStats.hp || 0) * 0.05 + (playerStats.maxSp || 0) * 0.5);
+      }
+      return Math.max(1, Math.floor(baseDmg * (100 / (100 + targetDef))));
+  },
+
+  // 24. 異常狀態命中率判定
+  calculateStatusEffectChance: (baseChance, targetResistStat = 0) => {
+      const finalChance = baseChance - Math.floor(targetResistStat / 2);
+      return Math.max(0, finalChance); 
   }
 };
-
-
