@@ -66,12 +66,21 @@ export const SETTINGS = {
   // 稀有度掉落機率 (大於該數值即中獎，從大排到小)
   DROP_RATES: { legendary: 0.98, epic: 0.90, rare: 0.70, uncommon: 0.40 },
   // 創角初始狀態 (包含基本素質與四轉特性素質)
-  DEFAULT_STATE: {
+DEFAULT_STATE: {
     name: '初心者', classType: 'novice', jobTier: 1, level: 1, exp: 0, jobLevel: 1, jobExp: 0, hp: 50, sp: 10, gold: 0, cash: 0,
     attributes: { points: 48, str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 },
-    traits: { points: 0, pow: 0, sta: 0, wis: 0, spl: 0, con: 0, crt: 0 }, // 四轉特性素質預設
+    traits: { points: 0, pow: 0, sta: 0, wis: 0, spl: 0, con: 0, crt: 0 }, 
     skills: { points: 1 }, 
-    equipment: { helm: null, armor: null, weapon: null, shield: null, garment: null, shoes: null, acc1: null, acc2: null },
+    equipment: { 
+      helm: null,          // 如果這個部位不想給初始裝備，就保持 null
+      armor: 'a_001',      // 填寫防具庫裡的 ID，記得加單引號或雙引號！
+      weapon: 'w_001',     // 填寫武器庫裡的 ID
+      shield: 'sh_001',    // 填寫盾牌庫裡的 ID
+      garment: 'g_001',    // 填寫披肩庫裡的 ID
+      shoes: 's_001',      // 填寫鞋子庫裡的 ID
+      acc1: null, 
+      acc2: null 
+    },
     consumables: { redPotion: 50, flyWing: 10  }, 
     buffs: { awake: 0 }, inventory: []
   }
