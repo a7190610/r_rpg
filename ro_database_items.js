@@ -3,8 +3,8 @@ var RO_DATABASE_ITEMS = {
     // --- 武器區 (Weapons) - 各系武器保留經典並補足 ---
     weapons: [
       // 短劍 (Daggers)
-      { id: 'w_001', name: '笨拙短劍', type: 'weapon', reqLevel: 1, reqClass: ['all'], attr: { atk: 17 } },
-      { id: 'w_002', name: '短劍', type: 'weapon', reqLevel: 12, reqClass: ['swordman', 'thief', 'magician', 'merchant', 'novice'], attr: { atk: 43 } },
+      { id: 'w_001', name: '短劍', type: 'weapon', reqLevel: 1, reqClass: ['all'], attr: { atk: 17 } },
+      { id: 'w_002', name: '笨拙短劍', type: 'weapon', reqLevel: 12, reqClass: ['swordman', 'thief', 'magician', 'merchant', 'novice'], attr: { atk: 43 } },
       { id: 'w_003', name: '大馬士革短劍', type: 'weapon', reqLevel: 24, reqClass: ['swordman', 'thief', 'magician', 'merchant'], attr: { atk: 118 } },
       { id: 'w_004', name: '刺客匕首', type: 'weapon', reqLevel: 40, reqClass: ['thief'], attr: { atk: 140, flee: 10, crit: 5 } },
       { id: 'w_005', name: '神聖之首', type: 'weapon', reqLevel: 60, reqClass: ['swordman', 'thief'], attr: { atk: 165, hit: 20 } },
