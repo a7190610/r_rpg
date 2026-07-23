@@ -1,5 +1,6 @@
 var RO_DATABASE_MAPS = {
   MAPS: [
+    { id: 'prontera', name: '普隆德拉', minLevel: 1, bg: 'from-green-900 to-slate-900', emoji: '★' },
     { id: 'prt_fild08', name: '普隆德拉原野', minLevel: 1, bg: 'from-green-900 to-slate-900', emoji: '🍀' },
     { id: 'pay_fild04', name: '斐揚樹林', minLevel: 10, bg: 'from-emerald-900 to-slate-900', emoji: '🌲' },
     { id: 'moc_fild12', name: '夢羅克沙漠', minLevel: 15, bg: 'from-yellow-900 to-slate-900', emoji: '🏜️' },
