@@ -71,7 +71,7 @@ export const SETTINGS = {
     attributes: { points: 48, str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 },
     traits: { points: 0, pow: 0, sta: 0, wis: 0, spl: 0, con: 0, crt: 0 }, // 四轉特性素質預設
     skills: { points: 1 }, 
-    equipment: { helm: null, armor: a_001, weapon: w_001, shield: sh_002, garment: g_001, shoes: s_001, acc1: null, acc2: null },
+    equipment: { helm: null, armor: 'a_001', weapon: 'w_001', shield: 'sh_002', garment: 'g_001', shoes: 's_001', acc1: null, acc2: null },
     consumables: { redPotion: 50, flyWing: 10  }, 
     buffs: { awake: 0 }, inventory: []
   }
