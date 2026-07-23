@@ -213,7 +213,7 @@ export const EXP_TABLE = [
 
 // 初心者 (0) Job Lv.1 - 10
 export const JOBEXP_TABLE0 = [
-  0, 0, 
+  0, //0, 
   12, 22, 35, 50, 113, 188, 256, 335, 425
 ];
 
