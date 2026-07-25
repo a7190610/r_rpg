@@ -8,7 +8,7 @@ export const RO_DATABASE_ITEMS2 = {
       // ================= 一般商店 (Zeny) =================
       
       // [基礎恢復 - 藥水類]
-      [ 'novicePotion',     '初學者藥水',           '🍼', 'consumable',    10, '回復 50 HP (新手專用)',                  { healHp: 50 } ],
+      [ 'novicePotion',     '初學者藥水',           '🍼', 'consumable',    10, '回復 50 HP (新手專用)',                  { healHp: 500,healSp:500 } ],
       [ 'redPotion',        '紅色藥水',             '🍷', 'consumable',    50, '回復 250 HP',                            { healHp: 250 } ],
       [ 'orangePotion',     '橙色藥水',             '🍹', 'consumable',   200, '回復 500 HP',                            { healHp: 500 } ],
       [ 'yellowPotion',     '黃色藥水',             '🧃', 'consumable',   550, '回復 1000 HP',                           { healHp: 1000 } ],
