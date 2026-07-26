@@ -26,6 +26,7 @@ var RO_DATABASE_MAPS = {
     ['abyss_03',   '深淵湖水地下洞穴(3F)',   100, 'from-purple-950 to-black',      '🐲', 'https://a7190610.github.io/r_rpg/49.mp3' ],
     ['thor_v03',   '托爾火山(3F)',           110, 'from-red-950 to-black',         '🔥', 'https://a7190610.github.io/r_rpg/00.mp3' ],
     ['dic_dun02',  '甲蟲洞穴',               120, 'from-amber-900 to-black',       '🪲', 'https://a7190610.github.io/r_rpg/00.mp3' ],
-    ['lhz_dun04',  '生體試驗所(4F)',         140, 'from-indigo-950 to-black',      '🧪', 'https://a7190610.github.io/r_rpg/00.mp3' ]
+    ['lhz_dun04',  '生體試驗所(4F)',         140, 'from-indigo-950 to-black',      '🧪', 'https://a7190610.github.io/r_rpg/00.mp3' ],
+    ['all_mvp00',  'MVP大賞',         140, 'from-indigo-950 to-black',      '🧪', 'https://a7190610.github.io/r_rpg/00.mp3' ]
   ]
 };
