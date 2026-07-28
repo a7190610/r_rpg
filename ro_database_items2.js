@@ -44,7 +44,7 @@ export const RO_DATABASE_ITEMS2 = {
       [ 'yellowHerb',       '黃色藥草',             '🍂', 'consumable',   250, '回復 300 HP',                            { healHp: 300 } ],
       [ 'whiteHerb',        '白色藥草',             '💮', 'consumable',   800, '回復 1000 HP',                           { healHp: 1000 } ],
       [ 'blueHerb',         '藍色藥草',             '🌱', 'consumable',  1000, '回復 100 SP',                            { healSp: 100 } ],
-      [ 'hinalleLeaflet',   '天地樹葉子',           '🍃', 'consumable',  4000, '復活死亡狀態的隊友',                     { special: 'resurrect' } ],
+      [ 'hinalleLeaflet',   '天地樹葉子',           '🍃', 'consumable',  4000, '復活死亡狀態的自己',                     { special: 'resurrect' } ],
 
       // [高級恢復 - 稀有掉落與合成]
       [ 'honey',            '蜂蜜',                 '🍯', 'consumable',  2000, '回復 500 HP / 100 SP',                   { healHp: 500, healSp: 100 } ],
