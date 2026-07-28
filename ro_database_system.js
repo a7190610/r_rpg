@@ -23,24 +23,24 @@ export const RO_DATABASE_SYSTEM = {
   },
 
   // ==========================================
-  // 2. 系統統一運算核心 (解決邏輯重複，統一在此計算)
+  // 2. 系統統一運算核心 (單一真理來源)
   // ==========================================
   FORMULAS: {
     // ---------------- [經驗與升級曲線] ----------------
     // 狀態升級花費: (當前數值-1)/10 取整 + 2
     getStatCost: (currentStat) => Math.floor((currentStat - 1) / 10) + 2,
 
-    // Base 經驗值需求公式 (取代數千行的 EXP_TABLE)
+    // Base 經驗值需求公式
     getBaseExpReq: (lv) => {
       if (lv <= 0) return 0;
       return Math.floor(Math.pow(lv, 3) * 2.5 + lv * 150 + 100);
     },
     
-    // Job 經驗值需求公式 (取代 JOBEXP_TABLE 1~4，根據職業階級給予不同倍率)
+    // Job 經驗值需求公式 (根據職業階級 jobTier: 0~4 給予不同曲線)
     getJobExpReq: (jobLv, jobTier = 1) => {
       if (jobLv <= 0) return 0;
       
-      // 容錯：若前端傳入的是布林值(isJob2)，則自動轉換
+      // 容錯：若傳入的是布林值(isJob2)，則自動轉換
       let tier = typeof jobTier === 'boolean' ? (jobTier ? 2 : 1) : jobTier;
 
       switch(tier) {
@@ -108,7 +108,7 @@ export const RO_DATABASE_SYSTEM = {
       return 2000 + (str * 30);
     },
 
-    // ---------------- [武器與屬性相剋機制] ----------------
+    // ---------------- [武器與屬性機制] ----------------
     checkWeaponRequirement: (weaponType, requiredTypes) => {
       if (!requiredTypes || requiredTypes === 'all') return true;
       const wType = weaponType || 'barehand'; 
@@ -127,11 +127,59 @@ export const RO_DATABASE_SYSTEM = {
        const dEle = defElement || 'neutral';
        if (!elementModTable || !elementModTable[aEle]) return 1.0;
        return elementModTable[aEle][dEle] || 1.0;
+    },
+
+    // ---------------- [進階技能傷害結算器] ----------------
+    /**
+     * @param {number} rawDamage - 經過 (ATK * 技能倍率) 算出來的原始傷害
+     * @param {Object} attackerStats - 攻擊方的面板素質 (包含目前的 HP/SP/MaxHP等)
+     * @param {Object} targetStats - 被攻擊方的面板素質 (包含 DEF/MDEF 等)
+     * @param {Object} skillExtras - 技能資料庫中經過 getSkillStats() 解出的純數值 attr 物件
+     * @returns {number} 最終判定後的實際傷害值
+     */
+    calculateFinalSkillDamage: (rawDamage, attackerStats, targetStats, skillExtras) => {
+      const extras = skillExtras || {};
+      let finalDamage = rawDamage;
+
+      // 1. 處理「無視防禦」
+      let effectiveDef = targetStats.def || 0;
+      if (extras.ignoreDef) {
+        effectiveDef = 0;
+      } else if (extras.ignoreDefPct) {
+        effectiveDef = Math.floor(effectiveDef * (1 - (extras.ignoreDefPct / 100)));
+      }
+
+      // 2. 扣除防禦減傷
+      finalDamage = Math.max(1, finalDamage - effectiveDef);
+
+      // 3. 處理「防禦力轉換傷害」(例如：武僧-浸透勁 defScaling)
+      if (extras.defScaling) {
+        finalDamage += Math.floor((targetStats.def || 0) * 1.5);
+      }
+
+      // 4. 處理「自身血量/魔力上限增傷」(例如：龍騎士-龍之吐息、修羅-虎砲)
+      if (extras.hpSpScalingDmg) {
+        const currentHp = attackerStats.hp || 1;
+        const maxHp = attackerStats.maxHp || 1;
+        const maxSp = attackerStats.maxSp || 1;
+        finalDamage += Math.floor((currentHp / maxHp) * maxSp * 2.5);
+      }
+
+      // 5. 處理「特定素質增傷」(例如：基因學者-手推車加農砲 scalingStats: ['int'])
+      if (extras.scalingStats && Array.isArray(extras.scalingStats)) {
+        extras.scalingStats.forEach(stat => {
+           const statValue = attackerStats[stat] || 0;
+           finalDamage += (statValue * 5); 
+        });
+      }
+
+      // 保底傷害 1
+      return Math.max(1, Math.floor(finalDamage));
     }
   },
 
   // ==========================================
-  // 3. 靜態相剋對照表 (維持您的原設定)
+  // 3. 靜態相剋對照表
   // ==========================================
   DEFAULT_SIZE_PENALTY: {
     'barehand': { small: 1.0, medium: 1.0, large: 1.0 },
