@@ -155,7 +155,7 @@ export const RO_DATABASE_SKILLS = {
       ['rg_sword',       '單手劍修練(流氓)', '⚔️', 'passive', 10, 10, (lv) => `裝備單手劍時攻擊力增加 ${lv*4}`, {} ]
     ],
     monk: [
-      ['mo_ashura', '阿修羅霸凰拳', '👊', 'active',  5,  25, (lv) => `消耗大量 SP，造成毀滅性真實傷害，施放後 5 分鐘無法回魔`, { spCost: 999, dmgMulti: (lv) => 10.0 + lv * 2.0*spCost, hits: 1, ignoreDef: true, ignoreFlee: true } ],
+      ['mo_ashura', '阿修羅霸凰拳', '👊', 'active',  5,  25, (lv) => `消耗大量 SP，造成毀滅性真實傷害，施放後 5 分鐘無法回魔`, { spCost: 999, dmgMulti: (lv) => 10.0 + lv * 2.0*9999, hits: 1, ignoreDef: true, ignoreFlee: true } ],
       ['mo_dodge',  '移花接木',     '🍃', 'passive', 10, 5,  (lv) => `FLEE 提升 ${lv*1.5}，受擊時機率減免傷害`, { passiveAttr: (lv) => ({ flee: lv*1.5 }) } ],
       ['mo_invest', '浸透勁',       '💥', 'active',  5,  10, (lv) => `消耗 1 氣球，無視防禦造成 ${100+lv*75}% 傷害，敵方防禦越高傷害越大`, { dmgMulti: (lv) => 1.0+lv*0.75, hits: 1, ignoreDef: true, defScaling: true } ],
       ['mo_sphere', '蓄氣',         '🔮', 'active',  5,  5,  (lv) => `主動聚集氣球，每顆氣球增加 3 ATK (最高 5 顆)`, {} ],
