@@ -290,7 +290,7 @@ export const RO_DATABASE_SKILLS = {
       ['mw_lessons', '聲樂課程',       '📖', 'passive', 10, 5,  (lv) => `增加所有歌曲/舞蹈持續時間，MaxSP 提升`, { passiveAttr: (lv) => ({ maxSpPct: lv*2 }) } ],
       ['mw_echo',    '絕望之歌(迴音)', '🎤', 'active',  5,  10, (lv) => `範圍魔法傷害並機率使敵人陷入恐懼`, { spCost: 50, dmgMulti: (lv) => 4.0+lv*1.0, hits: 1, fearChance: (lv) => lv*5 } ],
       ['mw_gloomy',  '憂鬱的微風',     '🍃', 'active',  5,  15, (lv) => `降低目標攻速與迴避，但部分特定職業技能傷害翻倍`, { spCost: 40, debuffDuration: 30, debuffAttr: (lv) => ({ aspdBonusPct: -lv*2, flee: -lv*10, specificSkillMulti: 2.0 }) } ],
-      ['mw_swing',   '搖擺舞',         '💃', 'active',  5,  10, (lv) => `全隊 ASPD 大幅提升，移動速度增加`, { spCost: 50, buffDuration: 60, buffAttr: (lv) => ({ aspdBonusPct: 10+lv*2, moveSpeedPct: 20 }) } ],
+      ['mw_swing',   '摇擺舞',         '💃', 'active',  5,  10, (lv) => `全隊 ASPD 大幅提升，移動速度增加`, { spCost: 50, buffDuration: 60, buffAttr: (lv) => ({ aspdBonusPct: 10+lv*2, moveSpeedPct: 20 }) } ],
       ['mw_siren',   '賽壬之音',       '🧜‍♀️', 'active',  5,  15, (lv) => `魅惑周圍的敵人，使其無法攻擊施法者`, { spCost: 40, debuffDuration: 15, charmChance: (lv) => 30+lv*5 } ],
       ['mw_reverb',  '殘響',           '🎼', 'active',  5,  20, (lv) => `在地面設置殘響，觸碰或手動引爆時造成魔法混合傷害`, { spCost: 30, dmgMulti: (lv) => 3.0+lv*1.0, hits: 1, type: 'trap' } ]
     ],
@@ -379,7 +379,7 @@ export const RO_DATABASE_SKILLS = {
     elemental_master: [
       ['em_diamond',   '鑽石風暴',     '❄️', 'active',  10, 1,  (lv) => `強化版鑽石星塵，極大範圍冰凍並造成毀滅水魔法傷害`, { spCost: 90, dmgMulti: (lv) => 20.0+lv*5.0, hits: 1, element: 'water', freezeChance: (lv) => 40+lv*5 } ],
       ['em_terra',     '大地驅動',     '⛰️', 'active',  10, 5,  (lv) => `撕裂大地，造成多段地魔法傷害並卸除敵軍裝備與護盾`, { spCost: 85, dmgMulti: (lv) => 8.0+lv*2.0, hits: 3, element: 'earth', stripChance: (lv) => 20+lv*2 } ],
-      ['em_venom',     '劇毒沼澤',     '☠️', 'active',  10, 10, (lv) => `毒屬性頂級魔法，在地面生成致死沼澤，持續扣除百分比HP`, { spCost: 90, dmgMulti: (lv) => 5.0+lv*1.0, hits: 5, element: 'poison', dotHpPct: lv*1 } ],
+      ['em_venom',     '劇毒沼澤',     '☠️', 'active',  10, 10, (lv) => `毒屬性頂級魔法，在地面生成致死沼澤，持續扣除百分比HP`, { spCost: 90, dmgMulti: (lv) => 5.0+lv*1.0, hits: 5, element: 'poison', dotHpPct: (lv) => lv*1 } ],
       ['em_conflag',   '大火災',       '🔥', 'active',  10, 15, (lv) => `召喚隕石後引發大範圍火災，使區域內敵人受到雙倍火傷`, { spCost: 100, dmgMulti: (lv) => 15.0+lv*3.0, hits: 1, element: 'fire', debuffDuration: 15, debuffAttr: (lv) => ({ recvFireDmgMulti: 2.0 }) } ],
       ['em_lightning', '雷電領域',     '⚡', 'active',  10, 15, (lv) => `消耗 AP，展開絕對雷電領域，每秒自動落雷轟炸敵人`, { spCost: 120, apCost: 15, buffDuration: 30, dmgMulti: (lv) => 10.0+lv*2.0, interval: 1, element: 'wind' } ],
       ['em_magic',     '精靈魔法精通', '📖', 'passive', 10, 5,  (lv) => `四大屬性魔法倍率大幅上升，無視敵人 MDEF`, { passiveAttr: (lv) => ({ elementalMagicMulti: 1.0+lv*0.1, ignoreMdefPct: lv*5 }) } ],
@@ -388,7 +388,7 @@ export const RO_DATABASE_SKILLS = {
     ],
     abyss_chaser: [
       ['ac_dagger',  '深淵短劍',     '🗡️', 'active',  10, 1,  (lv) => `從陰影中造成 ${2200+lv*300}% 物理傷害，受致命威脅加成`, { spCost: 50, dmgMulti: (lv) => 22.0+lv*3.0, hits: 1, weaponReq: 'dagger' } ],
-      ['ac_stab',    '靈巧刺擊',     '🔪', 'active',  10, 5,  (lv) => `無視體型與防禦的高速刺擊，機率秒殺低血量怪物`, { spCost: 55, dmgMulti: (lv) => 12.0+lv*2.0, hits: 1, ignoreSizePenalty: true, ignoreDef: true, executeHpThreshold: lv*1 } ],
+      ['ac_stab',    '靈巧刺擊',     '🔪', 'active',  10, 5,  (lv) => `無視體型與防禦的高速刺擊，機率秒殺低血量怪物`, { spCost: 55, dmgMulti: (lv) => 12.0+lv*2.0, hits: 1, ignoreSizePenalty: true, ignoreDef: true, executeHpThreshold: (lv) => lv*1 } ],
       ['ac_frenzy',  '狂亂射擊',     '🏹', 'active',  10, 10, (lv) => `裝備弓時連續射出無數暗影箭，單體爆發極高`, { spCost: 70, dmgMulti: (lv) => 3.0+lv*0.5, hits: 10, weaponReq: 'bow', element: 'shadow' } ],
       ['ac_square',  '深淵領域',     '🌌', 'active',  5,  15, (lv) => `展開深淵空間，範圍內敵人魔法與物理防禦歸零`, { spCost: 80, debuffDuration: 15, debuffAttr: (lv) => ({ defPct: -100, mdefPct: -100 }) } ],
       ['ac_mastery', '魔劍/暗器修練','⚔️', 'passive', 10, 5,  (lv) => `雙持武器或弓箭時，傷害獲得獨立倍率乘算`, { passiveAttr: (lv) => ({ finalDmgMulti: 1.0+lv*0.05, weaponReq: ['dagger', 'bow'] }) } ],
@@ -404,7 +404,7 @@ export const RO_DATABASE_SKILLS = {
       ['iq_faith',     '堅定信仰',   '🛡️', 'passive', 10, 5,  (lv) => `提升 MaxHP，並使自身受到的魔法與物理傷害減免上限提高`, { passiveAttr: (lv) => ({ maxHpPct: lv*3, dmgReductionLimitAdd: lv*2 }) } ],
       ['iq_oil',       '神聖之油',   '🧪', 'active',  5,  10, (lv) => `為自身與隊友塗抹聖油，獲得霸體與近戰物理反彈`, { spCost: 50, buffDuration: 60, buffAttr: (lv) => ({ antiFlinch: true, reflectMeleeDmgPct: lv*5 }) } ],
       ['iq_physical',  '肉體強化',   '💪', 'passive', 10, 5,  (lv) => `力量與體力極限突破，空手或裝備拳套時基礎攻擊力暴增`, { passiveAttr: (lv) => ({ str: lv*5, vit: lv*5, skAtk: lv*15, weaponReq: ['barehand', 'knuckle'] }) } ],
-      ['iq_aura',      '審判者光環', '✨', 'active',  5,  20, (lv) => `開啟光環，周圍不死與惡魔系敵人持續扣除大量血量`, { spCost: 80, buffDuration: 60, dotDmgPct: lv*2, targetRace: ['undead', 'demon'] } ]
+      ['iq_aura',      '審判者光環', '✨', 'active',  5,  20, (lv) => `開啟光環，周圍不死與惡魔系敵人持續扣除大量血量`, { spCost: 80, buffDuration: 60, dotDmgPct: (lv) => lv*2, targetRace: ['undead', 'demon'] } ]
     ],
     troubadour_trouvere: [
       ['tt_rhythm',   '節奏射擊',   '🏹', 'active',  10, 1,  (lv) => `跟隨節拍快速射出高傷害箭矢，連擊次數隨節奏增快`, { spCost: 60, dmgMulti: (lv) => 5.0+lv*1.0, hits: (lv) => 3+lv, weaponReq: 'bow' } ],
