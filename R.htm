@@ -328,7 +328,7 @@
     <div id="modal-rebirth" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hide">
         <div class="bg-gray-800 p-4 rounded shadow-lg border border-gray-600 w-80 max-w-[95%]">
             <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2 text-purple-400">轉生祭壇</h2>
-            <div id="rebirth-info" class="text-sm text-gray-300 space-y-2 mb-4 max-h-64 overflow-y-auto"></div>
+            <div id="rebirth-info" class="text-sm text-gray-300 space-y-2 mb-4 max-h-[60vh] overflow-y-auto"></div>
             <div class="flex justify-end gap-2 mt-4 border-t border-gray-700 pt-3">
                 <button class="btn bg-gray-700" onclick="UI.closeModal('modal-rebirth')">稍後再說</button>
                 <button class="btn bg-purple-900 border-purple-600 text-purple-100 font-bold hover:bg-purple-700" onclick="Player.confirmRebirth()">確認轉生</button>
@@ -336,9 +336,6 @@
         </div>
     </div>
 
-    <!-- Other Modals: Chat, Hotkey, Skills, Equip Action, Bag, Shop, Job... -->
-    <!-- (Retained to preserve functionality) -->
-    
     <!-- Chat Modal -->
     <div id="modal-chat" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hide">
         <div class="bg-gray-800 rounded shadow-lg border border-gray-600 w-[95%] max-w-lg h-[80%] flex flex-col">
@@ -639,7 +636,7 @@
         };
 
         const BuffManager = {
-            add: function(name, icon, durationMs, attrObj, stackId = null, maxStacks = 1) {
+            add: function(name, icon, durationMs, attrObj, stackId = null, maxStacks = 1, isSim = false) {
                 let existing = stackId ? GameState.buffs.find(b => b.stackId === stackId) : GameState.buffs.find(b => b.name === name);
                 let now = Date.now();
                 if (existing) {
@@ -654,16 +651,20 @@
                     if (stackId) { newBuff.stackId = stackId; newBuff.stacks = 1; newBuff.maxStacks = maxStacks; newBuff.baseAttr = Object.assign({}, attrObj); }
                     GameState.buffs.push(newBuff);
                 }
-                Player.calcStats(); this.render();
+                if (!isSim) { Player.calcStats(); this.render(); }
             },
-            tick: function(now) {
+            tick: function(now, isSim = false) {
                 let changed = false;
                 GameState.buffs = GameState.buffs.filter(b => {
-                    if (now >= b.expires) { changed = true; Log.add(`狀態解除：${b.name}`, 'text-gray-500', 'system'); return false; }
+                    if (now >= b.expires) { changed = true; if (!isSim) Log.add(`狀態解除：${b.name}`, 'text-gray-500', 'system'); return false; }
                     return true;
                 });
-                if(changed) { Player.calcStats(); this.render(); } 
-                else if (GameState.buffs.length > 0 && Math.floor(now / 1000) !== Math.floor(GameState.lastLoopTime / 1000)) { this.render(); }
+                if(changed) { 
+                    if (!isSim) { Player.calcStats(); this.render(); } 
+                } 
+                else if (GameState.buffs.length > 0 && Math.floor(now / 1000) !== Math.floor(GameState.lastLoopTime / 1000)) { 
+                    if (!isSim) this.render(); 
+                }
             },
             render: function() {
                 const container = document.getElementById('buff-container'); container.innerHTML = ''; let now = Date.now();
@@ -688,7 +689,7 @@
                 this.calcStats(); GameState.player.hp = this.derived.maxHp; GameState.player.sp = this.derived.maxSp;
             },
             derived: {}, bonuses: {},
-            calcStats: function() {
+            calcStats: function(isSim = false) {
                 let p = GameState.player; let c = GameDB.classes.find(x => x.c_id === p.classId); let sys = GameDB.system.FORMULAS; let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount);
                 let bonus = { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0, atk: 0, matk: 0, def: 0, mdef: 0, hit: 0, flee: 0, crit: 0, maxHp: 0, maxSp: 0, aspdBonusPct: 0, expMulti: 1, jobExpMulti: 1, dropMulti: 1 };
                 
@@ -718,7 +719,7 @@
                 });
 
                 this.bonuses = bonus;
-                let totalSt = { str: p.stats.str + bonus.str, agi: p.stats.agi + bonus.agi, vit: p.stats.vit + bonus.vit, int: p.stats.int + bonus.int, dex: p.stats.dex + bonus.dex, luk: p.stats.luk + bonus.luk };
+                let totalSt = { str: p.stats.str + bonus.str, agi: p.stats.agi + bonus.vit, vit: p.stats.vit + bonus.vit, int: p.stats.int + bonus.int, dex: p.stats.dex + bonus.dex, luk: p.stats.luk + bonus.luk };
                 
                 let flatHp = bonus.maxHpFlat || 0; let hpPct = bonus.maxHpPct || 0;
                 this.derived.maxHp = Math.floor(((sys.calculateMaxHP(p.baseLv, c.c_hpMulti, totalSt) + bonus.maxHp + flatHp) * (1 + hpPct/100)) * rbSys.statMulti);
@@ -743,7 +744,7 @@
                 this.derived.aspd = bonus.ignoreAspdLimit ? baseAspd : Math.min(rbSys.aspdCap, Math.floor(baseAspd));
                 
                 if(p.hp > this.derived.maxHp) p.hp = this.derived.maxHp; if(p.sp > this.derived.maxSp) p.sp = this.derived.maxSp;
-                if(window.UI) UI.updateStatus();
+                if(!isSim && window.UI) UI.updateStatus();
             },
             addStat: function(statName, amtStr) {
                 let p = GameState.player; let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount);
@@ -752,36 +753,49 @@
                 else { let addCount = parseInt(amtStr) || 1; for(let i=0; i<addCount; i++) { let cost = sys.getStatCost(p.stats[statName]); if (p.statPts >= cost && p.stats[statName] < statLimit) { p.statPts -= cost; p.stats[statName]++; upgraded = true; } else { break; } } }
                 if(upgraded) this.calcStats();
             },
-            gainExp: function(bExp, jExp) {
+            gainExp: function(bExp, jExp, isSim = false) {
                 let p = GameState.player; let c = GameDB.classes.find(x => x.c_id === p.classId); let sys = GameDB.system.FORMULAS; let leveledUp = false;
                 let realBExp = Math.floor(bExp * this.derived.expMulti); let realJExp = Math.floor(jExp * this.derived.jobExpMulti);
-                Log.add(`獲得經驗值: Base ${formatNumber(realBExp)} / Job ${formatNumber(realJExp)}`, 'text-yellow-400', 'exp');
+                if (!isSim) Log.add(`獲得經驗值: Base ${formatNumber(realBExp)} / Job ${formatNumber(realJExp)}`, 'text-yellow-400', 'exp');
                 if (p.baseLv < GameDB.system.SETTINGS.MAX_LEVEL) {
                     p.baseExp += realBExp; let reqB = sys.getBaseExpReq(p.baseLv);
-                    while (p.baseExp >= reqB && p.baseLv < GameDB.system.SETTINGS.MAX_LEVEL) { p.baseExp -= reqB; p.baseLv++; p.statPts += Math.floor(p.baseLv / 5) + 3; reqB = sys.getBaseExpReq(p.baseLv); Log.add(`Base Level 提升至 ${p.baseLv}!`, 'text-yellow-400 font-bold', 'system'); leveledUp = true; }
+                    while (p.baseExp >= reqB && p.baseLv < GameDB.system.SETTINGS.MAX_LEVEL) { p.baseExp -= reqB; p.baseLv++; p.statPts += Math.floor(p.baseLv / 5) + 3; reqB = sys.getBaseExpReq(p.baseLv); if (!isSim) Log.add(`Base Level 提升至 ${p.baseLv}!`, 'text-yellow-400 font-bold', 'system'); leveledUp = true; }
                     if (p.baseLv >= GameDB.system.SETTINGS.MAX_LEVEL) p.baseExp = 0;
                 }
                 if (p.jobLv < c.c_maxJob) {
                     p.jobExp += realJExp; let tier = SystemExt.getJobTier(p.classId); let reqJ = sys.getJobExpReq(p.jobLv, tier);
-                    while (p.jobExp >= reqJ && p.jobLv < c.c_maxJob) { p.jobExp -= reqJ; p.jobLv++; p.skillPts++; reqJ = sys.getJobExpReq(p.jobLv, tier); Log.add(`Job Level 提升至 ${p.jobLv}!`, 'text-green-400 font-bold', 'system'); leveledUp = true; }
+                    while (p.jobExp >= reqJ && p.jobLv < c.c_maxJob) { p.jobExp -= reqJ; p.jobLv++; p.skillPts++; reqJ = sys.getJobExpReq(p.jobLv, tier); if (!isSim) Log.add(`Job Level 提升至 ${p.jobLv}!`, 'text-green-400 font-bold', 'system'); leveledUp = true; }
                     if (p.jobLv >= c.c_maxJob) p.jobExp = 0;
                 }
-                if (leveledUp) { UI.updateMapSelect(); UI.checkJobChange(); UI.checkRebirth(); Skills.render(); p.hp = 999999; p.sp = 999999; this.calcStats(); } else { UI.updateStatus(); }
+                if (leveledUp) { 
+                    if (!isSim) { UI.updateMapSelect(); UI.checkJobChange(); UI.checkRebirth(); Skills.render(); }
+                    p.hp = 999999; p.sp = 999999; this.calcStats(isSim); 
+                } else { 
+                    if (!isSim) UI.updateStatus(); 
+                }
             },
-            heal: function(hpAmt, spAmt) { if(this.isDead) return; let p = GameState.player; if(hpAmt) p.hp = Math.min(this.derived.maxHp, p.hp + hpAmt); if(spAmt) p.sp = Math.min(this.derived.maxSp, p.sp + spAmt); UI.updateStatus(); },
-            takeDamage: function(amt) {
+            heal: function(hpAmt, spAmt, isSim = false) { 
+                if(this.isDead) return; 
+                let p = GameState.player; 
+                if(hpAmt) p.hp = Math.min(this.derived.maxHp, p.hp + hpAmt); 
+                if(spAmt) p.sp = Math.min(this.derived.maxSp, p.sp + spAmt); 
+                if (!isSim) UI.updateStatus(); 
+            },
+            takeDamage: function(amt, isSim = false) {
                 let p = GameState.player; p.hp -= amt;
                 if(p.hp <= 0) {
-                    p.hp = 0; p.isDead = true; Log.add('你已經死亡，等待復活...', 'text-red-500 font-bold', 'system');
+                    p.hp = 0; p.isDead = true; 
+                    if (!isSim) Log.add('你已經死亡，等待復活...', 'text-red-500 font-bold', 'system');
                     let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount); let leaf = GameState.inventory.item.find(i => i.id === 'hinalleLeaflet');
                     if (rbSys.autoRevive && GameState.autoConfig.autoRevive && leaf && leaf.amount > 0) {
-                        Bag.removeItemById('hinalleLeaflet', 1, 'item'); Log.add('發動自動復活！消耗 1 片天地樹葉子。', 'text-green-400 font-bold', 'system');
-                        setTimeout(() => { p.isDead = false; p.hp = this.derived.maxHp; p.sp = this.derived.maxSp; Log.add('原地滿血復活！繼續戰鬥！', 'text-yellow-200', 'system'); UI.updateStatus(); }, 3000);
+                        Bag.removeItemById('hinalleLeaflet', 1, 'item', isSim); 
+                        if (!isSim) Log.add('發動自動復活！消耗 1 片天地樹葉子。', 'text-green-400 font-bold', 'system');
+                        setTimeout(() => { p.isDead = false; p.hp = this.derived.maxHp; p.sp = this.derived.maxSp; if(!isSim) { Log.add('原地滿血復活！繼續戰鬥！', 'text-yellow-200', 'system'); UI.updateStatus(); } }, 3000);
                     } else {
-                        setTimeout(() => { p.isDead = false; p.hp = Math.floor(this.derived.maxHp * 0.5); p.sp = Math.floor(this.derived.maxSp * 0.5); Log.add('復活了！已退回普隆德拉。', 'text-yellow-200', 'system'); GameState.currentMap = 'prontera'; GameState.currentMonster = null; let mapSel = document.getElementById('map-select'); mapSel.value = 'prontera'; mapSel.dispatchEvent(new Event('change')); UI.updateStatus(); }, 5000);
+                        setTimeout(() => { p.isDead = false; p.hp = Math.floor(this.derived.maxHp * 0.5); p.sp = Math.floor(this.derived.maxSp * 0.5); if(!isSim) { Log.add('復活了！已退回普隆德拉。', 'text-yellow-200', 'system'); GameState.currentMap = 'prontera'; GameState.currentMonster = null; let mapSel = document.getElementById('map-select'); mapSel.value = 'prontera'; mapSel.dispatchEvent(new Event('change')); UI.updateStatus(); } }, 5000);
                     }
                 }
-                UI.updateStatus();
+                if (!isSim) UI.updateStatus();
             },
             confirmRebirth: function() {
                 let p = GameState.player; if(p.baseLv < 120) return;
@@ -826,25 +840,45 @@
                 if (GameState.mapMonsters.length < 5) {
                     let safeBreak = 0;
                     while (GameState.mapMonsters.length < 5 && safeBreak < 10) { let m = this.spawnMonster(GameState.currentMap); if (m) { m.uid = Date.now().toString() + '_' + Math.random().toString().slice(2) + '_' + GameState.mapMonsters.length; GameState.mapMonsters.push(m); } safeBreak++; }
-                    UI.updateMapMonsters();
+                    if(now - GameState.lastLoopTime <= 500) UI.updateMapMonsters();
                 }
 
                 if(!GameState.currentMonster) {
                     let alive = GameState.mapMonsters.filter(m => m.hp > 0);
-                    if (alive.length > 0) { GameState.currentMonster = alive[Math.floor(Math.random() * alive.length)]; UI.updateMonster(); UI.updateMapMonsters(); GameState.monsterAttackTimer = now + 1500; }
+                    if (alive.length > 0) { GameState.currentMonster = alive[Math.floor(Math.random() * alive.length)]; if(now - GameState.lastLoopTime <= 500) { UI.updateMonster(); UI.updateMapMonsters(); } GameState.monsterAttackTimer = now + 1500; }
                 }
                 
                 if(!GameState.currentMonster) return;
-                let pDelay = (200 - Player.derived.aspd) * 20; if(now - GameState.autoAttackTimer > pDelay) { this.processPlayerAttack(); GameState.autoAttackTimer = now; }
-                if(now - GameState.monsterAttackTimer > 1500) { if (GameState.currentMonster) this.processMonsterAttack(); GameState.monsterAttackTimer = now; }
+                
+                let pDelay = (200 - Player.derived.aspd) * 20; if (pDelay < 50) pDelay = 50; 
+                
+                let playerAttacks = 0;
+                while (now - GameState.autoAttackTimer > pDelay) {
+                    if (GameState.player.isDead || !GameState.currentMonster) { GameState.autoAttackTimer = now; break; }
+                    let isSim = (now - GameState.autoAttackTimer > pDelay * 2); 
+                    this.processPlayerAttack(isSim); 
+                    GameState.autoAttackTimer += pDelay;
+                    playerAttacks++;
+                    if (playerAttacks > 500000) { GameState.autoAttackTimer = now; break; } // Safety break
+                }
+                
+                let monsterAttacks = 0;
+                while (now - GameState.monsterAttackTimer > 1500) { 
+                    if (GameState.player.isDead || !GameState.currentMonster) { GameState.monsterAttackTimer = now; break; }
+                    let isSim = (now - GameState.monsterAttackTimer > 3000);
+                    this.processMonsterAttack(isSim); 
+                    GameState.monsterAttackTimer += 1500;
+                    monsterAttacks++;
+                    if (monsterAttacks > 200000) { GameState.monsterAttackTimer = now; break; } // Safety break
+                }
             },
-            processPlayerAttack: function() {
+            processPlayerAttack: function(isSim = false) {
                 let m = GameState.currentMonster; if (!m) return;
                 let hitChance = 80 + Player.derived.hit - m.flee; hitChance = Math.max(5, Math.min(100, hitChance));
                 let dmg = 0; let isCrit = false; let hits = 1; let isDouble = false;
                 
                 if (Player.bonuses.doubleHitChance && Math.random() * 100 < Player.bonuses.doubleHitChance) { isDouble = true; hits = 2; }
-                if (Player.bonuses.autoCombo1Chance && Math.random() * 100 < Player.bonuses.autoCombo1Chance) { hits = 3; BuffManager.add('連技-六合拳', '🤜', 5000, {}, 'combo1'); Log.add(`發動六合拳 (3連擊)!`, 'text-purple-300 font-bold', 'system'); }
+                if (Player.bonuses.autoCombo1Chance && Math.random() * 100 < Player.bonuses.autoCombo1Chance) { hits = 3; BuffManager.add('連技-六合拳', '🤜', 5000, {}, 'combo1', 1, isSim); if(!isSim) Log.add(`發動六合拳 (3連擊)!`, 'text-purple-300 font-bold', 'system'); }
                 
                 if(Math.random() * 100 < Player.derived.crit) { isCrit = true; dmg = Player.derived.atk * 1.4; } else if (Math.random() * 100 <= hitChance) { dmg = Math.max(1, Player.derived.atk - (m.def * 0.5)); }
                 
@@ -852,32 +886,40 @@
                     dmg = Math.floor(dmg);
                     for(let i=0; i<hits; i++) {
                         m.hp -= dmg;
-                        setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(dmg), isCrit, 'visual-monster'); Visuals.animHit('visual-monster'); } }, i * 150);
+                        if (!isSim) setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(dmg), isCrit, 'visual-monster'); Visuals.animHit('visual-monster'); } }, i * 150);
                     }
-                    Log.add(`你對 ${m.name} 造成 ${formatNumber(dmg * hits)} 傷害${hits>1?' ('+hits+'連擊)':''}`, isCrit ? 'text-orange-400' : 'text-white', 'dmgDealt');
+                    if (!isSim) Log.add(`你對 ${m.name} 造成 ${formatNumber(dmg * hits)} 傷害${hits>1?' ('+hits+'連擊)':''}`, isCrit ? 'text-orange-400' : 'text-white', 'dmgDealt');
                     
                     if (Player.bonuses.autoWargChance && Math.random() * 100 < Player.bonuses.autoWargChance) {
                         let wDmg = Math.floor(Player.derived.atk * 2.0); m.hp -= wDmg;
-                        Log.add(`狼突擊對 ${m.name} 造成 ${formatNumber(wDmg)} 真實傷害!`, 'text-blue-300 font-bold', 'dmgDealt');
-                        setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(wDmg), true, 'visual-monster'); Visuals.animHit('visual-monster'); } }, hits * 150);
+                        if (!isSim) {
+                            Log.add(`狼突擊對 ${m.name} 造成 ${formatNumber(wDmg)} 真實傷害!`, 'text-blue-300 font-bold', 'dmgDealt');
+                            setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(wDmg), true, 'visual-monster'); Visuals.animHit('visual-monster'); } }, hits * 150);
+                        }
                     }
 
-                    if(m.hp <= 0) this.onMonsterKill(m);
-                } else { Visuals.showDamage('Miss', false, 'visual-monster'); }
-                UI.updateMonsterHp();
+                    if(m.hp <= 0) this.onMonsterKill(m, isSim);
+                } else { 
+                    if (!isSim) Visuals.showDamage('Miss', false, 'visual-monster'); 
+                }
+                if (!isSim) UI.updateMonsterHp();
             },
-            processMonsterAttack: function() {
+            processMonsterAttack: function(isSim = false) {
                 let m = GameState.currentMonster; if (!m) return;
                 let def = Player.derived.def;
                 if (m.debuffs && m.debuffs.atkPct) m.atk = m.atk * (1 + m.debuffs.atkPct/100);
                 let hitChance = 80 + m.hit - Player.derived.flee; hitChance = Math.max(5, Math.min(100, hitChance));
                 if(Math.random() * 100 <= hitChance) {
-                    let dmg = Math.max(1, m.atk - (def * 0.5)); dmg = Math.floor(dmg); Player.takeDamage(dmg);
-                    Visuals.showDamage(formatNumber(dmg), false, 'visual-player'); Visuals.animHit('visual-player');
-                    Log.add(`${m.name} 對你造成 ${formatNumber(dmg)} 傷害`, 'text-red-400', 'dmgTaken');
-                } else { Visuals.showDamage('Miss', false, 'visual-player'); }
+                    let dmg = Math.max(1, m.atk - (def * 0.5)); dmg = Math.floor(dmg); Player.takeDamage(dmg, isSim);
+                    if (!isSim) {
+                        Visuals.showDamage(formatNumber(dmg), false, 'visual-player'); Visuals.animHit('visual-player');
+                        Log.add(`${m.name} 對你造成 ${formatNumber(dmg)} 傷害`, 'text-red-400', 'dmgTaken');
+                    }
+                } else { 
+                    if (!isSim) Visuals.showDamage('Miss', false, 'visual-player'); 
+                }
             },
-            processSkillAttack: function(sDef, lv) {
+            processSkillAttack: function(sDef, lv, isSim = false) {
                 let m = GameState.currentMonster; if (!m) return; let extras = sDef.sk_extras;
                 let dmgMulti = extras?.dmgMulti ? (typeof extras.dmgMulti === 'function' ? extras.dmgMulti(lv) : extras.dmgMulti) : 1.0;
                 let hits = extras?.hits ? (typeof extras.hits === 'function' ? extras.hits(lv) : extras.hits) : 1;
@@ -897,24 +939,25 @@
                 
                 for (let i = 0; i < hits; i++) {
                     let dmg = Math.max(1, baseDmg - (targetDef * 0.3)); dmg = Math.floor(dmg); totalDmgDone += dmg;
-                    setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(dmg), isCrit, 'visual-monster'); Visuals.animHit('visual-monster'); } }, i * 150);
+                    if (!isSim) setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(dmg), isCrit, 'visual-monster'); Visuals.animHit('visual-monster'); } }, i * 150);
                 }
                 
                 m.hp -= totalDmgDone;
-                Log.add(`使用 ${sDef.sk_name} 對 ${m.name} 造成 ${formatNumber(totalDmgDone)} 傷害! (${hits}連擊)`, 'text-purple-400 font-bold', 'dmgDealt');
+                if (!isSim) Log.add(`使用 ${sDef.sk_name} 對 ${m.name} 造成 ${formatNumber(totalDmgDone)} 傷害! (${hits}連擊)`, 'text-purple-400 font-bold', 'dmgDealt');
                 
                 if (extras?.debuffAttr) {
                     let debuffObj = typeof extras.debuffAttr === 'function' ? extras.debuffAttr(lv) : extras.debuffAttr;
                     if (!m.debuffs) m.debuffs = {}; Object.assign(m.debuffs, debuffObj);
-                    Log.add(`${m.name} 受到狀態影響！`, 'text-gray-400', 'system');
+                    if (!isSim) Log.add(`${m.name} 受到狀態影響！`, 'text-gray-400', 'system');
                 }
 
-                if(m.hp <= 0) this.onMonsterKill(m); UI.updateMonsterHp();
+                if(m.hp <= 0) this.onMonsterKill(m, isSim); 
+                if (!isSim) UI.updateMonsterHp();
             },
-            onMonsterKill: function(m) {
-                Log.add(`擊敗了 ${m.name}! 獲得 ${formatNumber(m.zeny)} Z`, 'text-yellow-400 font-bold', 'system');
-                Player.gainExp(m.bExp, m.jExp); GameState.player.zeny += m.zeny; this.rollDrop(m);
-                if (m.name.includes('MVP')) { let cashDrop = Math.round((m.lv / 10 * 0.5) * (0.1 + Math.random() * 0.8)); if (cashDrop > 0) { GameState.player.cash = (GameState.player.cash || 0) + cashDrop; Log.add(`【MVP擊殺】額外獲得 ${formatNumber(cashDrop)} Cash！`, 'text-blue-300 font-bold', 'system'); } }
+            onMonsterKill: function(m, isSim = false) {
+                if (!isSim) Log.add(`擊敗了 ${m.name}! 獲得 ${formatNumber(m.zeny)} Z`, 'text-yellow-400 font-bold', 'system');
+                Player.gainExp(m.bExp, m.jExp, isSim); GameState.player.zeny += m.zeny; this.rollDrop(m, isSim);
+                if (m.name.includes('MVP')) { let cashDrop = Math.round((m.lv / 10 * 0.5) * (0.1 + Math.random() * 0.8)); if (cashDrop > 0) { GameState.player.cash = (GameState.player.cash || 0) + cashDrop; if (!isSim) Log.add(`【MVP擊殺】額外獲得 ${formatNumber(cashDrop)} Cash！`, 'text-blue-300 font-bold', 'system'); } }
 
                 let idx = GameState.mapMonsters.findIndex(x => x.uid === m.uid);
                 if (idx !== -1) { GameState.mapMonsters.splice(idx, 1); }
@@ -922,24 +965,24 @@
                 let alive = GameState.mapMonsters.filter(x => x.hp > 0);
                 if(alive.length > 0) GameState.currentMonster = alive[Math.floor(Math.random() * alive.length)];
                 
-                UI.updateMonster(); UI.updateHeader(); UI.updateMapMonsters();
+                if (!isSim) { UI.updateMonster(); UI.updateHeader(); UI.updateMapMonsters(); }
             },
-            rollDrop: function(m) {
+            rollDrop: function(m, isSim = false) {
                 let realDropRate = m.dropRate * Player.derived.dropMulti;
-                if(Math.random() < realDropRate) { let dropPool = GameDB.items.filter(i => i.i2_cost < 1000); if(dropPool.length > 0) { let item = dropPool[Math.floor(Math.random() * dropPool.length)]; Bag.addItem(item.i2_id, 1, 'item'); Log.add(`獲得物品: ${item.i2_name}`, 'text-blue-300', 'drops'); } }
+                if(Math.random() < realDropRate) { let dropPool = GameDB.items.filter(i => i.i2_cost < 1000); if(dropPool.length > 0) { let item = dropPool[Math.floor(Math.random() * dropPool.length)]; Bag.addItem(item.i2_id, 1, 'item', isSim); if(!isSim) Log.add(`獲得物品: ${item.i2_name}`, 'text-blue-300', 'drops'); } }
                 let equipDropChance = m.name.includes('MVP') ? 1.0 : (0.15 + realDropRate * 0.5);
-                if (Math.random() < equipDropChance) { let mLevel = m.lv || 1; let eqPool = Object.values(GameDB.equipFlat).filter(eq => Math.abs(eq.i1_reqLevel - mLevel) <= 20 || eq.i1_reqLevel <= mLevel); if (eqPool.length === 0) eqPool = Object.values(GameDB.equipFlat); if(eqPool.length > 0) { let eq = eqPool[Math.floor(Math.random() * eqPool.length)]; Bag.addItem(eq.i1_id, 1, 'equip'); Log.add(`獲得裝備: ${eq.i1_name}`, 'text-fuchsia-400 font-bold', 'drops'); } }
+                if (Math.random() < equipDropChance) { let mLevel = m.lv || 1; let eqPool = Object.values(GameDB.equipFlat).filter(eq => Math.abs(eq.i1_reqLevel - mLevel) <= 20 || eq.i1_reqLevel <= mLevel); if (eqPool.length === 0) eqPool = Object.values(GameDB.equipFlat); if(eqPool.length > 0) { let eq = eqPool[Math.floor(Math.random() * eqPool.length)]; Bag.addItem(eq.i1_id, 1, 'equip', isSim); if(!isSim) Log.add(`獲得裝備: ${eq.i1_name}`, 'text-fuchsia-400 font-bold', 'drops'); } }
             }
         };
 
         const AutoSystem = {
-            tick: function(now) {
+            tick: function(now, isSim = false) {
                 if (GameState.player.isDead) return;
                 let p = GameState.player; let d = Player.derived; let cfg = GameState.autoConfig; let t = GameState.autoTimers; let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount);
-                if (rbSys.autoHp && now - t.hp > 1000 && ((p.hp / d.maxHp) * 100 <= cfg.hpPct)) { let hk = GameState.hotkeys[4]; if (hk && hk.type === 'item') { let item = GameState.inventory.item.find(i => i.id === hk.id); if (item && item.amount > 0) { Bag.useItem(hk.id); t.hp = now; } } }
-                if (rbSys.autoSp && now - t.sp > 1000 && ((p.sp / d.maxSp) * 100 <= cfg.spPct)) { let hk = GameState.hotkeys[5]; if (hk && hk.type === 'item') { let item = GameState.inventory.item.find(i => i.id === hk.id); if (item && item.amount > 0) { Bag.useItem(hk.id); t.sp = now; } } }
-                if (rbSys.autoSkill1 && now - t.s1 > cfg.s1Interval * 1000) { let hk = GameState.hotkeys[6]; if (hk && hk.type === 'skill' && GameState.skills[hk.id] > 0) { Skills.useSkill(hk.id, true); t.s1 = now; } }
-                if (rbSys.autoSkill2 && now - t.s2 > cfg.s2Interval * 1000) { let hk = GameState.hotkeys[7]; if (hk && hk.type === 'skill' && GameState.skills[hk.id] > 0) { Skills.useSkill(hk.id, true); t.s2 = now; } }
+                if (rbSys.autoHp && now - t.hp > 1000 && ((p.hp / d.maxHp) * 100 <= cfg.hpPct)) { let hk = GameState.hotkeys[4]; if (hk && hk.type === 'item') { let item = GameState.inventory.item.find(i => i.id === hk.id); if (item && item.amount > 0) { Bag.useItem(hk.id, isSim); t.hp = now; } } }
+                if (rbSys.autoSp && now - t.sp > 1000 && ((p.sp / d.maxSp) * 100 <= cfg.spPct)) { let hk = GameState.hotkeys[5]; if (hk && hk.type === 'item') { let item = GameState.inventory.item.find(i => i.id === hk.id); if (item && item.amount > 0) { Bag.useItem(hk.id, isSim); t.sp = now; } } }
+                if (rbSys.autoSkill1 && now - t.s1 > cfg.s1Interval * 1000) { let hk = GameState.hotkeys[6]; if (hk && hk.type === 'skill' && GameState.skills[hk.id] > 0) { Skills.useSkill(hk.id, true, isSim); t.s1 = now; } }
+                if (rbSys.autoSkill2 && now - t.s2 > cfg.s2Interval * 1000) { let hk = GameState.hotkeys[7]; if (hk && hk.type === 'skill' && GameState.skills[hk.id] > 0) { Skills.useSkill(hk.id, true, isSim); t.s2 = now; } }
             }
         };
 
@@ -959,13 +1002,13 @@
 
         const Bag = {
             currentTab: 'equip',
-            addItem: function(id, amount = 1, type = 'item') {
+            addItem: function(id, amount = 1, type = 'item', isSim = false) {
                 let slot = GameState.inventory[type].find(i => i.id === id);
                 if(slot && type === 'item') { slot.amount += amount; } else { if(type === 'equip') GameState.inventory.equip.push({ uid: Date.now()+Math.random(), id: id, refine: 0 }); else GameState.inventory.item.push({ id: id, amount: amount }); }
-                if(!document.getElementById('modal-bag').classList.contains('hide')) this.render();
+                if(!isSim && !document.getElementById('modal-bag').classList.contains('hide')) this.render();
             },
             removeItemByUid: function(uid, type='equip') { GameState.inventory[type] = GameState.inventory[type].filter(i => String(i.uid) !== String(uid)); if(!document.getElementById('modal-bag').classList.contains('hide')) this.render(); },
-            removeItemById: function(id, amt=1, type='item') { let slot = GameState.inventory[type].find(i => i.id === id); if(slot) { slot.amount -= amt; if(slot.amount <= 0) GameState.inventory[type] = GameState.inventory[type].filter(i => i.id !== id); } if(!document.getElementById('modal-bag').classList.contains('hide')) this.render(); },
+            removeItemById: function(id, amt=1, type='item', isSim = false) { let slot = GameState.inventory[type].find(i => i.id === id); if(slot) { slot.amount -= amt; if(slot.amount <= 0) GameState.inventory[type] = GameState.inventory[type].filter(i => i.id !== id); } if(!isSim && !document.getElementById('modal-bag').classList.contains('hide')) this.render(); },
             switchTab: function(tab) { this.currentTab = tab; document.getElementById('tab-equip').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab'); document.getElementById('tab-item').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab'); document.getElementById(`tab-${tab}`).classList.add('bg-blue-900/50', 'border-blue-700', 'active-tab'); document.getElementById('bag-actions-equip').style.display = tab === 'equip' ? 'flex' : 'none'; document.getElementById('bag-current-equips').style.display = tab === 'equip' ? 'flex' : 'none'; this.render(); },
             openEquipAction: function(slot) {
                 let eq = GameState.equipped[slot]; if(!eq) return;
@@ -1017,18 +1060,18 @@
                 GameState.equipped[targetSlot] = item; this.removeItemByUid(uid, 'equip'); Player.calcStats(); this.render();
             },
             unequipItem: function(slot, recalc=true) { if(GameState.equipped[slot]) { GameState.inventory.equip.push(GameState.equipped[slot]); GameState.equipped[slot] = null; if(recalc) Player.calcStats(); this.render(); } },
-            useItem: function(id) {
+            useItem: function(id, isSim = false) {
                 let itemData = GameState.inventory.item.find(i => i.id === id); if(!itemData || itemData.amount <= 0) return; let def = GameDB.itemFlat[id]; if(!def) return;
                 if (id === 'flyWing') {
-                    Log.add(`使用了 蒼蠅翅膀，瞬間移動迴避了戰鬥並尋找下一個魔物！`, 'text-blue-300', 'system');
-                    if (GameState.mapMonsters.length > 0) { GameState.currentMonster = GameState.mapMonsters[Math.floor(Math.random() * GameState.mapMonsters.length)]; Log.add(`發現新目標：${GameState.currentMonster.name}`, 'text-blue-300', 'system'); }
-                    this.removeItemById(id, 1, 'item'); UI.updateMonster(); UI.updateMapMonsters(); return;
+                    if (!isSim) Log.add(`使用了 蒼蠅翅膀，瞬間移動迴避了戰鬥並尋找下一個魔物！`, 'text-blue-300', 'system');
+                    if (GameState.mapMonsters.length > 0) { GameState.currentMonster = GameState.mapMonsters[Math.floor(Math.random() * GameState.mapMonsters.length)]; if(!isSim) Log.add(`發現新目標：${GameState.currentMonster.name}`, 'text-blue-300', 'system'); }
+                    this.removeItemById(id, 1, 'item', isSim); if(!isSim) { UI.updateMonster(); UI.updateMapMonsters(); } return;
                 }
-                if (id === 'butterflyWing') { Log.add(`使用了 蝴蝶翅膀，直接回到了普隆德拉。`, 'text-blue-300', 'system'); let mapSel = document.getElementById('map-select'); mapSel.value = 'prontera'; mapSel.dispatchEvent(new Event('change')); this.removeItemById(id, 1, 'item'); return; }
+                if (id === 'butterflyWing') { if (!isSim) Log.add(`使用了 蝴蝶翅膀，直接回到了普隆德拉。`, 'text-blue-300', 'system'); let mapSel = document.getElementById('map-select'); mapSel.value = 'prontera'; mapSel.dispatchEvent(new Event('change')); this.removeItemById(id, 1, 'item', isSim); return; }
                 let attr = def.i2_attr || def.i3_attr || {};
-                if(attr.healHp || attr.healSp) Player.heal(attr.healHp, attr.healSp); if(attr.healHpPct) Player.heal(Math.floor(Player.derived.maxHp * attr.healHpPct), 0);
-                if(def.i2_type === 'buff' || def.i3_type === 'buff') { let duration = attr.duration || 1800000; BuffManager.add(def.i2_name || def.i3_name, def.i2_icon || def.i3_icon, duration, attr.buffAttrs || attr); Log.add(`使用了 ${def.i2_name || def.i3_name}`, 'text-green-300', 'system'); } else { Log.add(`恢復了 HP/SP`, 'text-green-300', 'system'); }
-                this.removeItemById(id, 1, 'item'); Hotkeys.render(); 
+                if(attr.healHp || attr.healSp) Player.heal(attr.healHp, attr.healSp, isSim); if(attr.healHpPct) Player.heal(Math.floor(Player.derived.maxHp * attr.healHpPct), 0, isSim);
+                if(def.i2_type === 'buff' || def.i3_type === 'buff') { let duration = attr.duration || 1800000; BuffManager.add(def.i2_name || def.i3_name, def.i2_icon || def.i3_icon, duration, attr.buffAttrs || attr, null, 1, isSim); if(!isSim) Log.add(`使用了 ${def.i2_name || def.i3_name}`, 'text-green-300', 'system'); } else { if(!isSim) Log.add(`恢復了 HP/SP`, 'text-green-300', 'system'); }
+                this.removeItemById(id, 1, 'item', isSim); if(!isSim) Hotkeys.render(); 
             },
             sellItem: function(id_or_uid, type) { let price = 10; if(type === 'equip') { this.removeItemByUid(id_or_uid, 'equip'); price = 50; } else { this.removeItemById(id_or_uid, 1, 'item'); } GameState.player.zeny += price; UI.updateHeader(); Hotkeys.render(); },
             sellItemAll: function(id) { let slot = GameState.inventory.item.find(i => i.id === id); if(!slot) return; let amt = slot.amount; this.removeItemById(id, amt, 'item'); GameState.player.zeny += (amt * 10); UI.updateHeader(); Hotkeys.render(); UI.showToast(`已全部出售，獲得 ${formatNumber(amt*10)} Zeny`, 'bg-yellow-600 text-white'); },
@@ -1083,7 +1126,7 @@
                 });
             },
             upgrade: function(id) { let s = GameDB.skills[id]; let current = GameState.skills[id] || 0; if (GameState.player.skillPts <= 0 || current >= s.sk_maxLv) return; if (s.sk_reqJobLv && GameState.player.jobLv < s.sk_reqJobLv) return; GameState.player.skillPts--; GameState.skills[id] = current + 1; Player.calcStats(); this.render(); UI.checkJobChange(); },
-            useSkill: function(id, isAuto = false) {
+            useSkill: function(id, isAuto = false, isSim = false) {
                 if (GameState.player.isDead) return;
                 let sDef = GameDB.skills[id]; let currentLv = GameState.skills[id] || 0; if (currentLv <= 0) return;
                 let extras = sDef.sk_extras;
@@ -1092,31 +1135,31 @@
                 let apCost = extras?.apCost || 0;
                 
                 let p = GameState.player;
-                if (p.sp < spCost && spCost !== 999) { if(!isAuto) UI.showToast(`SP 不足 (${spCost})`, 'bg-blue-600 text-white'); return; }
-                if (p.hp <= p.hp * hpCostPct) { if(!isAuto) UI.showToast(`HP 不足`, 'bg-red-600 text-white'); return; }
-                if (p.zeny < zenyCost) { if(!isAuto) UI.showToast(`Zeny 不足`, 'bg-yellow-600 text-white'); return; }
+                if (p.sp < spCost && spCost !== 999) { if(!isAuto && !isSim) UI.showToast(`SP 不足 (${spCost})`, 'bg-blue-600 text-white'); return; }
+                if (p.hp <= p.hp * hpCostPct) { if(!isAuto && !isSim) UI.showToast(`HP 不足`, 'bg-red-600 text-white'); return; }
+                if (p.zeny < zenyCost) { if(!isAuto && !isSim) UI.showToast(`Zeny 不足`, 'bg-yellow-600 text-white'); return; }
                 
                 if (spCost === 999) p.sp = 0; else p.sp -= spCost;
                 p.hp -= Math.floor(p.hp * hpCostPct); p.zeny -= zenyCost;
 
-                if (extras?.buildStack) { BuffManager.add(`連技準備`, '🤜', 5000, {}, extras.buildStack, extras.maxStacks || 5); }
-                if (extras?.requireStack) { let b = GameState.buffs.find(x => x.stackId === extras.requireStack); if (!b) { if(!isAuto) UI.showToast(`前置狀態不足！`, 'bg-red-600 text-white'); return; } }
+                if (extras?.buildStack) { BuffManager.add(`連技準備`, '🤜', 5000, {}, extras.buildStack, extras.maxStacks || 5, isSim); }
+                if (extras?.requireStack) { let b = GameState.buffs.find(x => x.stackId === extras.requireStack); if (!b) { if(!isAuto && !isSim) UI.showToast(`前置狀態不足！`, 'bg-red-600 text-white'); return; } }
 
                 if (id === 'n_playdead') {
-                    p.hp = Math.min(Player.derived.maxHp, p.hp + Math.floor(Player.derived.maxHp * 0.2)); GameState.currentMonster = null; UI.updateMonster(); Log.add('你裝死了，怪物離開了。', 'text-gray-400', 'system');
+                    p.hp = Math.min(Player.derived.maxHp, p.hp + Math.floor(Player.derived.maxHp * 0.2)); GameState.currentMonster = null; if(!isSim) { UI.updateMonster(); Log.add('你裝死了，怪物離開了。', 'text-gray-400', 'system'); }
                 } else if (id === 'n_firstaid') {
-                    let healAmt = typeof extras.healPower === 'function' ? extras.healPower(currentLv) : (extras.healPower || 15); p.hp = Math.min(Player.derived.maxHp, p.hp + healAmt); Log.add(`使用急救，恢復了 ${formatNumber(healAmt)} HP`, 'text-green-400', 'system');
+                    let healAmt = typeof extras.healPower === 'function' ? extras.healPower(currentLv) : (extras.healPower || 15); p.hp = Math.min(Player.derived.maxHp, p.hp + healAmt); if(!isSim) Log.add(`使用急救，恢復了 ${formatNumber(healAmt)} HP`, 'text-green-400', 'system');
                 } else {
                     if (sDef.sk_type === 'active' && extras?.buffAttr) {
                         let duration = (extras.buffDuration || 180) * 1000;
                         let attrObj = typeof extras.buffAttr === 'function' ? extras.buffAttr(currentLv) : extras.buffAttr;
-                        BuffManager.add(sDef.sk_name, sDef.sk_icon, duration, attrObj); Log.add(`施放輔助技能：${sDef.sk_name}`, 'text-yellow-300', 'system');
+                        BuffManager.add(sDef.sk_name, sDef.sk_icon, duration, attrObj, null, 1, isSim); if(!isSim) Log.add(`施放輔助技能：${sDef.sk_name}`, 'text-yellow-300', 'system');
                     } else if (GameState.currentMonster && sDef.sk_type === 'active' && extras?.dmgMulti) { 
-                        Combat.processSkillAttack(sDef, currentLv); 
+                        Combat.processSkillAttack(sDef, currentLv, isSim); 
                     } 
-                    else { Log.add(`使用技能：${sDef.sk_name}!`, 'text-yellow-300 font-bold', 'system'); }
+                    else { if(!isSim) Log.add(`使用技能：${sDef.sk_name}!`, 'text-yellow-300 font-bold', 'system'); }
                 }
-                if(window.UI) { UI.updateStatus(); UI.updateHeader(); }
+                if(!isSim && window.UI) { UI.updateStatus(); UI.updateHeader(); }
             }
         };
 
@@ -1272,26 +1315,37 @@
             },
             openRebirthModal: function() {
                 let p = GameState.player; if(p.baseLv < 120) return;
-                let curr = p.rebirthCount || 0; let next = curr + 1; let rb = SystemExt.getRebirthBonuses(next);
+                let curr = p.rebirthCount || 0; let next = curr + 1;
+                
+                const getCls = (req) => curr >= req ? 'text-white font-bold' : 'text-gray-500 opacity-50'; // 修改這裡：移除 line-through
+                const getIcon = (req) => curr >= req ? '✅' : '🔒';
+                
                 let html = `
                     <div class="text-yellow-400 font-bold text-lg mb-2 text-center">準備進行第 ${next} 次轉生</div>
                     <div class="text-red-400 text-xs mb-2 text-center">警告：等級將回歸為初心者Lv.1，裝備可能會被卸下！</div>
-                    <div class="bg-gray-900 p-2 rounded border border-gray-700 text-xs text-green-300">
-                        <div class="mb-1 border-b border-gray-700 pb-1 font-bold">解鎖與提升福利：</div>
-                        <ul class="list-disc pl-4 space-y-1">
-                            <li>全屬性加成提升為 ${1 + next * 0.01} 倍</li>
-                            <li>獲得 1,000 Cash 獎勵</li>
-                            <li>額外獲得 100 點素質點數</li>
-                            ${rb.autoHp ? '<li>解鎖：自動使用HP恢復藥水</li>' : ''}
-                            ${rb.autoSp && next === 2 ? '<li>解鎖：自動使用SP恢復藥水</li>' : ''}
-                            ${rb.autoSkill1 && next === 3 ? '<li>解鎖：自動施放技能一</li>' : ''}
-                            ${rb.autoSkill2 && next === 4 ? '<li>解鎖：自動施放技能二</li>' : ''}
-                            ${rb.autoRevive && next === 5 ? '<li>解鎖：自動消耗天地樹葉子</li>' : ''}
-                            ${rb.chatUnlocked && next === 6 ? '<li>解鎖：世界頻道 (多人連線)</li>' : ''}
-                            ${next >= 20 ? `<li>最高攻速上限提升至 ${Math.min(250, 193 + (next - 19))}</li>` : ''}
-                            ${next >= 30 ? `<li>裝備精煉成功率額外提升 ${Math.min(70, next - 29)}%</li>` : ''}
-                            ${next >= 40 ? `<li>素質上限突破提升至 ${99 + (next*10) + (next - 39)}</li>` : ''}
-                            ${next >= 50 ? '<li class="text-purple-400 font-bold">50轉特權：初心者可直接轉職四轉職業！</li>' : ''}
+                    
+                    <div class="bg-gray-900 p-2 rounded border border-gray-700 text-xs mb-2">
+                        <div class="text-yellow-300 font-bold mb-1 border-b border-gray-700 pb-1">✨ 常駐加成狀態 (每次轉生皆可獲得)</div>
+                        <div class="text-white space-y-1 mt-1">
+                            <div>▶ 全屬性倍率：提升為 <span class="text-green-400 font-bold">${1 + curr * 0.01}</span> 倍 <span class="text-gray-500 text-[10px]">(下階: ${1 + next * 0.01} 倍)</span></div>
+                            <div>▶ 額外素質點數：獲得 <span class="text-green-400 font-bold">${curr * 100}</span> 點 <span class="text-gray-500 text-[10px]">(下階: ${next * 100} 點)</span></div>
+                            <div>▶ 獲得獎勵： <span class="text-blue-300 font-bold">1,000 Cash</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-900 p-2 rounded border border-gray-700 text-xs">
+                        <div class="mb-1 border-b border-gray-700 pb-1 font-bold text-purple-300">🔓 解鎖特權福利 (累積轉生次數)：</div>
+                        <ul class="space-y-1 mt-1">
+                            <li class="${getCls(1)}">${getIcon(1)} 1轉：解鎖「自動使用 HP 恢復藥水」</li>
+                            <li class="${getCls(2)}">${getIcon(2)} 2轉：解鎖「自動使用 SP 恢復藥水」</li>
+                            <li class="${getCls(3)}">${getIcon(3)} 3轉：解鎖「自動施放 第一格技能」</li>
+                            <li class="${getCls(4)}">${getIcon(4)} 4轉：解鎖「自動施放 第二格技能」</li>
+                            <li class="${getCls(5)}">${getIcon(5)} 5轉：解鎖「自動消耗 天地樹葉子 原地復活」</li>
+                            <li class="${getCls(6)}">${getIcon(6)} 6轉：解鎖「世界頻道 (多人連線)」</li>
+                            <li class="${getCls(20)}">${getIcon(20)} 20轉：攻速上限解禁 (193 ➔ 提升至 ${Math.min(250, 193 + Math.max(0, curr - 19))})</li>
+                            <li class="${getCls(30)}">${getIcon(30)} 30轉：裝備精煉極限提升 (成功率 +${Math.min(70, Math.max(0, curr - 29))}%)</li>
+                            <li class="${getCls(40)}">${getIcon(40)} 40轉：六大素質極限突破 (上限 +${Math.max(0, curr - 39)})</li>
+                            <li class="${getCls(50)}">${getIcon(50)} 50轉：初心者可直接轉職「四轉職業」</li>
                         </ul>
                     </div>`;
                 document.getElementById('rebirth-info').innerHTML = html; this.openModal('modal-rebirth');
@@ -1325,6 +1379,11 @@
         function gameLoopTick(now) {
             if (!GameState.lastLoopTime) { GameState.lastLoopTime = now; GameState.lastRegenTime = now; }
             if (!GameState.lastAutoSaveTime) GameState.lastAutoSaveTime = now;
+            
+            // 計算與上一次迴圈的差距，如果大於 500ms，判定為背景休眠，啟動「追趕模式」
+            let delta = now - GameState.lastLoopTime;
+            let isCatchUp = delta > 500;
+            
             if (now - GameState.lastAutoSaveTime >= 10000) { SaveLoad.autoSave(); GameState.lastAutoSaveTime = now; }
             if (now - GameState.lastRegenTime >= 5000) {
                 let ticks = Math.floor((now - GameState.lastRegenTime) / 5000); GameState.lastRegenTime += ticks * 5000;
@@ -1332,23 +1391,33 @@
                 let spRegenBase = Math.floor(Player.derived.maxSp * 0.02 + GameState.player.stats.int * 0.5);
                 if (GameState.skills['s_regen']) hpRegenBase += GameState.skills['s_regen'] * 5 + Math.floor(Player.derived.maxHp * GameState.skills['s_regen'] * 0.002);
                 if (GameState.skills['m_zen']) spRegenBase += GameState.skills['m_zen'] * 3 + Math.floor(Player.derived.maxSp * GameState.skills['m_zen'] * 0.002);
-                Player.heal(hpRegenBase * ticks, spRegenBase * ticks);
+                Player.heal(hpRegenBase * ticks, spRegenBase * ticks, isCatchUp);
             }
-            BuffManager.tick(now); Combat.tick(now); AutoSystem.tick(now); GameState.lastLoopTime = now;
+            
+            BuffManager.tick(now, isCatchUp); 
+            Combat.tick(now); 
+            AutoSystem.tick(now, isCatchUp); 
+            
+            // 如果剛才經歷了背景追趕模式 (CatchUp)，在計算完千百次戰鬥後，強制渲染一次最終的最新畫面
+            if (isCatchUp) {
+                Player.calcStats();
+                BuffManager.render();
+                UI.updateStatus();
+                UI.updateMapMonsters();
+                UI.updateMonster();
+                UI.updateHeader();
+                console.log(`[系統提示] 背景追趕完成，跳過了 ${delta} 毫秒的動畫。`);
+            }
+            
+            GameState.lastLoopTime = now;
         }
 
-        // Web Worker for Background Processing
-        let workerBlob = new Blob([`
-            let timer = null;
-            self.onmessage = function(e) {
-                if (e.data === 'start') {
-                    if(!timer) timer = setInterval(() => { self.postMessage({type: 'tick', now: Date.now()}); }, 100); 
-                }
-            };
-        `], { type: 'application/javascript' });
-        
-        const gameWorker = new Worker(URL.createObjectURL(workerBlob));
-        gameWorker.onmessage = function(e) { if (e.data.type === 'tick') { gameLoopTick(e.data.now); } };
+        // 使用最高效的 requestAnimationFrame 作為唯一引擎
+        function gameLoop() {
+            let now = Date.now();
+            gameLoopTick(now);
+            requestAnimationFrame(gameLoop);
+        }
 
         function setupEvents() {
             document.querySelectorAll('.btn-stat-add').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); Player.addStat(e.target.dataset.stat, e.target.dataset.amt); }); });
@@ -1378,7 +1447,9 @@
             if(!GameState.mapMonsters || GameState.mapMonsters.length === 0) { Combat.initMapMonsters(GameState.currentMap); }
             
             setupEvents(); UI.updateHeader(); UI.checkRebirth(); UI.checkJobChange(); Hotkeys.render(); BuffManager.render(); Skills.render();
-            gameWorker.postMessage('start');
+            
+            // 啟動最高效能的主迴圈
+            requestAnimationFrame(gameLoop);
         }
 
         window.addEventListener('DOMContentLoaded', loadDatabases);
