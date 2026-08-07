@@ -100,11 +100,11 @@
                 <div id="header-class-area" class="flex items-center gap-2">
                     <span id="player-class" class="px-2 py-1 bg-gray-700 rounded text-xs sm:text-sm text-blue-200">初心者</span>
                     <button id="btn-jobchange" class="btn text-yellow-300 text-xs hide font-bold border-yellow-600 bg-yellow-900/50" onclick="UI.openJobChange()">轉職!</button>
-                    <button id="btn-rebirth" class="btn text-purple-300 text-xs hide font-bold border-purple-600 bg-purple-900/50" onclick="Player.rebirth()">轉生!</button>
+                    <button id="btn-rebirth" class="btn text-purple-300 text-xs hide font-bold border-purple-600 bg-purple-900/50" onclick="UI.openRebirthModal()">轉生!</button>
                 </div>
             </div>
 
-            <!-- Header Collapsed Status (Shown only when status panel is hidden) -->
+            <!-- Header Collapsed Status -->
             <div id="header-mini-status" class="hidden absolute left-1/2 -translate-x-1/2 items-center text-[10px] sm:text-xs bg-gray-900/90 px-3 py-1 rounded border border-gray-600 cursor-pointer hover:border-yellow-500 shadow-md whitespace-nowrap z-20" onclick="UI.toggleStatusView()">
                 <div class="flex items-center gap-3">
                     <div class="flex flex-col gap-0.5">
@@ -211,19 +211,19 @@
                 </select>
             </div>
             
-            <!-- Map Monsters Preview / Interactive List -->
-            <div class="absolute top-12 left-2 z-30 bg-gray-900/90 p-2 rounded border border-gray-700 text-xs shadow-md min-w-[120px] max-w-[150px] sm:min-w-[160px] sm:max-w-[200px] pointer-events-auto backdrop-blur-sm" id="map-monsters-preview">
-                <!-- Monsters injected here -->
-            </div>
-
-            <!-- Monster Info (Top Right) -->
-            <div class="absolute top-2 right-2 z-20 bg-gray-900/80 p-2 rounded border border-gray-700 text-right min-w-[120px] shadow-md hidden" id="monster-info">
-                <div class="font-bold text-red-400" id="mon-name">Monster</div>
-                <div class="text-xs text-gray-300"><span id="mon-element">Element</span> | <span id="mon-race">Race</span></div>
+            <!-- Monster Info (Top Center - Adjusted position) -->
+            <div class="absolute top-2 left-1/2 -translate-x-1/2 z-20 bg-gray-900/80 p-2 rounded border border-gray-700 text-center min-w-[120px] sm:min-w-[160px] shadow-md hidden" id="monster-info">
+                <div class="font-bold text-red-400 text-sm" id="mon-name">Monster</div>
+                <div class="text-[10px] text-gray-300"><span id="mon-element">Element</span> | <span id="mon-race">Race</span></div>
                 <div class="w-full bg-gray-700 h-2 mt-1 rounded overflow-hidden">
                     <div id="mon-hp-bar" class="bg-red-500 h-full w-full bar-fill"></div>
                 </div>
                 <div class="text-[10px] text-gray-400 mt-0.5" id="mon-hp-txt">0 / 0</div>
+            </div>
+
+            <!-- Map Monsters Preview / Interactive List (Top Right - Adjusted position) -->
+            <div class="absolute top-2 right-2 z-30 bg-gray-900/90 p-2 rounded border border-gray-700 text-xs shadow-md min-w-[120px] max-w-[150px] sm:min-w-[160px] sm:max-w-[200px] pointer-events-auto backdrop-blur-sm" id="map-monsters-preview">
+                <!-- Monsters injected here -->
             </div>
 
             <!-- Combat Visuals -->
@@ -277,7 +277,6 @@
                 </div>
             </div>
 
-            <!-- 自動掛機設定 -->
             <div class="pt-4 border-t border-gray-700 space-y-3">
                 <h3 class="text-sm font-bold text-green-400 mb-2">自動掛機設定</h3>
                 <div class="flex justify-between items-center text-xs">
@@ -302,7 +301,6 @@
                 </label>
             </div>
 
-            <!-- 戰鬥資訊過濾器 -->
             <div class="pt-4 mt-4 border-t border-gray-700 space-y-2 text-sm">
                 <h3 class="text-sm font-bold text-blue-300 mb-2">戰鬥資訊顯示設定</h3>
                 <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="log-dmg-dealt" class="w-4 h-4 accent-yellow-500" checked> 顯示對怪物傷害</label>
@@ -311,7 +309,6 @@
                 <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="log-drop" class="w-4 h-4 accent-yellow-500" checked> 顯示掉落物品</label>
             </div>
 
-            <!-- 存檔/讀檔功能 -->
             <div class="mt-6 pt-4 border-t border-gray-700 flex flex-col gap-2">
                 <div class="text-xs text-purple-300 mb-1">進度儲存/讀取 (複製或貼上文字碼):</div>
                 <textarea id="save-data-text" class="w-full h-20 bg-gray-900 text-gray-300 text-[10px] font-mono p-1 rounded border border-gray-600 outline-none focus:border-purple-500 break-all" placeholder="點擊下方「產生存檔碼」獲得備份，或在此貼上之前的代碼進行「讀取」..."></textarea>
@@ -327,6 +324,21 @@
         </div>
     </div>
 
+    <!-- Rebirth Modal -->
+    <div id="modal-rebirth" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hide">
+        <div class="bg-gray-800 p-4 rounded shadow-lg border border-gray-600 w-80 max-w-[95%]">
+            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2 text-purple-400">轉生祭壇</h2>
+            <div id="rebirth-info" class="text-sm text-gray-300 space-y-2 mb-4 max-h-64 overflow-y-auto"></div>
+            <div class="flex justify-end gap-2 mt-4 border-t border-gray-700 pt-3">
+                <button class="btn bg-gray-700" onclick="UI.closeModal('modal-rebirth')">稍後再說</button>
+                <button class="btn bg-purple-900 border-purple-600 text-purple-100 font-bold hover:bg-purple-700" onclick="Player.confirmRebirth()">確認轉生</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Other Modals: Chat, Hotkey, Skills, Equip Action, Bag, Shop, Job... -->
+    <!-- (Retained to preserve functionality) -->
+    
     <!-- Chat Modal -->
     <div id="modal-chat" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hide">
         <div class="bg-gray-800 rounded shadow-lg border border-gray-600 w-[95%] max-w-lg h-[80%] flex flex-col">
@@ -467,33 +479,20 @@
         </div>
     </div>
 
-    <!-- Audio Element -->
     <audio id="bgm-player" loop></audio>
 
     <script type="module">
-        ////////// 全域千分位數字格式化 //////////
-        window.formatNumber = function(num) {
-            return Number(num).toLocaleString('en-US');
-        };
+        window.formatNumber = function(num) { return Number(num).toLocaleString('en-US'); };
 
-        ////////// 獨立系統與資料庫邏輯 //////////
         window.SystemExt = {
             getJobTier: function(classId) {
                 let c = GameDB.classes.find(x => x.c_id === classId);
-                if(!c) return 1;
-                if(c.c_id === 'novice') return 0;
-                if(c.c_reqBaseLv === 200) return 4;
-                if(c.c_reqBaseLv === 90) return 3;
-                if(c.c_isJob2) return 2;
-                return 1;
+                if(!c) return 1; if(c.c_id === 'novice') return 0;
+                if(c.c_reqBaseLv === 200) return 4; if(c.c_reqBaseLv === 90) return 3; if(c.c_isJob2) return 2; return 1;
             },
             getClassPath: function(cId) {
-                let path = [];
-                let curr = cId;
-                while(curr) {
-                    path.unshift(curr);
-                    curr = GameDB.classParents[curr];
-                }
+                let path = []; let curr = cId;
+                while(curr) { path.unshift(curr); curr = GameDB.classParents[curr]; }
                 return path;
             },
             getEquipRarity: function(reqLv) {
@@ -506,20 +505,11 @@
             getRebirthBonuses: function(rCount) {
                 let r = rCount || 0;
                 return {
-                    autoHp: r >= 1,       
-                    autoSp: r >= 2,       
-                    autoSkill1: r >= 3,   
-                    autoSkill2: r >= 4,   
-                    autoRevive: r >= 5,   
-                    chatUnlocked: r >= 6, 
-                    statCapBonus: r >= 40 ? (r - 39) : 0,
-                    aspdCap: r >= 20 ? Math.min(250, 193 + (r - 19)) : 193,
-                    refineBonus: r >= 30 ? Math.min(70, r - 29) * 0.01 : 0, 
-                    statMulti: 1 + (r * 0.01)
+                    autoHp: r >= 1, autoSp: r >= 2, autoSkill1: r >= 3, autoSkill2: r >= 4, autoRevive: r >= 5, chatUnlocked: r >= 6, 
+                    statCapBonus: r >= 40 ? (r - 39) : 0, aspdCap: r >= 20 ? Math.min(250, 193 + (r - 19)) : 193, refineBonus: r >= 30 ? Math.min(70, r - 29) * 0.01 : 0, statMulti: 1 + (r * 0.01)
                 };
             }
         };
-        //////////////////////////////////////////
 
         const DB_URLS = {
             classes: 'https://a7190610.github.io/r_rpg/ro_database_classes.js',
@@ -535,23 +525,11 @@
 
         window.GameDB = {};
         window.GameState = {
-            player: null,
-            inventory: { equip: [], item: [] },
-            equipped: { helm: null, armor: null, weapon: null, shield: null, garment: null, shoes: null, acc1: null, acc2: null },
-            skills: {}, 
-            hotkeys: [], 
-            hotkeySize: 12,
-            currentMap: '',
-            mapMonsters: [],
-            currentMonster: null,
-            buffs: [],
+            player: null, inventory: { equip: [], item: [] }, equipped: { helm: null, armor: null, weapon: null, shield: null, garment: null, shoes: null, acc1: null, acc2: null },
+            skills: {}, hotkeys: [], hotkeySize: 12, currentMap: '', mapMonsters: [], currentMonster: null, buffs: [],
             logFilters: { dmgDealt: true, dmgTaken: true, exp: true, drops: true },
-            lastLoopTime: 0,
-            autoAttackTimer: 0,
-            monsterAttackTimer: 0,
-            lastRegenTime: 0,
-            autoConfig: { hpPct: 50, spPct: 50, s1Interval: 10, s2Interval: 10, autoRevive: true },
-            autoTimers: { hp: 0, sp: 0, s1: 0, s2: 0 }
+            lastLoopTime: 0, autoAttackTimer: 0, monsterAttackTimer: 0, lastRegenTime: 0,
+            autoConfig: { hpPct: 50, spPct: 50, s1Interval: 10, s2Interval: 10, autoRevive: true }, autoTimers: { hp: 0, sp: 0, s1: 0, s2: 0 }
         };
         
         const UI_FUNCTIONS = [
@@ -562,88 +540,63 @@
         ];
 
         function parseDbObj(keys, dataArray) {
-            return dataArray.map(row => {
-                let obj = {};
-                keys.forEach((k, i) => obj[k] = row[i]);
-                return obj;
-            });
+            return dataArray.map(row => { let obj = {}; keys.forEach((k, i) => obj[k] = row[i]); return obj; });
         }
 
         async function fetchDB(url, objectName) {
-            let res = await fetch(url);
-            let text = await res.text();
-            text = text.replace(/export\s+const\s+/g, 'var ');
-            text = text.replace(/export\s+var\s+/g, 'var ');
-            text = text.replace(/export\s+let\s+/g, 'var ');
-            const fn = new Function(`${text}\nreturn typeof ${objectName} !== 'undefined' ? ${objectName} : null;`);
-            return fn();
+            try {
+                let res = await fetch(url); let text = await res.text();
+                text = text.replace(/export\s+const\s+/g, 'var ').replace(/export\s+var\s+/g, 'var ').replace(/export\s+let\s+/g, 'var ');
+                const fn = new Function(`${text}\nreturn typeof ${objectName} !== 'undefined' ? ${objectName} : null;`);
+                return fn();
+            } catch (e) {
+                console.error("Fetch DB failed: ", url, e); return null;
+            }
         }
 
         async function loadDatabases() {
-            const updateLoad = (pct, text) => {
-                document.getElementById('loading-bar').style.width = pct + '%';
-                document.getElementById('loading-text').innerText = text;
-            };
-            
+            const updateLoad = (pct, text) => { document.getElementById('loading-bar').style.width = pct + '%'; document.getElementById('loading-text').innerText = text; };
             try {
                 updateLoad(10, '載入系統設定...');
                 GameDB.system = await fetchDB(DB_URLS.system, 'RO_DATABASE_SYSTEM');
 
                 updateLoad(25, '載入職業與技能...');
-                const clsMod = await fetchDB(DB_URLS.classes, 'RO_DATABASE_CLASSES');
-                GameDB.classes = parseDbObj(clsMod.keys, clsMod.data);
+                const clsMod = await fetchDB(DB_URLS.classes, 'RO_DATABASE_CLASSES'); GameDB.classes = parseDbObj(clsMod.keys, clsMod.data);
+                GameDB.classParents = {}; GameDB.classes.forEach(c => { if(c.c_advClasses) { c.c_advClasses.forEach(adv => GameDB.classParents[adv] = c.c_id); } });
                 
-                GameDB.classParents = {};
-                GameDB.classes.forEach(c => {
-                    if(c.c_advClasses) { c.c_advClasses.forEach(adv => GameDB.classParents[adv] = c.c_id); }
-                });
-
                 const sklMod = await fetchDB(DB_URLS.skills, 'RO_DATABASE_SKILLS');
-                GameDB.skillsRaw = sklMod.data; 
+                if (sklMod) GameDB.skillsRaw = sklMod.data;
 
                 updateLoad(50, '載入裝備與道具...');
-                const itmMod = await fetchDB(DB_URLS.items, 'RO_DATABASE_ITEMS');
-                GameDB.equips = {};
-                for (let type in itmMod.data) { GameDB.equips[type] = parseDbObj(itmMod.keys, itmMod.data[type]); }
-                
-                const consMod = await fetchDB(DB_URLS.consumables, 'RO_DATABASE_ITEMS2');
-                GameDB.items = parseDbObj(consMod.keys, consMod.data.consumables);
+                const itmMod = await fetchDB(DB_URLS.items, 'RO_DATABASE_ITEMS'); GameDB.equips = {}; for (let type in itmMod.data) { GameDB.equips[type] = parseDbObj(itmMod.keys, itmMod.data[type]); }
+                const consMod = await fetchDB(DB_URLS.consumables, 'RO_DATABASE_ITEMS2'); GameDB.items = parseDbObj(consMod.keys, consMod.data.consumables);
 
                 updateLoad(75, '載入地圖與怪物...');
-                const mapDb = await fetchDB(DB_URLS.maps, 'RO_DATABASE_MAPS');
-                GameDB.maps = parseDbObj(mapDb.keys, mapDb.data);
-                
-                const monMod = await fetchDB(DB_URLS.monsters, 'RO_DATABASE_MONSTERS');
-                GameDB.monsters = parseDbObj(monMod.keys, monMod.data);
-                
-                const mapmonMod = await fetchDB(DB_URLS.mapmon, 'RO_DATABASE_MAPMON');
-                GameDB.mapmon = mapmonMod.data;
+                const mapDb = await fetchDB(DB_URLS.maps, 'RO_DATABASE_MAPS'); GameDB.maps = parseDbObj(mapDb.keys, mapDb.data);
+                const monMod = await fetchDB(DB_URLS.monsters, 'RO_DATABASE_MONSTERS'); GameDB.monsters = parseDbObj(monMod.keys, monMod.data);
+                const mapmonMod = await fetchDB(DB_URLS.mapmon, 'RO_DATABASE_MAPMON'); GameDB.mapmon = mapmonMod.data;
 
                 updateLoad(100, '初始化遊戲...');
-                
                 GameDB.skills = {};
-                for (let job in GameDB.skillsRaw) {
-                    let parsed = parseDbObj(sklMod.keys, GameDB.skillsRaw[job]);
-                    parsed.forEach(s => { s.job = job; GameDB.skills[s.sk_id] = s; });
+                if (GameDB.skillsRaw) {
+                    for (let job in GameDB.skillsRaw) {
+                        let parsed = parseDbObj(sklMod.keys, GameDB.skillsRaw[job]);
+                        parsed.forEach(s => { s.job = job; GameDB.skills[s.sk_id] = s; });
+                    }
                 }
 
-                GameDB.equipFlat = {};
-                for (let cat in GameDB.equips) {
-                    GameDB.equips[cat].forEach(eq => GameDB.equipFlat[eq.i1_id] = eq);
-                }
-                
-                GameDB.itemFlat = {};
-                GameDB.items.forEach(it => GameDB.itemFlat[it.i2_id] = it);
-                
+                GameDB.equipFlat = {}; for (let cat in GameDB.equips) { GameDB.equips[cat].forEach(eq => GameDB.equipFlat[eq.i1_id] = eq); }
+                GameDB.itemFlat = {}; GameDB.items.forEach(it => GameDB.itemFlat[it.i2_id] = it);
                 try {
                      const cashMod = await fetchDB(DB_URLS.cash, 'RO_DATABASE_ITEMS3');
-                     let cashItems = parseDbObj(cashMod.keys, cashMod.data.consumables);
-                     cashItems.forEach(it => { it.isCash = true; GameDB.itemFlat[it.i3_id] = it; });
-                     GameDB.cashItems = cashItems;
+                     if(cashMod) {
+                         let cashItems = parseDbObj(cashMod.keys, cashMod.data.consumables);
+                         cashItems.forEach(it => { it.isCash = true; GameDB.itemFlat[it.i3_id] = it; });
+                         GameDB.cashItems = cashItems;
+                     }
                 } catch(e) {}
 
                 setTimeout(initGame, 500);
-
             } catch (err) {
                 document.getElementById('loading-text').innerText = '載入失敗，請重整網頁。' + err.message;
                 document.getElementById('loading-text').className = 'text-red-500 font-bold';
@@ -654,8 +607,7 @@
             exportData: function() {
                 try {
                     let data = btoa(encodeURIComponent(JSON.stringify(GameState)));
-                    document.getElementById('save-data-text').value = data;
-                    UI.showToast('系統提示：存檔碼已成功產生，請複製保存！', 'bg-green-600 text-white');
+                    document.getElementById('save-data-text').value = data; UI.showToast('系統提示：存檔碼已成功產生，請複製保存！', 'bg-green-600 text-white');
                 } catch(e) { UI.showToast('匯出失敗', 'bg-red-600 text-white'); }
             },
             importData: function() {
@@ -663,92 +615,46 @@
                 if(!dataStr) { UI.showToast('請先在欄位中貼上存檔碼！', 'bg-yellow-600 text-white'); return; }
                 this.loadFromData(dataStr, true);
             },
-            autoSave: function() {
-                try {
-                    let data = btoa(encodeURIComponent(JSON.stringify(GameState)));
-                    localStorage.setItem('idleRo_autoSave', data);
-                } catch(e) {}
-            },
-            autoLoad: function() {
-                let dataStr = localStorage.getItem('idleRo_autoSave');
-                if(dataStr) {
-                    this.loadFromData(dataStr, false);
-                }
-            },
+            autoSave: function() { try { localStorage.setItem('idleRo_autoSave', btoa(encodeURIComponent(JSON.stringify(GameState)))); } catch(e) {} },
+            autoLoad: function() { let dataStr = localStorage.getItem('idleRo_autoSave'); if(dataStr) this.loadFromData(dataStr, false); },
             loadFromData: function(dataStr, isManual) {
                 try {
                     let parsed = JSON.parse(decodeURIComponent(atob(dataStr)));
-                    
-                    if(parsed.player) {
-                        Object.keys(parsed.player).forEach(k => {
-                            if (k === 'stats' && parsed.player.stats) {
-                                Object.assign(GameState.player.stats, parsed.player.stats);
-                            } else {
-                                GameState.player[k] = parsed.player[k];
-                            }
-                        });
-                    }
-                    if(parsed.inventory) {
-                        if(parsed.inventory.equip) GameState.inventory.equip = parsed.inventory.equip;
-                        if(parsed.inventory.item) GameState.inventory.item = parsed.inventory.item;
-                    }
+                    if(parsed.player) { Object.keys(parsed.player).forEach(k => { if (k === 'stats' && parsed.player.stats) Object.assign(GameState.player.stats, parsed.player.stats); else GameState.player[k] = parsed.player[k]; }); }
+                    if(parsed.inventory) { if(parsed.inventory.equip) GameState.inventory.equip = parsed.inventory.equip; if(parsed.inventory.item) GameState.inventory.item = parsed.inventory.item; }
                     if(parsed.equipped) Object.assign(GameState.equipped, parsed.equipped);
                     if(parsed.skills) Object.assign(GameState.skills, parsed.skills);
-                    if(parsed.hotkeys) GameState.hotkeys = parsed.hotkeys;
-                    if(parsed.hotkeySize) GameState.hotkeySize = parsed.hotkeySize;
-                    if(parsed.currentMap) GameState.currentMap = parsed.currentMap;
-                    if(parsed.autoConfig) {
-                        Object.assign(GameState.autoConfig, parsed.autoConfig);
-                        if(GameState.autoConfig.autoRevive === undefined) GameState.autoConfig.autoRevive = true;
-                    }
+                    if(parsed.hotkeys) GameState.hotkeys = parsed.hotkeys; if(parsed.hotkeySize) GameState.hotkeySize = parsed.hotkeySize; if(parsed.currentMap) GameState.currentMap = parsed.currentMap;
+                    if(parsed.autoConfig) { Object.assign(GameState.autoConfig, parsed.autoConfig); if(GameState.autoConfig.autoRevive === undefined) GameState.autoConfig.autoRevive = true; }
                     if(parsed.logFilters) Object.assign(GameState.logFilters, parsed.logFilters);
                     
-                    if(GameState.player.rebirthCount === undefined) GameState.player.rebirthCount = 0;
-                    if(GameState.player.cash === undefined) GameState.player.cash = 0;
+                    if(GameState.player.rebirthCount === undefined) GameState.player.rebirthCount = 0; if(GameState.player.cash === undefined) GameState.player.cash = 0;
                     
-                    let now = Date.now();
-                    GameState.lastLoopTime = now;
-                    GameState.autoAttackTimer = now;
-                    GameState.monsterAttackTimer = now;
-                    GameState.lastRegenTime = now;
-                    GameState.currentMonster = null; 
-                    
-                    Player.calcStats();
-                    UI.updateHeader();
-                    UI.updateMapSelect();
-                    UI.updateStatus();
-                    UI.checkJobChange();
-                    UI.checkRebirth();
-                    Hotkeys.render();
-                    BuffManager.render();
-                    Skills.render();
-                    
-                    document.getElementById('log-dmg-dealt').checked = GameState.logFilters.dmgDealt;
-                    document.getElementById('log-dmg-taken').checked = GameState.logFilters.dmgTaken;
-                    document.getElementById('log-exp').checked = GameState.logFilters.exp;
-                    document.getElementById('log-drop').checked = GameState.logFilters.drops;
-                    document.getElementById('set-auto-revive').checked = GameState.autoConfig.autoRevive;
-
-                    // Re-initialize map monsters for safety
+                    let now = Date.now(); GameState.lastLoopTime = now; GameState.autoAttackTimer = now; GameState.monsterAttackTimer = now; GameState.lastRegenTime = now; GameState.currentMonster = null; 
+                    Player.calcStats(); UI.updateHeader(); UI.updateMapSelect(); UI.updateStatus(); UI.checkJobChange(); UI.checkRebirth(); Hotkeys.render(); BuffManager.render(); Skills.render();
                     Combat.initMapMonsters(GameState.currentMap || 'prontera');
-
-                    if(isManual) {
-                        UI.showToast('系統提示：遊戲進度已成功讀取！', 'bg-green-600 text-white');
-                        UI.closeModal('modal-settings');
-                    }
-                } catch(e) { 
-                    if(isManual) UI.showToast('讀取失敗：存檔碼錯誤', 'bg-red-600 text-white'); 
-                }
+                    if(isManual) { UI.showToast('系統提示：遊戲進度已成功讀取！', 'bg-green-600 text-white'); UI.closeModal('modal-settings'); }
+                } catch(e) { if(isManual) UI.showToast('讀取失敗：存檔碼錯誤', 'bg-red-600 text-white'); }
             }
         };
-        window.SaveLoad = SaveLoad;
 
         const BuffManager = {
-            add: function(name, icon, durationMs, attrObj) {
-                GameState.buffs = GameState.buffs.filter(b => b.name !== name);
-                GameState.buffs.push({ uid: Date.now() + Math.random(), name: name, icon: icon, expires: Date.now() + durationMs, attr: attrObj });
-                Player.calcStats();
-                this.render();
+            add: function(name, icon, durationMs, attrObj, stackId = null, maxStacks = 1) {
+                let existing = stackId ? GameState.buffs.find(b => b.stackId === stackId) : GameState.buffs.find(b => b.name === name);
+                let now = Date.now();
+                if (existing) {
+                    existing.expires = now + durationMs;
+                    if (stackId && existing.stacks < maxStacks) {
+                        existing.stacks++;
+                        let newAttr = {}; for(let k in attrObj) newAttr[k] = attrObj[k] * existing.stacks;
+                        existing.attr = newAttr;
+                    }
+                } else {
+                    let newBuff = { uid: now + Math.random(), name: name, icon: icon, expires: now + durationMs, attr: attrObj };
+                    if (stackId) { newBuff.stackId = stackId; newBuff.stacks = 1; newBuff.maxStacks = maxStacks; newBuff.baseAttr = Object.assign({}, attrObj); }
+                    GameState.buffs.push(newBuff);
+                }
+                Player.calcStats(); this.render();
             },
             tick: function(now) {
                 let changed = false;
@@ -760,16 +666,12 @@
                 else if (GameState.buffs.length > 0 && Math.floor(now / 1000) !== Math.floor(GameState.lastLoopTime / 1000)) { this.render(); }
             },
             render: function() {
-                const container = document.getElementById('buff-container');
-                container.innerHTML = '';
-                let now = Date.now();
+                const container = document.getElementById('buff-container'); container.innerHTML = ''; let now = Date.now();
                 GameState.buffs.forEach(b => {
-                    let remainSec = Math.max(0, Math.floor((b.expires - now) / 1000));
-                    let m = Math.floor(remainSec / 60); let s = remainSec % 60;
-                    let timeStr = `${m}:${s.toString().padStart(2, '0')}`;
-                    let div = document.createElement('div');
-                    div.className = 'flex items-center gap-1 bg-gray-900/90 rounded px-2 py-1 text-xs border border-gray-600 shadow-sm';
-                    div.innerHTML = `<span class="text-lg">${b.icon}</span><div class="flex flex-col text-right"><span class="text-[10px] text-gray-300 leading-none">${b.name}</span><span class="text-yellow-400 font-mono leading-none mt-1">${timeStr}</span></div>`;
+                    let remainSec = Math.max(0, Math.floor((b.expires - now) / 1000)); let m = Math.floor(remainSec / 60); let s = remainSec % 60; let timeStr = `${m}:${s.toString().padStart(2, '0')}`;
+                    let stackStr = b.stacks ? `<span class="text-red-400 font-bold ml-1 text-[10px]">x${b.stacks}</span>` : '';
+                    let div = document.createElement('div'); div.className = 'flex items-center gap-1 bg-gray-900/90 rounded px-2 py-1 text-xs border border-gray-600 shadow-sm relative overflow-hidden';
+                    div.innerHTML = `<span class="text-lg relative z-10">${b.icon}${stackStr}</span><div class="flex flex-col text-right relative z-10"><span class="text-[10px] text-gray-300 leading-none">${b.name}</span><span class="text-yellow-400 font-mono leading-none mt-1">${timeStr}</span></div>`;
                     container.appendChild(div);
                 });
             }
@@ -777,84 +679,58 @@
 
         const Player = {
             init: function() {
-                GameState.player = {
-                    name: '冒險者', classId: 'novice', baseLv: 1, baseExp: 0, jobLv: 1, jobExp: 0, zeny: 0, cash: 0, hp: 50, sp: 10,
-                    stats: { str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 }, statPts: 48, skillPts: 0, rebirthCount: 0, isDead: false
-                };
+                GameState.player = { name: '冒險者', classId: 'novice', baseLv: 1, baseExp: 0, jobLv: 1, jobExp: 0, zeny: 0, cash: 0, hp: 50, sp: 10, stats: { str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 }, statPts: 48, skillPts: 0, rebirthCount: 0, isDead: false };
                 GameState.skills['n_basic'] = 1; GameState.skills['n_playdead'] = 1; GameState.skills['n_firstaid'] = 1;
-
-                GameState.hotkeys = Array(36).fill(null);
-                GameState.hotkeys[0] = { type: 'ui', id: 'ui_skill' }; 
-                GameState.hotkeys[1] = { type: 'ui', id: 'ui_bag' }; 
-                GameState.hotkeys[2] = { type: 'ui', id: 'ui_shop' }; 
-                GameState.hotkeys[3] = { type: 'ui', id: 'ui_mall' };
-                GameState.hotkeys[4] = { type: 'item', id: 'novicePotion' }; 
-                GameState.hotkeys[6] = { type: 'skill', id: 'n_firstaid' };
-                GameState.hotkeys[7] = { type: 'skill', id: 'n_playdead' }; 
-
+                GameState.hotkeys = Array(36).fill(null); GameState.hotkeys[0] = { type: 'ui', id: 'ui_skill' }; GameState.hotkeys[1] = { type: 'ui', id: 'ui_bag' }; GameState.hotkeys[2] = { type: 'ui', id: 'ui_shop' }; GameState.hotkeys[3] = { type: 'ui', id: 'ui_mall' }; GameState.hotkeys[4] = { type: 'item', id: 'novicePotion' }; GameState.hotkeys[6] = { type: 'skill', id: 'n_firstaid' }; GameState.hotkeys[7] = { type: 'skill', id: 'n_playdead' }; 
                 GameState.equipped = { helm: null, armor: null, weapon: null, shield: null, garment: null, shoes: null, acc1: null, acc2: null };
                 const typesToEquip = ['weapon', 'armor', 'shoes', 'shield', 'garment'];
-                typesToEquip.forEach(type => {
-                    const def = Object.values(GameDB.equipFlat).find(e => e.i1_type === type);
-                    if (def) GameState.equipped[type] = { uid: Date.now() + Math.random(), id: def.i1_id, refine: 0 };
-                });
-
-                this.calcStats();
-                GameState.player.hp = this.derived.maxHp; GameState.player.sp = this.derived.maxSp;
+                typesToEquip.forEach(type => { const def = Object.values(GameDB.equipFlat).find(e => e.i1_type === type); if (def) GameState.equipped[type] = { uid: Date.now() + Math.random(), id: def.i1_id, refine: 0 }; });
+                this.calcStats(); GameState.player.hp = this.derived.maxHp; GameState.player.sp = this.derived.maxSp;
             },
-            
             derived: {}, bonuses: {},
-
             calcStats: function() {
-                let p = GameState.player;
-                let c = GameDB.classes.find(x => x.c_id === p.classId);
-                let sys = GameDB.system.FORMULAS;
-                let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount);
-
+                let p = GameState.player; let c = GameDB.classes.find(x => x.c_id === p.classId); let sys = GameDB.system.FORMULAS; let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount);
                 let bonus = { str: 0, agi: 0, vit: 0, int: 0, dex: 0, luk: 0, atk: 0, matk: 0, def: 0, mdef: 0, hit: 0, flee: 0, crit: 0, maxHp: 0, maxSp: 0, aspdBonusPct: 0, expMulti: 1, jobExpMulti: 1, dropMulti: 1 };
                 
                 Object.values(GameState.equipped).forEach(eqData => {
-                    if(!eqData) return;
-                    let eqDef = GameDB.equipFlat[eqData.id];
-                    if(!eqDef || !eqDef.i1_attr) return;
-                    let rarity = SystemExt.getEquipRarity(eqDef.i1_reqLevel);
-                    
-                    let actualPct = rarity.pct + rbSys.refineBonus;
-                    let refineMulti = 1 + (eqData.refine * actualPct);
-                    
-                    for(let k in eqDef.i1_attr) { 
-                        let baseVal = eqDef.i1_attr[k];
-                        let finalVal = (typeof baseVal === 'number' && baseVal > 0) ? Math.floor(baseVal * refineMulti) : baseVal;
-                        if (bonus[k] !== undefined) bonus[k] += finalVal; else bonus[k] = finalVal;
-                    }
+                    if(!eqData) return; let eqDef = GameDB.equipFlat[eqData.id]; if(!eqDef || !eqDef.i1_attr) return;
+                    let rarity = SystemExt.getEquipRarity(eqDef.i1_reqLevel); let actualPct = rarity.pct + rbSys.refineBonus; let refineMulti = 1 + (eqData.refine * actualPct);
+                    for(let k in eqDef.i1_attr) { let baseVal = eqDef.i1_attr[k]; let finalVal = (typeof baseVal === 'number' && baseVal > 0) ? Math.floor(baseVal * refineMulti) : baseVal; if (bonus[k] !== undefined) bonus[k] += finalVal; else bonus[k] = finalVal; }
                 });
 
                 Object.keys(GameState.skills).forEach(sId => {
-                    let sDef = GameDB.skills[sId];
-                    let sLv = GameState.skills[sId];
+                    let sDef = GameDB.skills[sId]; let sLv = GameState.skills[sId];
                     if (sDef && sDef.sk_type === 'passive' && sLv > 0 && sDef.sk_extras && sDef.sk_extras.passiveAttr) {
                         let pAttr = typeof sDef.sk_extras.passiveAttr === 'function' ? sDef.sk_extras.passiveAttr(sLv) : sDef.sk_extras.passiveAttr;
-                        for(let k in pAttr) { if (bonus[k] !== undefined) bonus[k] += pAttr[k]; }
+                        let weaponOk = true;
+                        if(pAttr.weaponReq) {
+                            let currWeap = GameState.equipped.weapon ? GameDB.equipFlat[GameState.equipped.weapon.id].i1_type : 'barehand';
+                            if(Array.isArray(pAttr.weaponReq)) { if(!pAttr.weaponReq.includes(currWeap)) weaponOk = false; } 
+                            else { if(currWeap !== pAttr.weaponReq) weaponOk = false; }
+                        }
+                        if(weaponOk) { for(let k in pAttr) { if (bonus[k] !== undefined) bonus[k] += pAttr[k]; else bonus[k] = pAttr[k]; } }
                     }
                 });
 
                 GameState.buffs.forEach(b => {
-                    if(b.attr && b.attr.expMulti) bonus.expMulti *= b.attr.expMulti;
-                    if(b.attr && b.attr.jobExpMulti) bonus.jobExpMulti *= b.attr.jobExpMulti;
-                    if(b.attr && b.attr.dropMulti) bonus.dropMulti *= b.attr.dropMulti;
-                    if(b.attr) { for(let k in b.attr) { if (bonus[k] !== undefined) bonus[k] += b.attr[k]; } }
+                    if(b.attr && b.attr.expMulti) bonus.expMulti *= b.attr.expMulti; if(b.attr && b.attr.jobExpMulti) bonus.jobExpMulti *= b.attr.jobExpMulti; if(b.attr && b.attr.dropMulti) bonus.dropMulti *= b.attr.dropMulti;
+                    if(b.attr) { for(let k in b.attr) { if (bonus[k] !== undefined) bonus[k] += b.attr[k]; else bonus[k] = b.attr[k]; } }
                 });
 
                 this.bonuses = bonus;
                 let totalSt = { str: p.stats.str + bonus.str, agi: p.stats.agi + bonus.agi, vit: p.stats.vit + bonus.vit, int: p.stats.int + bonus.int, dex: p.stats.dex + bonus.dex, luk: p.stats.luk + bonus.luk };
                 
-                this.derived.maxHp = Math.floor((sys.calculateMaxHP(p.baseLv, c.c_hpMulti, totalSt) + bonus.maxHp) * rbSys.statMulti);
-                this.derived.maxSp = Math.floor((sys.calculateMaxSP(p.baseLv, c.c_spMulti, totalSt) + bonus.maxSp) * rbSys.statMulti);
-                let weaponBaseAtk = GameState.equipped.weapon ? (GameDB.equipFlat[GameState.equipped.weapon.id].i1_attr.atk || 0) : 0;
-                this.derived.atk = Math.floor((sys.calculateATK(totalSt, p.baseLv) + weaponBaseAtk + bonus.atk) * rbSys.statMulti);
-                this.derived.matk = Math.floor((sys.calculateMATK(totalSt, p.baseLv) + bonus.matk) * rbSys.statMulti);
-                this.derived.def = Math.floor((sys.calculateDEF(totalSt, p.baseLv) + bonus.def) * rbSys.statMulti);
+                let flatHp = bonus.maxHpFlat || 0; let hpPct = bonus.maxHpPct || 0;
+                this.derived.maxHp = Math.floor(((sys.calculateMaxHP(p.baseLv, c.c_hpMulti, totalSt) + bonus.maxHp + flatHp) * (1 + hpPct/100)) * rbSys.statMulti);
                 
+                let flatSp = bonus.maxSpFlat || 0; let spPct = bonus.maxSpPct || 0;
+                this.derived.maxSp = Math.floor(((sys.calculateMaxSP(p.baseLv, c.c_spMulti, totalSt) + bonus.maxSp + flatSp) * (1 + spPct/100)) * rbSys.statMulti);
+                
+                let weaponBaseAtk = GameState.equipped.weapon ? (GameDB.equipFlat[GameState.equipped.weapon.id].i1_attr.atk || 0) : 0;
+                let skAtk = bonus.skAtk || 0; let flatAtk = bonus.flatAtk || 0; let atkPct = bonus.atkPct || 0;
+                this.derived.atk = Math.floor(((sys.calculateATK(totalSt, p.baseLv) + weaponBaseAtk + bonus.atk + skAtk + flatAtk) * (1 + atkPct/100)) * rbSys.statMulti);
+                this.derived.matk = Math.floor((sys.calculateMATK(totalSt, p.baseLv) + bonus.matk) * rbSys.statMulti);
+                this.derived.def = Math.floor(((sys.calculateDEF(totalSt, p.baseLv) + bonus.def) * (1 + (bonus.defPct || 0)/100)) * rbSys.statMulti);
                 this.derived.mdef = sys.calculateMDEF(totalSt, p.baseLv) + bonus.mdef;
                 this.derived.hit = sys.calculateHIT(totalSt, p.baseLv) + bonus.hit;
                 this.derived.flee = sys.calculateFLEE(totalSt, p.baseLv) + bonus.flee;
@@ -864,329 +740,202 @@
                 let weaponBaseSpeed = 150; 
                 let baseAspd = sys.calculateASPD(totalSt, weaponBaseSpeed);
                 if (bonus.aspdBonusPct) { baseAspd += (200 - baseAspd) * (bonus.aspdBonusPct / 100); }
-                this.derived.aspd = Math.min(rbSys.aspdCap, Math.floor(baseAspd));
+                this.derived.aspd = bonus.ignoreAspdLimit ? baseAspd : Math.min(rbSys.aspdCap, Math.floor(baseAspd));
                 
-                if(p.hp > this.derived.maxHp) p.hp = this.derived.maxHp;
-                if(p.sp > this.derived.maxSp) p.sp = this.derived.maxSp;
-                UI.updateStatus();
+                if(p.hp > this.derived.maxHp) p.hp = this.derived.maxHp; if(p.sp > this.derived.maxSp) p.sp = this.derived.maxSp;
+                if(window.UI) UI.updateStatus();
             },
-
             addStat: function(statName, amtStr) {
-                let p = GameState.player;
-                let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount);
-                let statLimit = 99 + ((p.rebirthCount || 0) * 10) + rbSys.statCapBonus;
-                let sys = GameDB.system.FORMULAS;
-                let upgraded = false;
-
-                if (amtStr === 'max') {
-                    while(p.stats[statName] < statLimit) {
-                        let cost = sys.getStatCost(p.stats[statName]);
-                        if (p.statPts >= cost) {
-                            p.statPts -= cost; p.stats[statName]++; upgraded = true;
-                        } else { break; }
-                    }
-                } else {
-                    let addCount = parseInt(amtStr) || 1;
-                    for(let i=0; i<addCount; i++) {
-                        let cost = sys.getStatCost(p.stats[statName]);
-                        if (p.statPts >= cost && p.stats[statName] < statLimit) {
-                            p.statPts -= cost; p.stats[statName]++; upgraded = true;
-                        } else { break; }
-                    }
-                }
+                let p = GameState.player; let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount);
+                let statLimit = 99 + ((p.rebirthCount || 0) * 10) + rbSys.statCapBonus; let sys = GameDB.system.FORMULAS; let upgraded = false;
+                if (amtStr === 'max') { while(p.stats[statName] < statLimit) { let cost = sys.getStatCost(p.stats[statName]); if (p.statPts >= cost) { p.statPts -= cost; p.stats[statName]++; upgraded = true; } else { break; } } } 
+                else { let addCount = parseInt(amtStr) || 1; for(let i=0; i<addCount; i++) { let cost = sys.getStatCost(p.stats[statName]); if (p.statPts >= cost && p.stats[statName] < statLimit) { p.statPts -= cost; p.stats[statName]++; upgraded = true; } else { break; } } }
                 if(upgraded) this.calcStats();
             },
-            
             gainExp: function(bExp, jExp) {
-                let p = GameState.player;
-                let c = GameDB.classes.find(x => x.c_id === p.classId);
-                let sys = GameDB.system.FORMULAS;
-                let leveledUp = false;
-                let realBExp = Math.floor(bExp * this.derived.expMulti);
-                let realJExp = Math.floor(jExp * this.derived.jobExpMulti);
-
+                let p = GameState.player; let c = GameDB.classes.find(x => x.c_id === p.classId); let sys = GameDB.system.FORMULAS; let leveledUp = false;
+                let realBExp = Math.floor(bExp * this.derived.expMulti); let realJExp = Math.floor(jExp * this.derived.jobExpMulti);
                 Log.add(`獲得經驗值: Base ${formatNumber(realBExp)} / Job ${formatNumber(realJExp)}`, 'text-yellow-400', 'exp');
-
                 if (p.baseLv < GameDB.system.SETTINGS.MAX_LEVEL) {
-                    p.baseExp += realBExp;
-                    let reqB = sys.getBaseExpReq(p.baseLv);
-                    while (p.baseExp >= reqB && p.baseLv < GameDB.system.SETTINGS.MAX_LEVEL) {
-                        p.baseExp -= reqB; p.baseLv++; p.statPts += Math.floor(p.baseLv / 5) + 3;
-                        reqB = sys.getBaseExpReq(p.baseLv);
-                        Log.add(`Base Level 提升至 ${p.baseLv}!`, 'text-yellow-400 font-bold', 'system');
-                        leveledUp = true;
-                    }
+                    p.baseExp += realBExp; let reqB = sys.getBaseExpReq(p.baseLv);
+                    while (p.baseExp >= reqB && p.baseLv < GameDB.system.SETTINGS.MAX_LEVEL) { p.baseExp -= reqB; p.baseLv++; p.statPts += Math.floor(p.baseLv / 5) + 3; reqB = sys.getBaseExpReq(p.baseLv); Log.add(`Base Level 提升至 ${p.baseLv}!`, 'text-yellow-400 font-bold', 'system'); leveledUp = true; }
                     if (p.baseLv >= GameDB.system.SETTINGS.MAX_LEVEL) p.baseExp = 0;
                 }
-
                 if (p.jobLv < c.c_maxJob) {
-                    p.jobExp += realJExp;
-                    let tier = SystemExt.getJobTier(p.classId);
-                    let reqJ = sys.getJobExpReq(p.jobLv, tier);
-                    while (p.jobExp >= reqJ && p.jobLv < c.c_maxJob) {
-                        p.jobExp -= reqJ; p.jobLv++; p.skillPts++;
-                        reqJ = sys.getJobExpReq(p.jobLv, tier);
-                        Log.add(`Job Level 提升至 ${p.jobLv}!`, 'text-green-400 font-bold', 'system');
-                        leveledUp = true;
-                    }
+                    p.jobExp += realJExp; let tier = SystemExt.getJobTier(p.classId); let reqJ = sys.getJobExpReq(p.jobLv, tier);
+                    while (p.jobExp >= reqJ && p.jobLv < c.c_maxJob) { p.jobExp -= reqJ; p.jobLv++; p.skillPts++; reqJ = sys.getJobExpReq(p.jobLv, tier); Log.add(`Job Level 提升至 ${p.jobLv}!`, 'text-green-400 font-bold', 'system'); leveledUp = true; }
                     if (p.jobLv >= c.c_maxJob) p.jobExp = 0;
                 }
-                
-                if (leveledUp) {
-                    UI.updateMapSelect(); UI.checkJobChange(); UI.checkRebirth(); Skills.render();
-                    p.hp = 999999; p.sp = 999999; this.calcStats();
-                } else { UI.updateStatus(); }
+                if (leveledUp) { UI.updateMapSelect(); UI.checkJobChange(); UI.checkRebirth(); Skills.render(); p.hp = 999999; p.sp = 999999; this.calcStats(); } else { UI.updateStatus(); }
             },
-            
-            heal: function(hpAmt, spAmt) {
-                if(this.isDead) return;
-                let p = GameState.player;
-                if(hpAmt) p.hp = Math.min(this.derived.maxHp, p.hp + hpAmt);
-                if(spAmt) p.sp = Math.min(this.derived.maxSp, p.sp + spAmt);
-                UI.updateStatus();
-            },
-            
+            heal: function(hpAmt, spAmt) { if(this.isDead) return; let p = GameState.player; if(hpAmt) p.hp = Math.min(this.derived.maxHp, p.hp + hpAmt); if(spAmt) p.sp = Math.min(this.derived.maxSp, p.sp + spAmt); UI.updateStatus(); },
             takeDamage: function(amt) {
-                let p = GameState.player;
-                p.hp -= amt;
+                let p = GameState.player; p.hp -= amt;
                 if(p.hp <= 0) {
-                    p.hp = 0; p.isDead = true;
-                    Log.add('你已經死亡，等待復活...', 'text-red-500 font-bold', 'system');
-                    
-                    let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount);
-                    let leaf = GameState.inventory.item.find(i => i.id === 'hinalleLeaflet');
-
+                    p.hp = 0; p.isDead = true; Log.add('你已經死亡，等待復活...', 'text-red-500 font-bold', 'system');
+                    let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount); let leaf = GameState.inventory.item.find(i => i.id === 'hinalleLeaflet');
                     if (rbSys.autoRevive && GameState.autoConfig.autoRevive && leaf && leaf.amount > 0) {
-                        Bag.removeItemById('hinalleLeaflet', 1, 'item');
-                        Log.add('發動自動復活！消耗 1 片天地樹葉子。', 'text-green-400 font-bold', 'system');
-                        setTimeout(() => {
-                            p.isDead = false; p.hp = this.derived.maxHp; p.sp = this.derived.maxSp;
-                            Log.add('原地滿血復活！繼續戰鬥！', 'text-yellow-200', 'system');
-                            UI.updateStatus();
-                        }, 3000);
+                        Bag.removeItemById('hinalleLeaflet', 1, 'item'); Log.add('發動自動復活！消耗 1 片天地樹葉子。', 'text-green-400 font-bold', 'system');
+                        setTimeout(() => { p.isDead = false; p.hp = this.derived.maxHp; p.sp = this.derived.maxSp; Log.add('原地滿血復活！繼續戰鬥！', 'text-yellow-200', 'system'); UI.updateStatus(); }, 3000);
                     } else {
-                        setTimeout(() => {
-                            p.isDead = false; p.hp = Math.floor(this.derived.maxHp * 0.5); p.sp = Math.floor(this.derived.maxSp * 0.5);
-                            Log.add('復活了！已退回普隆德拉。', 'text-yellow-200', 'system');
-                            GameState.currentMap = 'prontera';
-                            GameState.currentMonster = null;
-                            let mapSel = document.getElementById('map-select'); mapSel.value = 'prontera'; mapSel.dispatchEvent(new Event('change'));
-                            UI.updateStatus();
-                        }, 5000);
+                        setTimeout(() => { p.isDead = false; p.hp = Math.floor(this.derived.maxHp * 0.5); p.sp = Math.floor(this.derived.maxSp * 0.5); Log.add('復活了！已退回普隆德拉。', 'text-yellow-200', 'system'); GameState.currentMap = 'prontera'; GameState.currentMonster = null; let mapSel = document.getElementById('map-select'); mapSel.value = 'prontera'; mapSel.dispatchEvent(new Event('change')); UI.updateStatus(); }, 5000);
                     }
                 }
                 UI.updateStatus();
             },
-
-            rebirth: function() {
-                let p = GameState.player;
-                if(p.baseLv < 120) return;
-                p.rebirthCount = (p.rebirthCount || 0) + 1;
-                
-                p.cash = (p.cash || 0) + 1000;
+            confirmRebirth: function() {
+                let p = GameState.player; if(p.baseLv < 120) return;
+                p.rebirthCount = (p.rebirthCount || 0) + 1; p.cash = (p.cash || 0) + 1000;
                 Log.add(`轉生成功！獲得 1,000 Cash 獎勵！`, 'text-blue-300 font-bold', 'system');
-
-                BuffManager.add('轉生爆發', '🔥', 10000, { atk: 100 });
-                Log.add(`獲得轉生爆發狀態，ATK暴增 100 點維持 10 秒！`, 'text-orange-400 font-bold', 'system');
-
+                BuffManager.add('轉生爆發', '🔥', 10000, { atk: 100 }); Log.add(`獲得轉生爆發狀態，ATK暴增 100 點維持 10 秒！`, 'text-orange-400 font-bold', 'system');
                 p.classId = 'novice'; p.baseLv = 1; p.baseExp = 0; p.jobLv = 1; p.jobExp = 0;
-                p.stats = { str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 };
-                p.statPts = 48 + (p.rebirthCount * 100); p.skillPts = 0;
+                p.stats = { str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 }; p.statPts = 48 + (p.rebirthCount * 100); p.skillPts = 0;
                 GameState.skills = { 'n_basic': 1, 'n_playdead': 1, 'n_firstaid': 1 };
                 
-                GameDB.system.SETTINGS.EQUIPMENT_SLOTS.forEach(slot => {
-                    let eq = GameState.equipped[slot];
-                    if(eq) {
-                        let def = GameDB.equipFlat[eq.id];
-                        if(def.i1_reqLevel > 1 || (!def.i1_reqClass.includes('all') && !def.i1_reqClass.includes('novice'))) { Bag.unequipItem(slot, false); }
-                    }
-                });
+                GameDB.system.SETTINGS.EQUIPMENT_SLOTS.forEach(slot => { let eq = GameState.equipped[slot]; if(eq) { let def = GameDB.equipFlat[eq.id]; if(def.i1_reqLevel > 1 || (!def.i1_reqClass.includes('all') && !def.i1_reqClass.includes('novice'))) { Bag.unequipItem(slot, false); } } });
                 
                 this.calcStats(); p.hp = this.derived.maxHp; p.sp = this.derived.maxSp;
-                UI.updateHeader(); UI.checkJobChange(); UI.checkRebirth(); UI.updateMapSelect(); Skills.render(); Hotkeys.render();
-                UI.showToast(`轉生成功！目前轉生次數：${p.rebirthCount}`, 'bg-purple-600 text-white');
-                
-                if (p.rebirthCount >= 50) {
-                    setTimeout(() => { UI.openJobChange(); }, 500);
-                } else if (p.rebirthCount >= 15) {
-                    p.jobLv = 10;
-                    GameState.skills['n_basic'] = 10;
-                    GameState.skills['n_playdead'] = 1;
-                    GameState.skills['n_firstaid'] = 1;
-                    setTimeout(() => { UI.openJobChange(); }, 500);
-                }
+                UI.updateHeader(); UI.checkJobChange(); UI.checkRebirth(); UI.updateMapSelect(); Skills.render(); Hotkeys.render(); UI.closeModal('modal-rebirth'); UI.showToast(`轉生成功！目前轉生次數：${p.rebirthCount}`, 'bg-purple-600 text-white');
+                if (p.rebirthCount >= 50) { setTimeout(() => { UI.openJobChange(); }, 500); } else if (p.rebirthCount >= 15) { p.jobLv = 10; GameState.skills['n_basic'] = 10; GameState.skills['n_playdead'] = 1; GameState.skills['n_firstaid'] = 1; setTimeout(() => { UI.openJobChange(); }, 500); }
             }
         };
 
         const Combat = {
             initMapMonsters: function(mapId) {
                 GameState.mapMonsters = [];
-                for(let i=0; i<5; i++) {
-                    let m = this.spawnMonster(mapId);
-                    if(m) {
-                        m.uid = Date.now().toString() + '_' + Math.random().toString().slice(2) + '_' + i;
-                        GameState.mapMonsters.push(m);
-                    }
-                }
-                GameState.currentMonster = GameState.mapMonsters[0] || null;
-                UI.updateMapMonsters();
-                UI.updateMonster();
+                for(let i=0; i<5; i++) { let m = this.spawnMonster(mapId); if(m) { m.uid = Date.now().toString() + '_' + Math.random().toString().slice(2) + '_' + i; GameState.mapMonsters.push(m); } }
+                GameState.currentMonster = GameState.mapMonsters[0] || null; UI.updateMapMonsters(); UI.updateMonster();
             },
             engageMonster: function(uid) {
-                if(GameState.player.isDead) return;
-                let m = GameState.mapMonsters.find(x => x.uid === uid);
-                if(m && GameState.currentMonster !== m && m.hp > 0) {
-                    GameState.currentMonster = m;
-                    GameState.autoAttackTimer = Date.now() + 500;
-                    GameState.monsterAttackTimer = Date.now() + 1500;
-                    UI.updateMonster();
-                    UI.updateMapMonsters();
-                    Log.add(`轉向攻擊目標：${m.name}!`, 'text-blue-300', 'system');
-                }
+                if(GameState.player.isDead) return; let m = GameState.mapMonsters.find(x => x.uid === uid);
+                if(m && GameState.currentMonster !== m && m.hp > 0) { GameState.currentMonster = m; GameState.autoAttackTimer = Date.now() + 500; GameState.monsterAttackTimer = Date.now() + 1500; UI.updateMonster(); UI.updateMapMonsters(); Log.add(`轉向攻擊目標：${m.name}!`, 'text-blue-300', 'system'); }
             },
             spawnMonster: function(mapId) {
-                if(!mapId) return null;
-                let spawnList = GameDB.mapmon[mapId];
-                if(!spawnList) return null;
-                let totalWeight = spawnList.reduce((sum, item) => sum + item[1], 0);
-                let rnd = Math.random() * totalWeight; let sum = 0, monId = null;
-                for(let item of spawnList) { sum += item[1]; if(rnd <= sum) { monId = item[0]; break; } }
-                let monTemplate = GameDB.monsters.find(m => m.mon_id === monId);
-                if(!monTemplate) return null;
+                if(!mapId) return null; let spawnList = GameDB.mapmon[mapId]; if(!spawnList) return null;
+                let hasBoss = GameState.mapMonsters.some(m => m.hp > 0 && (m.name.includes('MVP') || m.name.includes('BOSS')));
+                let availableSpawns = spawnList.filter(item => { let monTemplate = GameDB.monsters.find(m => m.mon_id === item[0]); if (!monTemplate) return false; let isBoss = monTemplate.mon_name.includes('MVP') || monTemplate.mon_name.includes('BOSS'); if (hasBoss && isBoss) return false; return true; });
+                if (availableSpawns.length === 0) availableSpawns = spawnList; 
+                let totalWeight = availableSpawns.reduce((sum, item) => sum + item[1], 0); let rnd = Math.random() * totalWeight; let sum = 0, monId = null;
+                for(let item of availableSpawns) { sum += item[1]; if(rnd <= sum) { monId = item[0]; break; } }
+                let monTemplate = GameDB.monsters.find(m => m.mon_id === monId); if(!monTemplate) return null;
                 return { id: monTemplate.mon_id, name: monTemplate.mon_name, emoji: monTemplate.mon_emoji, lv: monTemplate.mon_lv, hp: monTemplate.mon_hp, maxHp: monTemplate.mon_hp, atk: monTemplate.mon_atk, def: monTemplate.mon_def, hit: monTemplate.mon_hit, flee: monTemplate.mon_flee, element: monTemplate.mon_element, size: monTemplate.mon_size, bExp: monTemplate.mon_baseExp, jExp: monTemplate.mon_jobExp, zeny: monTemplate.mon_gold, dropRate: monTemplate.mon_dropRate };
             },
             tick: function(now) {
                 if(GameState.player.isDead) return;
                 
-                if(!GameState.currentMonster && GameState.mapMonsters && GameState.mapMonsters.length > 0) {
-                    GameState.currentMonster = GameState.mapMonsters.find(m => m.hp > 0) || GameState.mapMonsters[0];
-                    if (GameState.currentMonster) {
-                        UI.updateMonster();
-                        UI.updateMapMonsters();
-                        GameState.monsterAttackTimer = now + 1500;
-                    }
+                if (GameState.mapMonsters.length < 5) {
+                    let safeBreak = 0;
+                    while (GameState.mapMonsters.length < 5 && safeBreak < 10) { let m = this.spawnMonster(GameState.currentMap); if (m) { m.uid = Date.now().toString() + '_' + Math.random().toString().slice(2) + '_' + GameState.mapMonsters.length; GameState.mapMonsters.push(m); } safeBreak++; }
+                    UI.updateMapMonsters();
+                }
+
+                if(!GameState.currentMonster) {
+                    let alive = GameState.mapMonsters.filter(m => m.hp > 0);
+                    if (alive.length > 0) { GameState.currentMonster = alive[Math.floor(Math.random() * alive.length)]; UI.updateMonster(); UI.updateMapMonsters(); GameState.monsterAttackTimer = now + 1500; }
                 }
                 
                 if(!GameState.currentMonster) return;
-                
-                let pDelay = (200 - Player.derived.aspd) * 20; 
-                if(now - GameState.autoAttackTimer > pDelay) { this.processPlayerAttack(); GameState.autoAttackTimer = now; }
+                let pDelay = (200 - Player.derived.aspd) * 20; if(now - GameState.autoAttackTimer > pDelay) { this.processPlayerAttack(); GameState.autoAttackTimer = now; }
                 if(now - GameState.monsterAttackTimer > 1500) { if (GameState.currentMonster) this.processMonsterAttack(); GameState.monsterAttackTimer = now; }
             },
             processPlayerAttack: function() {
-                let m = GameState.currentMonster;
-                if (!m) return;
+                let m = GameState.currentMonster; if (!m) return;
                 let hitChance = 80 + Player.derived.hit - m.flee; hitChance = Math.max(5, Math.min(100, hitChance));
-                let isDouble = false;
-                if (GameState.skills['t_double']) {
-                    let w = GameState.equipped.weapon;
-                    if (w && GameDB.equipFlat[w.id] && GameDB.equipFlat[w.id].i1_type === 'dagger') { if (Math.random() * 100 < GameState.skills['t_double'] * 5) isDouble = true; }
-                }
-                let dmg = 0; let isCrit = false;
-                if(Math.random() * 100 < Player.derived.crit) { isCrit = true; dmg = Player.derived.atk * 1.4; } 
-                else if (Math.random() * 100 <= hitChance) { dmg = Math.max(1, Player.derived.atk - (m.def * 0.5)); }
+                let dmg = 0; let isCrit = false; let hits = 1; let isDouble = false;
+                
+                if (Player.bonuses.doubleHitChance && Math.random() * 100 < Player.bonuses.doubleHitChance) { isDouble = true; hits = 2; }
+                if (Player.bonuses.autoCombo1Chance && Math.random() * 100 < Player.bonuses.autoCombo1Chance) { hits = 3; BuffManager.add('連技-六合拳', '🤜', 5000, {}, 'combo1'); Log.add(`發動六合拳 (3連擊)!`, 'text-purple-300 font-bold', 'system'); }
+                
+                if(Math.random() * 100 < Player.derived.crit) { isCrit = true; dmg = Player.derived.atk * 1.4; } else if (Math.random() * 100 <= hitChance) { dmg = Math.max(1, Player.derived.atk - (m.def * 0.5)); }
+                
                 if(dmg > 0) {
                     dmg = Math.floor(dmg);
-                    if (isDouble) {
-                        m.hp -= (dmg * 2);
-                        Log.add(`你對 ${m.name} 造成 ${formatNumber(dmg*2)} 傷害 (二刀連擊!)`, 'text-yellow-300', 'dmgDealt');
-                        Visuals.showDamage(formatNumber(dmg), false, 'visual-monster'); Visuals.animHit('visual-monster');
-                        setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(dmg), false, 'visual-monster'); Visuals.animHit('visual-monster'); } }, 150);
-                    } else {
+                    for(let i=0; i<hits; i++) {
                         m.hp -= dmg;
-                        Visuals.showDamage(formatNumber(dmg), isCrit, 'visual-monster'); Visuals.animHit('visual-monster');
-                        Log.add(`你對 ${m.name} 造成 ${formatNumber(dmg)} 傷害`, isCrit ? 'text-orange-400' : 'text-white', 'dmgDealt');
+                        setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(dmg), isCrit, 'visual-monster'); Visuals.animHit('visual-monster'); } }, i * 150);
                     }
+                    Log.add(`你對 ${m.name} 造成 ${formatNumber(dmg * hits)} 傷害${hits>1?' ('+hits+'連擊)':''}`, isCrit ? 'text-orange-400' : 'text-white', 'dmgDealt');
+                    
+                    if (Player.bonuses.autoWargChance && Math.random() * 100 < Player.bonuses.autoWargChance) {
+                        let wDmg = Math.floor(Player.derived.atk * 2.0); m.hp -= wDmg;
+                        Log.add(`狼突擊對 ${m.name} 造成 ${formatNumber(wDmg)} 真實傷害!`, 'text-blue-300 font-bold', 'dmgDealt');
+                        setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(wDmg), true, 'visual-monster'); Visuals.animHit('visual-monster'); } }, hits * 150);
+                    }
+
                     if(m.hp <= 0) this.onMonsterKill(m);
                 } else { Visuals.showDamage('Miss', false, 'visual-monster'); }
                 UI.updateMonsterHp();
             },
             processMonsterAttack: function() {
-                let m = GameState.currentMonster;
-                if (!m) return;
+                let m = GameState.currentMonster; if (!m) return;
+                let def = Player.derived.def;
+                if (m.debuffs && m.debuffs.atkPct) m.atk = m.atk * (1 + m.debuffs.atkPct/100);
                 let hitChance = 80 + m.hit - Player.derived.flee; hitChance = Math.max(5, Math.min(100, hitChance));
                 if(Math.random() * 100 <= hitChance) {
-                    let dmg = Math.max(1, m.atk - (Player.derived.def * 0.5)); dmg = Math.floor(dmg);
-                    Player.takeDamage(dmg);
+                    let dmg = Math.max(1, m.atk - (def * 0.5)); dmg = Math.floor(dmg); Player.takeDamage(dmg);
                     Visuals.showDamage(formatNumber(dmg), false, 'visual-player'); Visuals.animHit('visual-player');
                     Log.add(`${m.name} 對你造成 ${formatNumber(dmg)} 傷害`, 'text-red-400', 'dmgTaken');
                 } else { Visuals.showDamage('Miss', false, 'visual-player'); }
             },
             processSkillAttack: function(sDef, lv) {
-                let m = GameState.currentMonster;
-                if (!m) return;
-                let extras = sDef.sk_extras;
+                let m = GameState.currentMonster; if (!m) return; let extras = sDef.sk_extras;
                 let dmgMulti = extras?.dmgMulti ? (typeof extras.dmgMulti === 'function' ? extras.dmgMulti(lv) : extras.dmgMulti) : 1.0;
                 let hits = extras?.hits ? (typeof extras.hits === 'function' ? extras.hits(lv) : extras.hits) : 1;
-                let baseDmg = Player.derived.atk * dmgMulti; 
-                let desc = sDef.sk_desc(lv);
-                if (desc.includes('魔法') || desc.includes('屬性傷害')) { if(!desc.includes('物理')) baseDmg = Player.derived.matk * dmgMulti; }
-                let totalDmgDone = 0;
+                let baseDmg = Player.derived.atk;
+                let desc = sDef.sk_desc(lv); if (desc.includes('魔法') || desc.includes('屬性傷害')) { if(!desc.includes('物理')) baseDmg = Player.derived.matk; }
+                
+                if (extras?.hpSpScalingDmg) { baseDmg += Math.floor(Player.derived.maxHp * 0.1 + Player.derived.maxSp * 0.5); }
+                if (extras?.apCost) { baseDmg *= 3; } 
+                baseDmg *= dmgMulti;
+                
+                let targetDef = m.def; 
+                if (m.debuffs && m.debuffs.defPct) targetDef = targetDef * (1 + m.debuffs.defPct/100);
+                if (extras?.ignoreDef || (extras?.ignoreDefPct && Math.random()*100 < extras.ignoreDefPct)) targetDef = 0;
+
+                let totalDmgDone = 0; let isCrit = extras?.canCrit || extras?.autoCrit ? true : false;
+                if (extras?.autoCrit) { baseDmg *= 1.5; }
+                
                 for (let i = 0; i < hits; i++) {
-                    let dmg = Math.max(1, baseDmg - (m.def * 0.3)); dmg = Math.floor(dmg); totalDmgDone += dmg;
-                    setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(dmg), true, 'visual-monster'); Visuals.animHit('visual-monster'); } }, i * 150);
+                    let dmg = Math.max(1, baseDmg - (targetDef * 0.3)); dmg = Math.floor(dmg); totalDmgDone += dmg;
+                    setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(dmg), isCrit, 'visual-monster'); Visuals.animHit('visual-monster'); } }, i * 150);
                 }
+                
                 m.hp -= totalDmgDone;
                 Log.add(`使用 ${sDef.sk_name} 對 ${m.name} 造成 ${formatNumber(totalDmgDone)} 傷害! (${hits}連擊)`, 'text-purple-400 font-bold', 'dmgDealt');
-                if(m.hp <= 0) this.onMonsterKill(m);
-                UI.updateMonsterHp();
+                
+                if (extras?.debuffAttr) {
+                    let debuffObj = typeof extras.debuffAttr === 'function' ? extras.debuffAttr(lv) : extras.debuffAttr;
+                    if (!m.debuffs) m.debuffs = {}; Object.assign(m.debuffs, debuffObj);
+                    Log.add(`${m.name} 受到狀態影響！`, 'text-gray-400', 'system');
+                }
+
+                if(m.hp <= 0) this.onMonsterKill(m); UI.updateMonsterHp();
             },
             onMonsterKill: function(m) {
                 Log.add(`擊敗了 ${m.name}! 獲得 ${formatNumber(m.zeny)} Z`, 'text-yellow-400 font-bold', 'system');
                 Player.gainExp(m.bExp, m.jExp); GameState.player.zeny += m.zeny; this.rollDrop(m);
-                
-                if (m.name.includes('MVP')) {
-                    let rnd = 0.1 + Math.random() * 0.8;
-                    let cashDrop = Math.round((m.lv / 10 * 0.5) * rnd);
-                    if (cashDrop > 0) {
-                        GameState.player.cash = (GameState.player.cash || 0) + cashDrop;
-                        Log.add(`【MVP擊殺】額外獲得 ${formatNumber(cashDrop)} Cash！`, 'text-blue-300 font-bold', 'system');
-                    }
-                }
+                if (m.name.includes('MVP')) { let cashDrop = Math.round((m.lv / 10 * 0.5) * (0.1 + Math.random() * 0.8)); if (cashDrop > 0) { GameState.player.cash = (GameState.player.cash || 0) + cashDrop; Log.add(`【MVP擊殺】額外獲得 ${formatNumber(cashDrop)} Cash！`, 'text-blue-300 font-bold', 'system'); } }
 
-                // Replace the dead monster in the interactive list
                 let idx = GameState.mapMonsters.findIndex(x => x.uid === m.uid);
-                if (idx !== -1) {
-                    let newM = this.spawnMonster(GameState.currentMap);
-                    if(newM) {
-                        newM.uid = Date.now().toString() + '_' + Math.random().toString().slice(2) + '_' + idx;
-                        GameState.mapMonsters[idx] = newM;
-                    }
-                }
-
+                if (idx !== -1) { GameState.mapMonsters.splice(idx, 1); }
                 GameState.currentMonster = null; 
+                let alive = GameState.mapMonsters.filter(x => x.hp > 0);
+                if(alive.length > 0) GameState.currentMonster = alive[Math.floor(Math.random() * alive.length)];
+                
                 UI.updateMonster(); UI.updateHeader(); UI.updateMapMonsters();
             },
             rollDrop: function(m) {
                 let realDropRate = m.dropRate * Player.derived.dropMulti;
-                if(Math.random() < realDropRate) {
-                    let dropPool = GameDB.items.filter(i => i.i2_cost < 1000);
-                    if(dropPool.length > 0) {
-                        let item = dropPool[Math.floor(Math.random() * dropPool.length)];
-                        Bag.addItem(item.i2_id, 1, 'item');
-                        Log.add(`獲得物品: ${item.i2_name}`, 'text-blue-300', 'drops');
-                    }
-                }
+                if(Math.random() < realDropRate) { let dropPool = GameDB.items.filter(i => i.i2_cost < 1000); if(dropPool.length > 0) { let item = dropPool[Math.floor(Math.random() * dropPool.length)]; Bag.addItem(item.i2_id, 1, 'item'); Log.add(`獲得物品: ${item.i2_name}`, 'text-blue-300', 'drops'); } }
                 let equipDropChance = m.name.includes('MVP') ? 1.0 : (0.15 + realDropRate * 0.5);
-                if (Math.random() < equipDropChance) {
-                    let mLevel = m.lv || 1;
-                    let eqPool = Object.values(GameDB.equipFlat).filter(eq => Math.abs(eq.i1_reqLevel - mLevel) <= 20 || eq.i1_reqLevel <= mLevel);
-                    if (eqPool.length === 0) eqPool = Object.values(GameDB.equipFlat);
-                    if(eqPool.length > 0) {
-                        let eq = eqPool[Math.floor(Math.random() * eqPool.length)];
-                        Bag.addItem(eq.i1_id, 1, 'equip');
-                        Log.add(`獲得裝備: ${eq.i1_name}`, 'text-fuchsia-400 font-bold', 'drops');
-                    }
-                }
+                if (Math.random() < equipDropChance) { let mLevel = m.lv || 1; let eqPool = Object.values(GameDB.equipFlat).filter(eq => Math.abs(eq.i1_reqLevel - mLevel) <= 20 || eq.i1_reqLevel <= mLevel); if (eqPool.length === 0) eqPool = Object.values(GameDB.equipFlat); if(eqPool.length > 0) { let eq = eqPool[Math.floor(Math.random() * eqPool.length)]; Bag.addItem(eq.i1_id, 1, 'equip'); Log.add(`獲得裝備: ${eq.i1_name}`, 'text-fuchsia-400 font-bold', 'drops'); } }
             }
         };
 
         const AutoSystem = {
             tick: function(now) {
                 if (GameState.player.isDead) return;
-                let p = GameState.player; let d = Player.derived; let cfg = GameState.autoConfig; let t = GameState.autoTimers;
-                let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount);
-
+                let p = GameState.player; let d = Player.derived; let cfg = GameState.autoConfig; let t = GameState.autoTimers; let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount);
                 if (rbSys.autoHp && now - t.hp > 1000 && ((p.hp / d.maxHp) * 100 <= cfg.hpPct)) { let hk = GameState.hotkeys[4]; if (hk && hk.type === 'item') { let item = GameState.inventory.item.find(i => i.id === hk.id); if (item && item.amount > 0) { Bag.useItem(hk.id); t.hp = now; } } }
                 if (rbSys.autoSp && now - t.sp > 1000 && ((p.sp / d.maxSp) * 100 <= cfg.spPct)) { let hk = GameState.hotkeys[5]; if (hk && hk.type === 'item') { let item = GameState.inventory.item.find(i => i.id === hk.id); if (item && item.amount > 0) { Bag.useItem(hk.id); t.sp = now; } } }
                 if (rbSys.autoSkill1 && now - t.s1 > cfg.s1Interval * 1000) { let hk = GameState.hotkeys[6]; if (hk && hk.type === 'skill' && GameState.skills[hk.id] > 0) { Skills.useSkill(hk.id, true); t.s1 = now; } }
@@ -1201,28 +950,10 @@
                 GameState.player.zeny -= cost;
                 let chance = 100; if(eq.refine >= 4) chance = 60; if(eq.refine >= 7) chance = 40; if(eq.refine >= 10) chance = 20; if(eq.refine >= 14) chance = 10;
                 let roll = Math.random() * 100;
-                if(roll <= chance) { 
-                    eq.refine++; 
-                    UI.showToast(`精煉成功！達到 +${eq.refine}`, 'bg-green-600 text-white'); 
-                    Log.add(`精煉成功！達到 +${eq.refine}，消耗 ${formatNumber(cost)} Z`, 'text-green-400', 'system'); 
-                } 
-                else { 
-                    if(eq.refine >= 15 && Math.random() < 0.01) { 
-                        UI.showToast(`精煉失敗，裝備爆裂摧毀了！`, 'bg-red-600 text-white'); 
-                        Log.add(`精煉失敗，裝備爆裂摧毀了！消耗 ${formatNumber(cost)} Z`, 'text-red-500 font-bold', 'system'); 
-                        GameState.equipped[slot] = null; 
-                    } else { 
-                        UI.showToast(`精煉失敗。裝備保持原樣。`, 'bg-gray-700 text-white'); 
-                        Log.add(`精煉失敗。消耗 ${formatNumber(cost)} Z`, 'text-gray-400', 'system'); 
-                    } 
-                }
+                if(roll <= chance) { eq.refine++; UI.showToast(`精煉成功！達到 +${eq.refine}`, 'bg-green-600 text-white'); Log.add(`精煉成功！達到 +${eq.refine}，消耗 ${formatNumber(cost)} Z`, 'text-green-400', 'system'); } 
+                else { if(eq.refine >= 15 && Math.random() < 0.01) { UI.showToast(`精煉失敗，裝備爆裂摧毀了！`, 'bg-red-600 text-white'); Log.add(`精煉失敗，裝備爆裂摧毀了！消耗 ${formatNumber(cost)} Z`, 'text-red-500 font-bold', 'system'); GameState.equipped[slot] = null; } else { UI.showToast(`精煉失敗。裝備保持原樣。`, 'bg-gray-700 text-white'); Log.add(`精煉失敗。消耗 ${formatNumber(cost)} Z`, 'text-gray-400', 'system'); } }
                 Player.calcStats(); UI.updateHeader(); Bag.render();
-                
-                if(GameState.equipped[slot]) {
-                    Bag.openEquipAction(slot);
-                } else {
-                    UI.closeModal('modal-equip-action');
-                }
+                if(GameState.equipped[slot]) { Bag.openEquipAction(slot); } else { UI.closeModal('modal-equip-action'); }
             }
         };
 
@@ -1230,131 +961,44 @@
             currentTab: 'equip',
             addItem: function(id, amount = 1, type = 'item') {
                 let slot = GameState.inventory[type].find(i => i.id === id);
-                if(slot && type === 'item') { slot.amount += amount; } 
-                else {
-                    if(type === 'equip') GameState.inventory.equip.push({ uid: Date.now()+Math.random(), id: id, refine: 0 });
-                    else GameState.inventory.item.push({ id: id, amount: amount });
-                }
-                if(document.getElementById('modal-bag').classList.contains('hide') === false) this.render();
+                if(slot && type === 'item') { slot.amount += amount; } else { if(type === 'equip') GameState.inventory.equip.push({ uid: Date.now()+Math.random(), id: id, refine: 0 }); else GameState.inventory.item.push({ id: id, amount: amount }); }
+                if(!document.getElementById('modal-bag').classList.contains('hide')) this.render();
             },
-            removeItemByUid: function(uid, type='equip') {
-                 GameState.inventory[type] = GameState.inventory[type].filter(i => String(i.uid) !== String(uid));
-                 if(document.getElementById('modal-bag').classList.contains('hide') === false) this.render();
-            },
-            removeItemById: function(id, amt=1, type='item') {
-                 let slot = GameState.inventory[type].find(i => i.id === id);
-                 if(slot) {
-                     slot.amount -= amt;
-                     if(slot.amount <= 0) GameState.inventory[type] = GameState.inventory[type].filter(i => i.id !== id);
-                 }
-                 if(document.getElementById('modal-bag').classList.contains('hide') === false) this.render();
-            },
-            switchTab: function(tab) {
-                this.currentTab = tab;
-                document.getElementById('tab-equip').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab');
-                document.getElementById('tab-item').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab');
-                document.getElementById(`tab-${tab}`).classList.add('bg-blue-900/50', 'border-blue-700', 'active-tab');
-                document.getElementById('bag-actions-equip').style.display = tab === 'equip' ? 'flex' : 'none';
-                document.getElementById('bag-current-equips').style.display = tab === 'equip' ? 'flex' : 'none';
-                this.render();
-            },
+            removeItemByUid: function(uid, type='equip') { GameState.inventory[type] = GameState.inventory[type].filter(i => String(i.uid) !== String(uid)); if(!document.getElementById('modal-bag').classList.contains('hide')) this.render(); },
+            removeItemById: function(id, amt=1, type='item') { let slot = GameState.inventory[type].find(i => i.id === id); if(slot) { slot.amount -= amt; if(slot.amount <= 0) GameState.inventory[type] = GameState.inventory[type].filter(i => i.id !== id); } if(!document.getElementById('modal-bag').classList.contains('hide')) this.render(); },
+            switchTab: function(tab) { this.currentTab = tab; document.getElementById('tab-equip').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab'); document.getElementById('tab-item').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab'); document.getElementById(`tab-${tab}`).classList.add('bg-blue-900/50', 'border-blue-700', 'active-tab'); document.getElementById('bag-actions-equip').style.display = tab === 'equip' ? 'flex' : 'none'; document.getElementById('bag-current-equips').style.display = tab === 'equip' ? 'flex' : 'none'; this.render(); },
             openEquipAction: function(slot) {
-                let eq = GameState.equipped[slot];
-                if(!eq) return;
-                
-                let def = GameDB.equipFlat[eq.id];
-                let rarity = SystemExt.getEquipRarity(def.i1_reqLevel);
-                let rbSys = SystemExt.getRebirthBonuses(GameState.player.rebirthCount);
-                
-                let actualPct = rarity.pct + rbSys.refineBonus;
-                let currentMulti = eq.refine * actualPct;
-                let nextMulti = (eq.refine + 1) * actualPct;
-
-                let chance = 100; if(eq.refine >= 4) chance = 60; if(eq.refine >= 7) chance = 40; if(eq.refine >= 10) chance = 20; if(eq.refine >= 14) chance = 10;
-                let cost = (eq.refine + 1) * 1000;
-
+                let eq = GameState.equipped[slot]; if(!eq) return;
+                let def = GameDB.equipFlat[eq.id]; let rarity = SystemExt.getEquipRarity(def.i1_reqLevel); let rbSys = SystemExt.getRebirthBonuses(GameState.player.rebirthCount);
+                let actualPct = rarity.pct + rbSys.refineBonus; let currentMulti = eq.refine * actualPct; let nextMulti = (eq.refine + 1) * actualPct;
+                let chance = 100; if(eq.refine >= 4) chance = 60; if(eq.refine >= 7) chance = 40; if(eq.refine >= 10) chance = 20; if(eq.refine >= 14) chance = 10; let cost = (eq.refine + 1) * 1000;
                 let statsHtml = '';
-                for(let k in def.i1_attr) {
-                     let baseVal = def.i1_attr[k];
-                     let curVal = Math.floor(baseVal * (1 + currentMulti));
-                     let nextVal = Math.floor(baseVal * (1 + nextMulti));
-                     let diff = nextVal - curVal;
-                     let diffHtml = diff > 0 ? `<span class="text-green-400 font-bold ml-1">(+${formatNumber(diff)})</span>` : '';
-                     statsHtml += `<div class="flex justify-between text-xs text-gray-300 border-b border-gray-700 py-1.5 last:border-0"><span>${k.toUpperCase()}</span> <span>${formatNumber(curVal)} ${diffHtml}</span></div>`;
-                }
-
-                document.getElementById('equip-action-title').innerHTML = `<span class="${rarity.color}">+${eq.refine} ${def.i1_name}</span>`;
-                document.getElementById('equip-action-stats').innerHTML = statsHtml;
-                document.getElementById('equip-action-info').innerHTML = `
-                    <div class="text-xs text-gray-400 mb-1">部位: ${def.i1_type} | 階級: ${rarity.name} (每階+${(actualPct*100).toFixed(0)}%)</div>
-                    <div class="text-[11px] text-yellow-300">精煉 +${eq.refine + 1} 成功率: <span class="font-bold text-yellow-100">${chance}%</span></div>
-                `;
-
-                document.getElementById('btn-equip-refine').onclick = () => { Smith.refine(slot); }; 
-                document.getElementById('btn-equip-refine').innerText = `精煉 (-${formatNumber(cost)} Zeny)`;
-                document.getElementById('btn-equip-unequip').onclick = () => { this.unequipItem(slot); UI.closeModal('modal-equip-action'); };
-
+                for(let k in def.i1_attr) { let baseVal = def.i1_attr[k]; let curVal = Math.floor(baseVal * (1 + currentMulti)); let nextVal = Math.floor(baseVal * (1 + nextMulti)); let diff = nextVal - curVal; let diffHtml = diff > 0 ? `<span class="text-green-400 font-bold ml-1">(+${formatNumber(diff)})</span>` : ''; statsHtml += `<div class="flex justify-between text-xs text-gray-300 border-b border-gray-700 py-1.5 last:border-0"><span>${k.toUpperCase()}</span> <span>${formatNumber(curVal)} ${diffHtml}</span></div>`; }
+                document.getElementById('equip-action-title').innerHTML = `<span class="${rarity.color}">+${eq.refine} ${def.i1_name}</span>`; document.getElementById('equip-action-stats').innerHTML = statsHtml; document.getElementById('equip-action-info').innerHTML = `<div class="text-xs text-gray-400 mb-1">部位: ${def.i1_type} | 階級: ${rarity.name} (每階+${(actualPct*100).toFixed(0)}%)</div><div class="text-[11px] text-yellow-300">精煉 +${eq.refine + 1} 成功率: <span class="font-bold text-yellow-100">${chance}%</span></div>`;
+                document.getElementById('btn-equip-refine').onclick = () => { Smith.refine(slot); }; document.getElementById('btn-equip-refine').innerText = `精煉 (-${formatNumber(cost)} Zeny)`; document.getElementById('btn-equip-unequip').onclick = () => { this.unequipItem(slot); UI.closeModal('modal-equip-action'); };
                 UI.openModal('modal-equip-action');
             },
             render: function() {
-                let total = GameState.inventory.equip.length + GameState.inventory.item.length;
-                document.getElementById('txt-bag-count').innerText = `(${total}/${GameDB.system.SETTINGS.INVENTORY_SLOTS})`;
-
+                let total = GameState.inventory.equip.length + GameState.inventory.item.length; document.getElementById('txt-bag-count').innerText = `(${total}/${GameDB.system.SETTINGS.INVENTORY_SLOTS})`;
                 if(this.currentTab === 'equip') {
-                    const leftSlots = ['helm', 'armor', 'weapon', 'shield'];
-                    const rightSlots = ['garment', 'shoes', 'acc1', 'acc2'];
+                    const leftSlots = ['helm', 'armor', 'weapon', 'shield']; const rightSlots = ['garment', 'shoes', 'acc1', 'acc2'];
                     const renderSlot = (slot, containerId) => {
-                        const container = document.getElementById(containerId);
-                        let currentEq = GameState.equipped[slot];
-                        let div = document.createElement('div');
+                        const container = document.getElementById(containerId); let currentEq = GameState.equipped[slot]; let div = document.createElement('div');
                         if (currentEq) {
-                            let def = GameDB.equipFlat[currentEq.id];
-                            let rarity = SystemExt.getEquipRarity(def.i1_reqLevel);
-                            div.className = 'w-full bg-gray-800 border border-gray-600 flex items-center gap-2 p-1 text-xs cursor-pointer hover:border-yellow-500 rounded h-10 transition-colors shadow-sm';
-                            div.onclick = () => Bag.openEquipAction(slot);
-                            div.innerHTML = `
-                                <div class="text-2xl w-8 text-center shrink-0 pointer-events-none">${this.getEquipIcon(def.i1_type)}</div>
-                                <div class="flex-1 overflow-hidden leading-tight pointer-events-none">
-                                    <div class="truncate ${rarity.color} font-bold text-[11px]">+${currentEq.refine} ${def.i1_name}</div>
-                                    <div class="text-[9px] text-gray-400">點擊操作 (精煉/卸下)</div>
-                                </div>
-                            `;
-                        } else {
-                            div.className = 'w-full bg-gray-800 border border-gray-600 flex items-center gap-2 p-1 text-xs rounded h-10';
-                            div.innerHTML = `<div class="text-2xl w-8 text-center shrink-0 opacity-30">${this.getEquipIcon(slot.includes('acc') ? 'acc' : slot)}</div><div class="text-gray-500 opacity-50 flex-1 truncate text-[10px] uppercase">${slot.replace(/[0-9]/g, '')}</div>`;
-                        }
+                            let def = GameDB.equipFlat[currentEq.id]; let rarity = SystemExt.getEquipRarity(def.i1_reqLevel); div.className = 'w-full bg-gray-800 border border-gray-600 flex items-center gap-2 p-1 text-xs cursor-pointer hover:border-yellow-500 rounded h-10 transition-colors shadow-sm'; div.onclick = () => Bag.openEquipAction(slot);
+                            div.innerHTML = `<div class="text-2xl w-8 text-center shrink-0 pointer-events-none">${this.getEquipIcon(def.i1_type)}</div><div class="flex-1 overflow-hidden leading-tight pointer-events-none"><div class="truncate ${rarity.color} font-bold text-[11px]">+${currentEq.refine} ${def.i1_name}</div><div class="text-[9px] text-gray-400">點擊操作 (精煉/卸下)</div></div>`;
+                        } else { div.className = 'w-full bg-gray-800 border border-gray-600 flex items-center gap-2 p-1 text-xs rounded h-10'; div.innerHTML = `<div class="text-2xl w-8 text-center shrink-0 opacity-30">${this.getEquipIcon(slot.includes('acc') ? 'acc' : slot)}</div><div class="text-gray-500 opacity-50 flex-1 truncate text-[10px] uppercase">${slot.replace(/[0-9]/g, '')}</div>`; }
                         container.appendChild(div);
                     };
-                    document.getElementById('equip-left').innerHTML = '';
-                    document.getElementById('equip-right').innerHTML = '';
-                    leftSlots.forEach(s => renderSlot(s, 'equip-left'));
-                    rightSlots.forEach(s => renderSlot(s, 'equip-right'));
+                    document.getElementById('equip-left').innerHTML = ''; document.getElementById('equip-right').innerHTML = ''; leftSlots.forEach(s => renderSlot(s, 'equip-left')); rightSlots.forEach(s => renderSlot(s, 'equip-right'));
                 }
-
-                const grid = document.getElementById('bag-grid');
-                grid.innerHTML = '';
-                const items = GameState.inventory[this.currentTab];
-                
+                const grid = document.getElementById('bag-grid'); grid.innerHTML = ''; const items = GameState.inventory[this.currentTab];
                 items.forEach((itemData) => {
-                    let def = this.currentTab === 'equip' ? GameDB.equipFlat[itemData.id] : GameDB.itemFlat[itemData.id];
-                    if(!def) return;
-                    let div = document.createElement('div');
-                    div.className = 'bg-gray-700 p-2 rounded border border-gray-600 flex justify-between items-center gap-2 hover:border-yellow-500 transition-colors';
+                    let def = this.currentTab === 'equip' ? GameDB.equipFlat[itemData.id] : GameDB.itemFlat[itemData.id]; if(!def) return; let div = document.createElement('div'); div.className = 'bg-gray-700 p-2 rounded border border-gray-600 flex justify-between items-center gap-2 hover:border-yellow-500 transition-colors';
                     if(this.currentTab === 'equip') {
-                        let nameStr = itemData.refine > 0 ? `+${itemData.refine} ${def.i1_name}` : def.i1_name;
-                        let descStr = `部位: ${def.i1_type} | 需求Lv: ${def.i1_reqLevel}<br>`;
-                        for(let k in def.i1_attr) descStr += `${k.toUpperCase()}: ${formatNumber(def.i1_attr[k])} `;
-                        
-                        let path = SystemExt.getClassPath(GameState.player.classId);
-                        let canEquipLevel = GameState.player.baseLv >= def.i1_reqLevel;
-                        let canEquipClass = def.i1_reqClass.includes('all') || path.some(c => def.i1_reqClass.includes(c));
-                        let canEquip = canEquipLevel && canEquipClass;
-                        
-                        let equipBtnClass = canEquip ? 'bg-blue-900 border-blue-600 hover:bg-blue-800' : 'bg-gray-800 border-gray-600 text-gray-500 opacity-50 cursor-not-allowed';
-                        let warningHtml = '';
-                        if (!canEquipLevel) warningHtml += `<div class="text-[10px] text-red-400 mt-0.5 font-bold">⚠️ 等級不足 (需 Lv.${def.i1_reqLevel})</div>`;
-                        if (!canEquipClass) warningHtml += `<div class="text-[10px] text-red-400 mt-0.5 font-bold">⚠️ 職業不符</div>`;
-
+                        let nameStr = itemData.refine > 0 ? `+${itemData.refine} ${def.i1_name}` : def.i1_name; let descStr = `部位: ${def.i1_type} | 需求Lv: ${def.i1_reqLevel}<br>`; for(let k in def.i1_attr) descStr += `${k.toUpperCase()}: ${formatNumber(def.i1_attr[k])} `;
+                        let path = SystemExt.getClassPath(GameState.player.classId); let canEquipLevel = GameState.player.baseLv >= def.i1_reqLevel; let canEquipClass = def.i1_reqClass.includes('all') || path.some(c => def.i1_reqClass.includes(c)); let canEquip = canEquipLevel && canEquipClass;
+                        let equipBtnClass = canEquip ? 'bg-blue-900 border-blue-600 hover:bg-blue-800' : 'bg-gray-800 border-gray-600 text-gray-500 opacity-50 cursor-not-allowed'; let warningHtml = ''; if (!canEquipLevel) warningHtml += `<div class="text-[10px] text-red-400 mt-0.5 font-bold">⚠️ 等級不足 (需 Lv.${def.i1_reqLevel})</div>`; if (!canEquipClass) warningHtml += `<div class="text-[10px] text-red-400 mt-0.5 font-bold">⚠️ 職業不符</div>`;
                         div.innerHTML = `<div class="flex items-center gap-2 flex-1"><span class="text-3xl shrink-0">${this.getEquipIcon(def.i1_type)}</span><div class="flex-1 overflow-hidden"><div class="font-bold text-sm text-yellow-100">${nameStr}</div><div class="text-[10px] text-gray-300 mt-0.5 leading-tight">${descStr}</div>${warningHtml}</div></div><div class="flex flex-col gap-1 shrink-0"><button class="btn ${equipBtnClass} text-xs py-1" onclick="Bag.equipItem('${itemData.uid}')">穿著</button><button class="btn bg-red-900 border-red-600 text-xs py-1" onclick="Bag.sellItem('${itemData.uid}', 'equip')">出售</button></div>`;
                     } else {
                         let nameStr = def.i2_name || def.i3_name; let descStr = def.i2_desc || def.i3_desc || ''; let canUse = (def.i2_type === 'consumable' || def.i3_type === 'consumable' || def.i2_type === 'buff' || def.i3_type === 'buff');
@@ -1365,96 +1009,57 @@
             },
             getEquipIcon: function(type) { const m = { weapon:'🗡️', helm:'🪖', armor:'👕', shield:'🛡️', garment:'🧥', shoes:'👞', acc:'💍' }; return m[type] || '🎒'; },
             equipItem: function(uid) {
-                let item = GameState.inventory.equip.find(i => i.uid === uid);
-                if(!item) return; let def = GameDB.equipFlat[item.id];
+                let item = GameState.inventory.equip.find(i => i.uid === uid); if(!item) return; let def = GameDB.equipFlat[item.id];
                 let targetSlot = def.i1_type; if(targetSlot === 'acc') { targetSlot = GameState.equipped.acc1 ? 'acc2' : 'acc1'; }
                 if(GameState.player.baseLv < def.i1_reqLevel) { UI.showToast(`裝備等級不足！需要 Base Lv.${def.i1_reqLevel}`, 'bg-red-600 text-white'); return; }
-                let reqClass = def.i1_reqClass;
-                if(!reqClass.includes('all') && !reqClass.includes(GameState.player.classId)) {
-                     let path = SystemExt.getClassPath(GameState.player.classId);
-                     let canEquip = path.some(c => reqClass.includes(c));
-                     if(!canEquip) { UI.showToast(`職業不符！無法裝備此物品。`, 'bg-red-600 text-white'); return; }
-                }
+                let reqClass = def.i1_reqClass; if(!reqClass.includes('all') && !reqClass.includes(GameState.player.classId)) { let path = SystemExt.getClassPath(GameState.player.classId); let canEquip = path.some(c => reqClass.includes(c)); if(!canEquip) { UI.showToast(`職業不符！無法裝備此物品。`, 'bg-red-600 text-white'); return; } }
                 if(GameState.equipped[targetSlot]) { this.unequipItem(targetSlot, false); }
-                GameState.equipped[targetSlot] = item; this.removeItemByUid(uid, 'equip');
-                Player.calcStats(); this.render();
+                GameState.equipped[targetSlot] = item; this.removeItemByUid(uid, 'equip'); Player.calcStats(); this.render();
             },
-            unequipItem: function(slot, recalc=true) {
-                if(GameState.equipped[slot]) {
-                    GameState.inventory.equip.push(GameState.equipped[slot]); GameState.equipped[slot] = null;
-                    if(recalc) Player.calcStats(); this.render();
-                }
-            },
+            unequipItem: function(slot, recalc=true) { if(GameState.equipped[slot]) { GameState.inventory.equip.push(GameState.equipped[slot]); GameState.equipped[slot] = null; if(recalc) Player.calcStats(); this.render(); } },
             useItem: function(id) {
-                let itemData = GameState.inventory.item.find(i => i.id === id);
-                if(!itemData || itemData.amount <= 0) return;
-                let def = GameDB.itemFlat[id]; if(!def) return;
-
+                let itemData = GameState.inventory.item.find(i => i.id === id); if(!itemData || itemData.amount <= 0) return; let def = GameDB.itemFlat[id]; if(!def) return;
                 if (id === 'flyWing') {
                     Log.add(`使用了 蒼蠅翅膀，瞬間移動迴避了戰鬥並尋找下一個魔物！`, 'text-blue-300', 'system');
-                    if (GameState.currentMonster && GameState.mapMonsters) {
-                        let idx = GameState.mapMonsters.findIndex(x => x.uid === GameState.currentMonster.uid);
-                        let nextIdx = (idx + 1) % GameState.mapMonsters.length;
-                        GameState.currentMonster = GameState.mapMonsters[nextIdx];
-                        Log.add(`發現新目標：${GameState.currentMonster.name}`, 'text-blue-300', 'system');
-                    }
-                    this.removeItemById(id, 1, 'item');
-                    UI.updateMonster();
-                    UI.updateMapMonsters();
-                    return;
+                    if (GameState.mapMonsters.length > 0) { GameState.currentMonster = GameState.mapMonsters[Math.floor(Math.random() * GameState.mapMonsters.length)]; Log.add(`發現新目標：${GameState.currentMonster.name}`, 'text-blue-300', 'system'); }
+                    this.removeItemById(id, 1, 'item'); UI.updateMonster(); UI.updateMapMonsters(); return;
                 }
-                if (id === 'butterflyWing') {
-                    Log.add(`使用了 蝴蝶翅膀，直接回到了普隆德拉。`, 'text-blue-300', 'system');
-                    let mapSel = document.getElementById('map-select');
-                    mapSel.value = 'prontera';
-                    mapSel.dispatchEvent(new Event('change'));
-                    this.removeItemById(id, 1, 'item');
-                    return;
-                }
-
+                if (id === 'butterflyWing') { Log.add(`使用了 蝴蝶翅膀，直接回到了普隆德拉。`, 'text-blue-300', 'system'); let mapSel = document.getElementById('map-select'); mapSel.value = 'prontera'; mapSel.dispatchEvent(new Event('change')); this.removeItemById(id, 1, 'item'); return; }
                 let attr = def.i2_attr || def.i3_attr || {};
-                if(attr.healHp || attr.healSp) Player.heal(attr.healHp, attr.healSp);
-                if(attr.healHpPct) Player.heal(Math.floor(Player.derived.maxHp * attr.healHpPct), 0);
-                if(def.i2_type === 'buff' || def.i3_type === 'buff') {
-                    let duration = attr.duration || 1800000;
-                    BuffManager.add(def.i2_name || def.i3_name, def.i2_icon || def.i3_icon, duration, attr.buffAttrs || attr);
-                    Log.add(`使用了 ${def.i2_name || def.i3_name}`, 'text-green-300', 'system');
-                } else { Log.add(`恢復了 HP/SP`, 'text-green-300', 'system'); }
+                if(attr.healHp || attr.healSp) Player.heal(attr.healHp, attr.healSp); if(attr.healHpPct) Player.heal(Math.floor(Player.derived.maxHp * attr.healHpPct), 0);
+                if(def.i2_type === 'buff' || def.i3_type === 'buff') { let duration = attr.duration || 1800000; BuffManager.add(def.i2_name || def.i3_name, def.i2_icon || def.i3_icon, duration, attr.buffAttrs || attr); Log.add(`使用了 ${def.i2_name || def.i3_name}`, 'text-green-300', 'system'); } else { Log.add(`恢復了 HP/SP`, 'text-green-300', 'system'); }
                 this.removeItemById(id, 1, 'item'); Hotkeys.render(); 
             },
-            sellItem: function(id_or_uid, type) {
-                let price = 10;
-                if(type === 'equip') { this.removeItemByUid(id_or_uid, 'equip'); price = 50; } else { this.removeItemById(id_or_uid, 1, 'item'); }
-                GameState.player.zeny += price; UI.updateHeader(); Hotkeys.render();
-            },
-            sellItemAll: function(id) {
-                let slot = GameState.inventory.item.find(i => i.id === id);
-                if(!slot) return; let amt = slot.amount; this.removeItemById(id, amt, 'item');
-                GameState.player.zeny += (amt * 10); UI.updateHeader(); Hotkeys.render();
-                UI.showToast(`已全部出售，獲得 ${formatNumber(amt*10)} Zeny`, 'bg-yellow-600 text-white');
-            },
-            autoSell: function() {
-                let rarityMap = { common: 20, uncommon: 50, rare: 80 }; let sel = document.getElementById('auto-sell-rarity').value; let lvCap = rarityMap[sel] || 20;
-                let toSell = GameState.inventory.equip.filter(eq => { let def = GameDB.equipFlat[eq.id]; return def && def.i1_reqLevel <= lvCap && eq.refine === 0; });
-                let totalZeny = toSell.length * 50; GameState.inventory.equip = GameState.inventory.equip.filter(eq => !toSell.includes(eq)); GameState.player.zeny += totalZeny;
-                Log.add(`自動出售了 ${toSell.length} 件裝備，獲得 ${formatNumber(totalZeny)} Z`, 'text-yellow-300', 'system'); UI.updateHeader(); this.render();
-            },
+            sellItem: function(id_or_uid, type) { let price = 10; if(type === 'equip') { this.removeItemByUid(id_or_uid, 'equip'); price = 50; } else { this.removeItemById(id_or_uid, 1, 'item'); } GameState.player.zeny += price; UI.updateHeader(); Hotkeys.render(); },
+            sellItemAll: function(id) { let slot = GameState.inventory.item.find(i => i.id === id); if(!slot) return; let amt = slot.amount; this.removeItemById(id, amt, 'item'); GameState.player.zeny += (amt * 10); UI.updateHeader(); Hotkeys.render(); UI.showToast(`已全部出售，獲得 ${formatNumber(amt*10)} Zeny`, 'bg-yellow-600 text-white'); },
+            autoSell: function() { let rarityMap = { common: 20, uncommon: 50, rare: 80 }; let sel = document.getElementById('auto-sell-rarity').value; let lvCap = rarityMap[sel] || 20; let toSell = GameState.inventory.equip.filter(eq => { let def = GameDB.equipFlat[eq.id]; return def && def.i1_reqLevel <= lvCap && eq.refine === 0; }); let totalZeny = toSell.length * 50; GameState.inventory.equip = GameState.inventory.equip.filter(eq => !toSell.includes(eq)); GameState.player.zeny += totalZeny; Log.add(`自動出售了 ${toSell.length} 件裝備，獲得 ${formatNumber(totalZeny)} Z`, 'text-yellow-300', 'system'); UI.updateHeader(); this.render(); },
             autoEquip: function() {
                 const slots = GameDB.system.SETTINGS.EQUIPMENT_SLOTS; let changed = false;
                 slots.forEach(slot => {
-                    let currentEq = GameState.equipped[slot]; let currentLv = currentEq ? GameDB.equipFlat[currentEq.id].i1_reqLevel : -1;
-                    let slotType = slot.includes('acc') ? 'acc' : slot; let bestCandidate = null; let bestLv = currentLv;
-                    let path = SystemExt.getClassPath(GameState.player.classId);
-                    GameState.inventory.equip.forEach(eq => {
-                        let def = GameDB.equipFlat[eq.id]; let canWearClass = def.i1_reqClass.includes('all') || path.some(c => def.i1_reqClass.includes(c));
-                        if(def.i1_type === slotType && def.i1_reqLevel > bestLv && def.i1_reqLevel <= GameState.player.baseLv && canWearClass) { bestCandidate = eq; bestLv = def.i1_reqLevel; }
-                    });
-                    if(bestCandidate) {
-                        if(currentEq) GameState.inventory.equip.push(currentEq);
-                        GameState.equipped[slot] = bestCandidate; GameState.inventory.equip = GameState.inventory.equip.filter(i => i.uid !== bestCandidate.uid); changed = true;
-                    }
+                    let currentEq = GameState.equipped[slot]; let currentLv = currentEq ? GameDB.equipFlat[currentEq.id].i1_reqLevel : -1; let slotType = slot.includes('acc') ? 'acc' : slot; let bestCandidate = null; let bestLv = currentLv; let path = SystemExt.getClassPath(GameState.player.classId);
+                    GameState.inventory.equip.forEach(eq => { let def = GameDB.equipFlat[eq.id]; let canWearClass = def.i1_reqClass.includes('all') || path.some(c => def.i1_reqClass.includes(c)); if(def.i1_type === slotType && def.i1_reqLevel > bestLv && def.i1_reqLevel <= GameState.player.baseLv && canWearClass) { bestCandidate = eq; bestLv = def.i1_reqLevel; } });
+                    if(bestCandidate) { if(currentEq) GameState.inventory.equip.push(currentEq); GameState.equipped[slot] = bestCandidate; GameState.inventory.equip = GameState.inventory.equip.filter(i => i.uid !== bestCandidate.uid); changed = true; }
                 });
                 if(changed) { Player.calcStats(); this.render(); Log.add('自動換裝完成', 'text-blue-300', 'system'); }
+            }
+        };
+
+        const Shop = {
+            isCashShop: false,
+            render: function(isCash) {
+                this.isCashShop = isCash; document.getElementById('shop-title').innerText = isCash ? '💎 現金商城' : '🏪 道具店'; document.getElementById('shop-zeny').innerText = formatNumber(GameState.player.zeny); document.getElementById('shop-cash').innerText = formatNumber(GameState.player.cash || 0);
+                if (isCash) { document.getElementById('shop-cash-container').classList.remove('hide'); document.getElementById('exchange-cash-container').classList.remove('hide'); document.getElementById('exchange-cash-container').classList.add('flex'); } else { document.getElementById('shop-cash-container').classList.add('hide'); document.getElementById('exchange-cash-container').classList.add('hide'); document.getElementById('exchange-cash-container').classList.remove('flex'); }
+                const list = document.getElementById('shop-list'); list.innerHTML = ''; let itemsToShow = isCash && GameDB.cashItems ? GameDB.cashItems : GameDB.items.filter(i => !i.isCash);
+                itemsToShow.forEach(it => { let cost = it.i2_cost || it.i3_cost || 9999; let icon = it.i2_icon || it.i3_icon || '📦'; let name = it.i2_name || it.i3_name; let desc = it.i2_desc || it.i3_desc || ''; let id = it.i2_id || it.i3_id; let currencyStr = isCash ? 'Cash' : 'Z'; let currencyColor = isCash ? 'text-blue-300' : 'text-yellow-400'; let div = document.createElement('div'); div.className = 'bg-gray-700 p-2 rounded flex justify-between items-center gap-2 hover:border-yellow-500 border border-transparent transition-colors'; div.innerHTML = `<div class="flex items-center gap-2 flex-1 pr-2 overflow-hidden"><span class="text-3xl shrink-0">${icon}</span><div class="flex-1 overflow-hidden"><div class="font-bold text-sm text-yellow-100">${name}</div><div class="text-[10px] text-gray-300 mt-0.5 leading-tight">${desc}</div><div class="text-xs ${currencyColor} mt-1 font-mono font-bold">售價: ${formatNumber(cost)} ${currencyStr}</div></div></div><div class="flex flex-col gap-1 items-end shrink-0"><input type="number" id="shop-qty-${id}" value="1" min="1" class="w-14 bg-gray-900 border border-gray-500 rounded text-center text-xs py-1 text-white outline-none focus:border-yellow-500"><button class="btn text-xs bg-green-900 hover:bg-green-800 border-green-600 w-14 py-1 font-bold" onclick="Shop.buy('${id}', ${cost})">購買</button></div>`; list.appendChild(div); });
+            },
+            buy: function(id, unitCost) {
+                let qtyInput = document.getElementById(`shop-qty-${id}`); let qty = parseInt(qtyInput.value) || 1; if(qty < 1) qty = 1; let totalCost = unitCost * qty;
+                if (this.isCashShop) { GameState.player.cash = GameState.player.cash || 0; if(GameState.player.cash >= totalCost) { GameState.player.cash -= totalCost; Bag.addItem(id, qty, 'item'); document.getElementById('shop-cash').innerText = formatNumber(GameState.player.cash); UI.updateHeader(); UI.showToast(`成功購買 ${formatNumber(qty)} 個！`, 'bg-green-600 text-white'); Log.add(`商城購買成功，消耗 ${formatNumber(totalCost)} Cash`, 'text-blue-300', 'system'); Hotkeys.render(); } else { UI.showToast(`Cash 不足！需要 ${formatNumber(totalCost)} Cash`, 'bg-red-600 text-white'); } } 
+                else { if(GameState.player.zeny >= totalCost) { GameState.player.zeny -= totalCost; Bag.addItem(id, qty, 'item'); document.getElementById('shop-zeny').innerText = formatNumber(GameState.player.zeny); UI.updateHeader(); UI.showToast(`成功購買 ${formatNumber(qty)} 個！`, 'bg-green-600 text-white'); Log.add(`道具購買成功，消耗 ${formatNumber(totalCost)} Z`, 'text-green-300', 'system'); Hotkeys.render(); } else { UI.showToast(`Zeny 不足！需要 ${formatNumber(totalCost)} Z`, 'bg-red-600 text-white'); } }
+            },
+            exchangeCash: function() {
+                let qtyInput = document.getElementById('input-cash-qty'); let qty = parseInt(qtyInput.value) || 1; if(qty < 1) qty = 1; let totalCost = 10000 * qty; 
+                if(GameState.player.zeny >= totalCost) { GameState.player.zeny -= totalCost; GameState.player.cash = (GameState.player.cash || 0) + qty; document.getElementById('shop-zeny').innerText = formatNumber(GameState.player.zeny); document.getElementById('shop-cash').innerText = formatNumber(GameState.player.cash); UI.updateHeader(); UI.showToast(`兌換成功！獲得 ${formatNumber(qty)} Cash`, 'bg-purple-600 text-white'); Log.add(`消耗 ${formatNumber(totalCost)} Z 兌換了 ${formatNumber(qty)} Cash`, 'text-purple-300', 'system'); } else { UI.showToast(`Zeny 不足！需要 ${formatNumber(totalCost)} Z`, 'bg-red-600 text-white'); }
             }
         };
 
@@ -1468,8 +1073,7 @@
                     let titleDiv = document.createElement('div'); titleDiv.className = 'text-yellow-400 font-bold border-b border-gray-600 pb-1 mt-2'; titleDiv.innerText = `【${jobDef.c_name}】職系技能`; container.appendChild(titleDiv);
                     let skills = Object.values(GameDB.skills).filter(s => s.job === jobId);
                     skills.forEach(s => {
-                        let currentLv = GameState.skills[s.sk_id] || 0;
-                        let canUpgrade = GameState.player.skillPts > 0 && currentLv < s.sk_maxLv;
+                        let currentLv = GameState.skills[s.sk_id] || 0; let canUpgrade = GameState.player.skillPts > 0 && currentLv < s.sk_maxLv;
                         if (s.sk_reqJobLv && GameState.player.jobLv < s.sk_reqJobLv) canUpgrade = false;
                         let btnClass = canUpgrade ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50';
                         let div = document.createElement('div'); div.className = 'bg-gray-700 p-2 rounded flex justify-between items-center';
@@ -1478,47 +1082,50 @@
                     });
                 });
             },
-            upgrade: function(id) {
-                let s = GameDB.skills[id]; let current = GameState.skills[id] || 0;
-                if (GameState.player.skillPts <= 0 || current >= s.sk_maxLv) return;
-                if (s.sk_reqJobLv && GameState.player.jobLv < s.sk_reqJobLv) return;
-                GameState.player.skillPts--; GameState.skills[id] = current + 1; Player.calcStats(); this.render(); UI.checkJobChange();
-            },
+            upgrade: function(id) { let s = GameDB.skills[id]; let current = GameState.skills[id] || 0; if (GameState.player.skillPts <= 0 || current >= s.sk_maxLv) return; if (s.sk_reqJobLv && GameState.player.jobLv < s.sk_reqJobLv) return; GameState.player.skillPts--; GameState.skills[id] = current + 1; Player.calcStats(); this.render(); UI.checkJobChange(); },
             useSkill: function(id, isAuto = false) {
                 if (GameState.player.isDead) return;
                 let sDef = GameDB.skills[id]; let currentLv = GameState.skills[id] || 0; if (currentLv <= 0) return;
                 let extras = sDef.sk_extras;
                 let spCost = extras?.spCost ? (typeof extras.spCost === 'function' ? extras.spCost(currentLv) : extras.spCost) : 0;
                 let hpCostPct = extras?.hpCostPct || 0; let zenyCost = extras?.zenyCost ? (typeof extras.zenyCost === 'function' ? extras.zenyCost(currentLv) : extras.zenyCost) : 0;
+                let apCost = extras?.apCost || 0;
+                
                 let p = GameState.player;
-                if (p.sp < spCost) { if(!isAuto) UI.showToast(`SP 不足 (${spCost})`, 'bg-blue-600 text-white'); return; }
+                if (p.sp < spCost && spCost !== 999) { if(!isAuto) UI.showToast(`SP 不足 (${spCost})`, 'bg-blue-600 text-white'); return; }
                 if (p.hp <= p.hp * hpCostPct) { if(!isAuto) UI.showToast(`HP 不足`, 'bg-red-600 text-white'); return; }
                 if (p.zeny < zenyCost) { if(!isAuto) UI.showToast(`Zeny 不足`, 'bg-yellow-600 text-white'); return; }
-                p.sp -= spCost; p.hp -= p.hp * hpCostPct; p.zeny -= zenyCost;
+                
+                if (spCost === 999) p.sp = 0; else p.sp -= spCost;
+                p.hp -= Math.floor(p.hp * hpCostPct); p.zeny -= zenyCost;
+
+                if (extras?.buildStack) { BuffManager.add(`連技準備`, '🤜', 5000, {}, extras.buildStack, extras.maxStacks || 5); }
+                if (extras?.requireStack) { let b = GameState.buffs.find(x => x.stackId === extras.requireStack); if (!b) { if(!isAuto) UI.showToast(`前置狀態不足！`, 'bg-red-600 text-white'); return; } }
+
                 if (id === 'n_playdead') {
                     p.hp = Math.min(Player.derived.maxHp, p.hp + Math.floor(Player.derived.maxHp * 0.2)); GameState.currentMonster = null; UI.updateMonster(); Log.add('你裝死了，怪物離開了。', 'text-gray-400', 'system');
                 } else if (id === 'n_firstaid') {
-                    let healAmt = typeof extras.healPower === 'function' ? extras.healPower(currentLv) : (extras.healPower || 15);
-                    p.hp = Math.min(Player.derived.maxHp, p.hp + healAmt); Log.add(`使用急救，恢復了 ${formatNumber(healAmt)} HP`, 'text-green-400', 'system');
+                    let healAmt = typeof extras.healPower === 'function' ? extras.healPower(currentLv) : (extras.healPower || 15); p.hp = Math.min(Player.derived.maxHp, p.hp + healAmt); Log.add(`使用急救，恢復了 ${formatNumber(healAmt)} HP`, 'text-green-400', 'system');
                 } else {
-                    if (sDef.sk_type === 'active' && extras?.buffDuration) {
-                        let attrObj = typeof extras.buffAttr === 'function' ? extras.buffAttr(currentLv) : (extras.buffAttr || {});
-                        BuffManager.add(sDef.sk_name, sDef.sk_icon, extras.buffDuration * 1000, attrObj); Log.add(`施放輔助技能：${sDef.sk_name}`, 'text-yellow-300', 'system');
-                    } else if (GameState.currentMonster && sDef.sk_type === 'active' && extras?.dmgMulti) { Combat.processSkillAttack(sDef, currentLv); } 
+                    if (sDef.sk_type === 'active' && extras?.buffAttr) {
+                        let duration = (extras.buffDuration || 180) * 1000;
+                        let attrObj = typeof extras.buffAttr === 'function' ? extras.buffAttr(currentLv) : extras.buffAttr;
+                        BuffManager.add(sDef.sk_name, sDef.sk_icon, duration, attrObj); Log.add(`施放輔助技能：${sDef.sk_name}`, 'text-yellow-300', 'system');
+                    } else if (GameState.currentMonster && sDef.sk_type === 'active' && extras?.dmgMulti) { 
+                        Combat.processSkillAttack(sDef, currentLv); 
+                    } 
                     else { Log.add(`使用技能：${sDef.sk_name}!`, 'text-yellow-300 font-bold', 'system'); }
                 }
-                UI.updateStatus(); UI.updateHeader();
+                if(window.UI) { UI.updateStatus(); UI.updateHeader(); }
             }
         };
 
-        let currentHotkeyEditSlot = null;
         const Hotkeys = {
             render: function() {
                 const grid = document.getElementById('hotkey-grid'); grid.innerHTML = '';
                 for(let i=0; i<GameState.hotkeySize; i++) {
                     let hk = GameState.hotkeys[i]; let div = document.createElement('div');
-                    div.className = 'w-10 h-10 sm:w-12 sm:h-12 bg-gray-900 border border-gray-600 rounded flex items-center justify-center text-xs relative cursor-pointer hover:border-yellow-500 shrink-0';
-                    div.dataset.index = i;
+                    div.className = 'w-10 h-10 sm:w-12 sm:h-12 bg-gray-900 border border-gray-600 rounded flex items-center justify-center text-xs relative cursor-pointer hover:border-yellow-500 shrink-0'; div.dataset.index = i;
                     if(hk) {
                         if(hk.type === 'ui') { let uiDef = UI_FUNCTIONS.find(u => u.id === hk.id); if(uiDef) { div.innerHTML = `<span class="text-xl sm:text-2xl">${uiDef.icon}</span>`; div.onclick = uiDef.action; } } 
                         else if(hk.type === 'skill') { let sDef = GameDB.skills[hk.id]; if(sDef) { div.innerHTML = `<span class="text-xl sm:text-2xl">${sDef.sk_icon}</span>`; div.onclick = () => Skills.useSkill(hk.id); } } 
@@ -1533,107 +1140,42 @@
                 }
             },
             openEdit: function(index) {
-                currentHotkeyEditSlot = index; document.getElementById('hk-edit-id').innerText = index + 1;
+                window.currentHotkeyEditSlot = index; document.getElementById('hk-edit-id').innerText = index + 1;
                 const container = document.getElementById('hk-list-container'); container.innerHTML = '';
-                
-                // --- 介面分類 ---
                 container.innerHTML += `<div class="bg-gray-900 text-yellow-400 font-bold px-3 py-1 sticky top-0 z-10 border-y border-gray-700">📌 介面按鈕</div>`;
                 UI_FUNCTIONS.forEach(u => { container.innerHTML += `<div class="p-2 px-3 border-b border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-700 transition-colors" onclick="Hotkeys.assign('ui', '${u.id}')"><div class="flex items-center gap-3"><span class="text-2xl">${u.icon}</span><div><div class="font-bold text-sm text-yellow-100">${u.name}</div><div class="text-[10px] text-gray-400 leading-tight">${u.desc}</div></div></div></div>`; });
-                
-                // --- 技能分類 ---
                 container.innerHTML += `<div class="bg-gray-900 text-yellow-400 font-bold px-3 py-1 sticky top-0 z-10 border-y border-gray-700 mt-2">⚔️ 角色技能</div>`;
                 let hasSkill = false;
                 Object.keys(GameState.skills).forEach(sId => { let s = GameDB.skills[sId]; let lv = GameState.skills[sId]; if(lv > 0 && s.sk_type === 'active') { hasSkill = true; let sDesc = s.sk_desc(lv); container.innerHTML += `<div class="p-2 px-3 border-b border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-700 transition-colors" onclick="Hotkeys.assign('skill', '${sId}')"><div class="flex items-center gap-3"><span class="text-2xl shrink-0">${s.sk_icon}</span><div><div class="font-bold text-sm text-yellow-100">${s.sk_name} <span class="text-yellow-400 font-mono text-[10px]">(Lv.${lv})</span></div><div class="text-[10px] text-gray-400 leading-tight mt-0.5">${sDesc}</div></div></div></div>`; } });
                 if(!hasSkill) container.innerHTML += `<div class="p-3 text-center text-xs text-gray-500">目前沒有可放入快捷鍵的主動技能。</div>`;
-
-                // --- 道具分類 ---
                 container.innerHTML += `<div class="bg-gray-900 text-yellow-400 font-bold px-3 py-1 sticky top-0 z-10 border-y border-gray-700 mt-2">🧪 消耗道具</div>`;
                 let hasItem = false;
                 GameState.inventory.item.forEach(it => { let def = GameDB.itemFlat[it.id]; if(def && (def.i2_type === 'consumable' || def.i2_type === 'buff' || def.i3_type === 'consumable' || def.i3_type === 'buff')) { hasItem = true; let desc = def.i2_desc || def.i3_desc || ''; container.innerHTML += `<div class="p-2 px-3 border-b border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-700 transition-colors" onclick="Hotkeys.assign('item', '${it.id}')"><div class="flex items-center gap-3"><span class="text-2xl shrink-0">${def.i2_icon || def.i3_icon}</span><div><div class="font-bold text-sm text-yellow-100">${def.i2_name || def.i3_name} <span class="text-gray-400 font-mono text-[10px]">(持有: ${formatNumber(it.amount)})</span></div><div class="text-[10px] text-gray-400 leading-tight mt-0.5">${desc}</div></div></div></div>`; } });
                 if(!hasItem) container.innerHTML += `<div class="p-3 text-center text-xs text-gray-500">背包中沒有可使用的消耗品。</div>`;
-
                 UI.openModal('modal-hotkey');
             },
-            assign: function(type, id) { GameState.hotkeys[currentHotkeyEditSlot] = { type, id }; this.render(); UI.closeModal('modal-hotkey'); },
-            clearCurrentSlot: function() { GameState.hotkeys[currentHotkeyEditSlot] = null; this.render(); UI.closeModal('modal-hotkey'); }
+            assign: function(type, id) { GameState.hotkeys[window.currentHotkeyEditSlot] = { type, id }; this.render(); UI.closeModal('modal-hotkey'); },
+            clearCurrentSlot: function() { GameState.hotkeys[window.currentHotkeyEditSlot] = null; this.render(); UI.closeModal('modal-hotkey'); }
         };
 
-        const Shop = {
-            isCashShop: false,
-            render: function(isCash) {
-                this.isCashShop = isCash;
-                document.getElementById('shop-title').innerText = isCash ? '💎 現金商城' : '🏪 道具店';
-                document.getElementById('shop-zeny').innerText = formatNumber(GameState.player.zeny);
-                document.getElementById('shop-cash').innerText = formatNumber(GameState.player.cash || 0);
-                
-                if (isCash) {
-                    document.getElementById('shop-cash-container').classList.remove('hide');
-                    document.getElementById('exchange-cash-container').classList.remove('hide');
-                    document.getElementById('exchange-cash-container').classList.add('flex');
-                } else {
-                    document.getElementById('shop-cash-container').classList.add('hide');
-                    document.getElementById('exchange-cash-container').classList.add('hide');
-                    document.getElementById('exchange-cash-container').classList.remove('flex');
-                }
-
-                const list = document.getElementById('shop-list'); list.innerHTML = '';
-                let itemsToShow = isCash && GameDB.cashItems ? GameDB.cashItems : GameDB.items.filter(i => !i.isCash);
-                
-                itemsToShow.forEach(it => {
-                    let cost = it.i2_cost || it.i3_cost || 9999; 
-                    let icon = it.i2_icon || it.i3_icon || '📦'; 
-                    let name = it.i2_name || it.i3_name; 
-                    let desc = it.i2_desc || it.i3_desc || ''; 
-                    let id = it.i2_id || it.i3_id;
-                    let currencyStr = isCash ? 'Cash' : 'Z';
-                    let currencyColor = isCash ? 'text-blue-300' : 'text-yellow-400';
-                    let div = document.createElement('div'); div.className = 'bg-gray-700 p-2 rounded flex justify-between items-center gap-2 hover:border-yellow-500 border border-transparent transition-colors';
-                    div.innerHTML = `<div class="flex items-center gap-2 flex-1 pr-2 overflow-hidden"><span class="text-3xl shrink-0">${icon}</span><div class="flex-1 overflow-hidden"><div class="font-bold text-sm text-yellow-100">${name}</div><div class="text-[10px] text-gray-300 mt-0.5 leading-tight">${desc}</div><div class="text-xs ${currencyColor} mt-1 font-mono font-bold">售價: ${formatNumber(cost)} ${currencyStr}</div></div></div><div class="flex flex-col gap-1 items-end shrink-0"><input type="number" id="shop-qty-${id}" value="1" min="1" class="w-14 bg-gray-900 border border-gray-500 rounded text-center text-xs py-1 text-white outline-none focus:border-yellow-500"><button class="btn text-xs bg-green-900 hover:bg-green-800 border-green-600 w-14 py-1 font-bold" onclick="Shop.buy('${id}', ${cost})">購買</button></div>`;
-                    list.appendChild(div);
-                });
+        const Visuals = {
+            showDamage: function(amount, isCrit, targetId) {
+                const target = document.getElementById(targetId); const container = document.getElementById('dmg-container'); if(!target || !container) return;
+                const rect = target.getBoundingClientRect(); const appRect = container.getBoundingClientRect();
+                let div = document.createElement('div'); div.className = 'dmg-text'; div.innerText = amount;
+                div.style.left = `${rect.left - appRect.left + rect.width/2 + (Math.random()*40-20)}px`; div.style.top = `${rect.top - appRect.top + (Math.random()*20)}px`;
+                if(isCrit) { div.style.color = '#f87171'; div.style.fontSize = '1.5rem'; } else if (targetId === 'visual-player') { div.style.color = '#ef4444'; } else { div.style.color = 'white'; }
+                container.appendChild(div); setTimeout(() => div.remove(), 1000);
             },
-            buy: function(id, unitCost) {
-                let qtyInput = document.getElementById(`shop-qty-${id}`); let qty = parseInt(qtyInput.value) || 1; if(qty < 1) qty = 1;
-                let totalCost = unitCost * qty;
-                
-                if (this.isCashShop) {
-                    GameState.player.cash = GameState.player.cash || 0;
-                    if(GameState.player.cash >= totalCost) { 
-                        GameState.player.cash -= totalCost; 
-                        Bag.addItem(id, qty, 'item'); 
-                        document.getElementById('shop-cash').innerText = formatNumber(GameState.player.cash); 
-                        UI.updateHeader(); UI.showToast(`成功購買 ${formatNumber(qty)} 個！`, 'bg-green-600 text-white'); Log.add(`商城購買成功，消耗 ${formatNumber(totalCost)} Cash`, 'text-blue-300', 'system'); Hotkeys.render(); 
-                    } else { 
-                        UI.showToast(`Cash 不足！需要 ${formatNumber(totalCost)} Cash`, 'bg-red-600 text-white'); 
-                    }
-                } else {
-                    if(GameState.player.zeny >= totalCost) { 
-                        GameState.player.zeny -= totalCost; 
-                        Bag.addItem(id, qty, 'item'); 
-                        document.getElementById('shop-zeny').innerText = formatNumber(GameState.player.zeny); 
-                        UI.updateHeader(); UI.showToast(`成功購買 ${formatNumber(qty)} 個！`, 'bg-green-600 text-white'); Log.add(`道具購買成功，消耗 ${formatNumber(totalCost)} Z`, 'text-green-300', 'system'); Hotkeys.render(); 
-                    } else { 
-                        UI.showToast(`Zeny 不足！需要 ${formatNumber(totalCost)} Z`, 'bg-red-600 text-white'); 
-                    }
-                }
-            },
-            exchangeCash: function() {
-                let qtyInput = document.getElementById('input-cash-qty');
-                let qty = parseInt(qtyInput.value) || 1;
-                if(qty < 1) qty = 1;
-                let totalCost = 10000 * qty; 
+            animHit: function(targetId) { const target = document.getElementById(targetId); if(target) { target.classList.remove('anim-hit'); void target.offsetWidth; target.classList.add('anim-hit'); } }
+        };
 
-                if(GameState.player.zeny >= totalCost) {
-                    GameState.player.zeny -= totalCost;
-                    GameState.player.cash = (GameState.player.cash || 0) + qty;
-                    document.getElementById('shop-zeny').innerText = formatNumber(GameState.player.zeny);
-                    document.getElementById('shop-cash').innerText = formatNumber(GameState.player.cash);
-                    UI.updateHeader();
-                    UI.showToast(`兌換成功！獲得 ${formatNumber(qty)} Cash`, 'bg-purple-600 text-white');
-                    Log.add(`消耗 ${formatNumber(totalCost)} Z 兌換了 ${formatNumber(qty)} Cash`, 'text-purple-300', 'system');
-                } else {
-                    UI.showToast(`Zeny 不足！需要 ${formatNumber(totalCost)} Z`, 'bg-red-600 text-white');
-                }
+        const Log = {
+            add: function(msg, colorClass='text-gray-300', type='system') {
+                if(type === 'dmgDealt' && !GameState.logFilters.dmgDealt) return; if(type === 'dmgTaken' && !GameState.logFilters.dmgTaken) return; if(type === 'exp' && !GameState.logFilters.exp) return; if(type === 'drops' && !GameState.logFilters.drops) return;
+                const log = document.getElementById('combat-log'); const div = document.createElement('div');
+                div.className = colorClass + ' py-0.5 border-b border-gray-800/50 last:border-0'; div.innerText = msg;
+                log.appendChild(div); if(log.childNodes.length > 50) log.firstChild.remove(); log.scrollTop = log.scrollHeight;
             }
         };
 
@@ -1645,22 +1187,9 @@
             },
             openSettings: function() {
                 let rbSys = SystemExt.getRebirthBonuses(GameState.player.rebirthCount);
-                document.getElementById('txt-req-autohp').innerText = rbSys.autoHp ? '' : '(需 1 轉生)';
-                document.getElementById('txt-req-autosp').innerText = rbSys.autoSp ? '' : '(需 2 轉生)';
-                document.getElementById('txt-req-autos1').innerText = rbSys.autoSkill1 ? '' : '(需 3 轉生)';
-                document.getElementById('txt-req-autos2').innerText = rbSys.autoSkill2 ? '' : '(需 4 轉生)';
-                document.getElementById('txt-req-autorevive').innerText = rbSys.autoRevive ? '' : '(需 5 轉生)';
-
-                document.getElementById('set-auto-hp').value = GameState.autoConfig.hpPct; document.getElementById('set-auto-sp').value = GameState.autoConfig.spPct;
-                document.getElementById('set-auto-s1').value = GameState.autoConfig.s1Interval; document.getElementById('set-auto-s2').value = GameState.autoConfig.s2Interval;
-                document.getElementById('set-auto-revive').checked = GameState.autoConfig.autoRevive;
-                
-                document.getElementById('set-auto-hp').disabled = !rbSys.autoHp;
-                document.getElementById('set-auto-sp').disabled = !rbSys.autoSp;
-                document.getElementById('set-auto-s1').disabled = !rbSys.autoSkill1;
-                document.getElementById('set-auto-s2').disabled = !rbSys.autoSkill2;
-                document.getElementById('set-auto-revive').disabled = !rbSys.autoRevive;
-
+                document.getElementById('txt-req-autohp').innerText = rbSys.autoHp ? '' : '(需 1 轉生)'; document.getElementById('txt-req-autosp').innerText = rbSys.autoSp ? '' : '(需 2 轉生)'; document.getElementById('txt-req-autos1').innerText = rbSys.autoSkill1 ? '' : '(需 3 轉生)'; document.getElementById('txt-req-autos2').innerText = rbSys.autoSkill2 ? '' : '(需 4 轉生)'; document.getElementById('txt-req-autorevive').innerText = rbSys.autoRevive ? '' : '(需 5 轉生)';
+                document.getElementById('set-auto-hp').value = GameState.autoConfig.hpPct; document.getElementById('set-auto-sp').value = GameState.autoConfig.spPct; document.getElementById('set-auto-s1').value = GameState.autoConfig.s1Interval; document.getElementById('set-auto-s2').value = GameState.autoConfig.s2Interval; document.getElementById('set-auto-revive').checked = GameState.autoConfig.autoRevive;
+                document.getElementById('set-auto-hp').disabled = !rbSys.autoHp; document.getElementById('set-auto-sp').disabled = !rbSys.autoSp; document.getElementById('set-auto-s1').disabled = !rbSys.autoSkill1; document.getElementById('set-auto-s2').disabled = !rbSys.autoSkill2; document.getElementById('set-auto-revive').disabled = !rbSys.autoRevive;
                 this.openModal('modal-settings');
             },
             openModal: function(id) { document.getElementById(id).classList.remove('hide'); },
@@ -1670,57 +1199,16 @@
                 if(!panel.classList.contains('hidden')) { panel.classList.add('hidden'); mini.classList.remove('hidden'); mini.classList.add('flex'); } 
                 else { panel.classList.remove('hidden'); mini.classList.add('hidden'); mini.classList.remove('flex'); }
             },
-            cycleHotkeySize: function() {
-                let sz = GameState.hotkeySize; if(sz === 12) sz = 24; else if(sz === 24) sz = 36; else sz = 12;
-                GameState.hotkeySize = sz; Hotkeys.render();
-            },
+            cycleHotkeySize: function() { let sz = GameState.hotkeySize; if(sz === 12) sz = 24; else if(sz === 24) sz = 36; else sz = 12; GameState.hotkeySize = sz; Hotkeys.render(); },
             updateHeader: function() {
-                let p = GameState.player;
-                let rbText = p.rebirthCount > 0 ? `(轉生x${p.rebirthCount}) ` : '';
-                document.getElementById('player-class').innerText = rbText + (GameDB.classes.find(x => x.c_id === p.classId)?.c_name || '未知');
-                document.getElementById('player-zeny').innerText = formatNumber(p.zeny);
-                document.getElementById('player-cash').innerText = formatNumber(p.cash || 0);
-                
-                let rCount = p.rebirthCount || 0;
-                document.querySelectorAll('.stat-btn-10').forEach(el => { if (rCount >= 5) el.classList.remove('hide'); else el.classList.add('hide'); });
-                document.querySelectorAll('.stat-btn-max').forEach(el => { if (rCount >= 10) el.classList.remove('hide'); else el.classList.add('hide'); });
+                let p = GameState.player; let rbText = p.rebirthCount > 0 ? `(轉生x${p.rebirthCount}) ` : '';
+                document.getElementById('player-class').innerText = rbText + (GameDB.classes.find(x => x.c_id === p.classId)?.c_name || '未知'); document.getElementById('player-zeny').innerText = formatNumber(p.zeny); document.getElementById('player-cash').innerText = formatNumber(p.cash || 0);
+                let rCount = p.rebirthCount || 0; document.querySelectorAll('.stat-btn-10').forEach(el => { if (rCount >= 5) el.classList.remove('hide'); else el.classList.add('hide'); }); document.querySelectorAll('.stat-btn-max').forEach(el => { if (rCount >= 10) el.classList.remove('hide'); else el.classList.add('hide'); });
             },
             updateMapSelect: function() {
                 const mapSel = document.getElementById('map-select'); let currentVal = mapSel.value; mapSel.innerHTML = '';
-                GameDB.maps.forEach(m => {
-                    let canEnter = GameState.player.baseLv >= m.minLevel; let disabled = canEnter ? '' : 'disabled';
-                    let text = canEnter ? `${m.emoji} ${m.name}` : `${m.emoji} ${m.name} (需Lv.${m.minLevel})`;
-                    mapSel.innerHTML += `<option value="${m.id}" ${disabled}>${text}</option>`;
-                });
-                let selectedMapDef = GameDB.maps.find(m => m.id === currentVal);
-                if (!selectedMapDef || GameState.player.baseLv < selectedMapDef.minLevel) { mapSel.value = 'prontera'; GameState.currentMap = 'prontera'; } else { mapSel.value = currentVal; }
-                this.updateMapMonsters();
-            },
-            updateMapMonsters: function() {
-                let container = document.getElementById('map-monsters-preview');
-                if(!GameState.currentMap || !GameState.mapMonsters || GameState.mapMonsters.length === 0) { 
-                    container.innerHTML = ''; 
-                    return; 
-                }
-                let html = '<div class="text-yellow-400 font-bold mb-1.5 border-b border-gray-600 pb-1 text-[11px] uppercase tracking-wider">🗺️ 區域魔物清單</div>';
-                GameState.mapMonsters.forEach(m => {
-                    let isCurrent = GameState.currentMonster && GameState.currentMonster.uid === m.uid;
-                    let isDead = m.hp <= 0;
-                    let borderCls = isCurrent ? 'border-yellow-500 bg-gray-700/90 shadow-[0_0_8px_rgba(234,179,8,0.4)]' : 'border-gray-700 bg-gray-800/60 hover:border-yellow-400';
-                    html += `
-                    <div onclick="Combat.engageMonster('${m.uid}')" class="cursor-pointer border p-1 rounded mb-1.5 ${borderCls} transition-all relative overflow-hidden group ${isDead ? 'opacity-50' : ''}">
-                        <div class="flex justify-between items-center gap-1 relative z-10">
-                            <span class="truncate whitespace-nowrap text-[11px] font-bold text-gray-200 group-hover:text-white">${m.emoji} ${m.name}</span>
-                            ${isCurrent && !isDead ? '<span class="text-yellow-400 text-[10px] animate-pulse drop-shadow-md">⚔️</span>' : ''}
-                        </div>
-                        <div class="w-full bg-gray-900 h-1.5 mt-1 rounded overflow-hidden relative z-10 border border-gray-700/50">
-                            <div class="bg-red-500 h-full transition-all duration-300" style="width: ${Math.max(0, (m.hp/m.maxHp)*100)}%"></div>
-                        </div>
-                        <div class="text-right text-[9px] text-gray-400 mt-0.5 font-mono relative z-10 leading-none">${formatNumber(m.hp)} / ${formatNumber(m.maxHp)}</div>
-                        ${isCurrent ? '<div class="absolute inset-0 bg-yellow-500/10 pointer-events-none z-0"></div>' : ''}
-                    </div>`;
-                });
-                container.innerHTML = html;
+                GameDB.maps.forEach(m => { let canEnter = GameState.player.baseLv >= m.minLevel; let disabled = canEnter ? '' : 'disabled'; let text = canEnter ? `${m.emoji} ${m.name}` : `${m.emoji} ${m.name} (需Lv.${m.minLevel})`; mapSel.innerHTML += `<option value="${m.id}" ${disabled}>${text}</option>`; });
+                let selectedMapDef = GameDB.maps.find(m => m.id === currentVal); if (!selectedMapDef || GameState.player.baseLv < selectedMapDef.minLevel) { mapSel.value = 'prontera'; GameState.currentMap = 'prontera'; } else { mapSel.value = currentVal; } this.updateMapMonsters();
             },
             updateStatus: function() {
                 let p = GameState.player; let d = Player.derived; let sys = GameDB.system.FORMULAS; let tier = SystemExt.getJobTier(p.classId); 
@@ -1745,6 +1233,19 @@
                 if (Player.bonuses.aspdBonusPct > 0) specialText.push(`攻速: +${Player.bonuses.aspdBonusPct}%`);
                 document.getElementById('txt-special-bonus').innerText = specialText.length > 0 ? specialText.join(' | ') : '無';
             },
+            updateMapMonsters: function() {
+                let container = document.getElementById('map-monsters-preview'); if(!GameState.currentMap || !GameState.mapMonsters || GameState.mapMonsters.length === 0) { container.innerHTML = ''; return; }
+                let html = '<div class="text-yellow-400 font-bold mb-1.5 border-b border-gray-600 pb-1 text-[11px] uppercase tracking-wider">🗺️ 區域魔物清單</div>';
+                GameState.mapMonsters.forEach(m => {
+                    let isCurrent = GameState.currentMonster && GameState.currentMonster.uid === m.uid; let isDead = m.hp <= 0; let borderCls = isCurrent ? 'border-yellow-500 bg-gray-700/90 shadow-[0_0_8px_rgba(234,179,8,0.4)]' : 'border-gray-700 bg-gray-800/60 hover:border-yellow-400';
+                    html += `<div onclick="Combat.engageMonster('${m.uid}')" class="cursor-pointer border p-1 rounded mb-1.5 ${borderCls} transition-all relative overflow-hidden group ${isDead ? 'opacity-50' : ''}">
+                        <div class="flex justify-between items-center gap-1 relative z-10"><span class="truncate whitespace-nowrap text-[11px] font-bold text-gray-200 group-hover:text-white">${m.emoji} ${m.name}</span>${isCurrent && !isDead ? '<span class="text-yellow-400 text-[10px] animate-pulse drop-shadow-md">⚔️</span>' : ''}</div>
+                        <div class="w-full bg-gray-900 h-1.5 mt-1 rounded overflow-hidden relative z-10 border border-gray-700/50"><div class="bg-red-500 h-full transition-all duration-300" style="width: ${Math.max(0, (m.hp/m.maxHp)*100)}%"></div></div>
+                        <div class="text-right text-[9px] text-gray-400 mt-0.5 font-mono relative z-10 leading-none">${formatNumber(m.hp)} / ${formatNumber(m.maxHp)}</div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+            },
             updateMonster: function() {
                 let info = document.getElementById('monster-info'); let vis = document.getElementById('visual-monster'); let m = GameState.currentMonster;
                 if(m) { info.classList.remove('hidden'); vis.classList.remove('hidden'); document.getElementById('mon-name').innerText = m.name; document.getElementById('mon-element').innerText = m.element; document.getElementById('mon-race').innerText = m.size; vis.innerText = m.emoji; this.updateMonsterHp(); } 
@@ -1753,100 +1254,75 @@
             updateMonsterHp: function() {
                 let m = GameState.currentMonster; if(!m) return;
                 document.getElementById('mon-hp-txt').innerText = `${formatNumber(m.hp)} / ${formatNumber(m.maxHp)}`; document.getElementById('mon-hp-bar').style.width = `${Math.max(0, (m.hp/m.maxHp)*100)}%`;
-                this.updateMapMonsters(); // 即時同步更新表單上的血量
-            },
-            checkJobChange: function() {
-                let p = GameState.player; let c = GameDB.classes.find(x => x.c_id === p.classId); let btn = document.getElementById('btn-jobchange'); if(!c) return;
-                if(c.c_advClasses && c.c_advClasses.length > 0) {
-                    if(p.classId === 'novice' && p.jobLv >= 10) { btn.classList.remove('hide'); return; } 
-                    else if (p.classId !== 'novice' && p.jobLv >= c.c_maxJob) { btn.classList.remove('hide'); return; }
-                }
-                btn.classList.add('hide');
+                this.updateMapMonsters();
             },
             checkRebirth: function() {
-                let p = GameState.player; let btn = document.getElementById('btn-rebirth');
-                if (p.baseLv >= 120) { btn.classList.remove('hide'); } 
-                else { btn.classList.add('hide'); }
+                let p = GameState.player; let btn = document.getElementById('btn-rebirth'); if(!btn) return;
+                if (p.baseLv >= 120) { btn.classList.remove('hide'); } else { btn.classList.add('hide'); }
+            },
+            checkJobChange: function() {
+                let p = GameState.player; let c = GameDB.classes.find(x => x.c_id === p.classId); let btn = document.getElementById('btn-jobchange');
+                if (!c || !btn) return;
+                let canChange = false;
+                if (p.jobLv >= c.c_maxJob) {
+                    if (c.c_advClasses && c.c_advClasses.length > 0) canChange = true;
+                    if (p.classId === 'novice' && (p.rebirthCount || 0) >= 50) canChange = true;
+                }
+                if (canChange) btn.classList.remove('hide'); else btn.classList.add('hide');
+            },
+            openRebirthModal: function() {
+                let p = GameState.player; if(p.baseLv < 120) return;
+                let curr = p.rebirthCount || 0; let next = curr + 1; let rb = SystemExt.getRebirthBonuses(next);
+                let html = `
+                    <div class="text-yellow-400 font-bold text-lg mb-2 text-center">準備進行第 ${next} 次轉生</div>
+                    <div class="text-red-400 text-xs mb-2 text-center">警告：等級將回歸為初心者Lv.1，裝備可能會被卸下！</div>
+                    <div class="bg-gray-900 p-2 rounded border border-gray-700 text-xs text-green-300">
+                        <div class="mb-1 border-b border-gray-700 pb-1 font-bold">解鎖與提升福利：</div>
+                        <ul class="list-disc pl-4 space-y-1">
+                            <li>全屬性加成提升為 ${1 + next * 0.01} 倍</li>
+                            <li>獲得 1,000 Cash 獎勵</li>
+                            <li>額外獲得 100 點素質點數</li>
+                            ${rb.autoHp ? '<li>解鎖：自動使用HP恢復藥水</li>' : ''}
+                            ${rb.autoSp && next === 2 ? '<li>解鎖：自動使用SP恢復藥水</li>' : ''}
+                            ${rb.autoSkill1 && next === 3 ? '<li>解鎖：自動施放技能一</li>' : ''}
+                            ${rb.autoSkill2 && next === 4 ? '<li>解鎖：自動施放技能二</li>' : ''}
+                            ${rb.autoRevive && next === 5 ? '<li>解鎖：自動消耗天地樹葉子</li>' : ''}
+                            ${rb.chatUnlocked && next === 6 ? '<li>解鎖：世界頻道 (多人連線)</li>' : ''}
+                            ${next >= 20 ? `<li>最高攻速上限提升至 ${Math.min(250, 193 + (next - 19))}</li>` : ''}
+                            ${next >= 30 ? `<li>裝備精煉成功率額外提升 ${Math.min(70, next - 29)}%</li>` : ''}
+                            ${next >= 40 ? `<li>素質上限突破提升至 ${99 + (next*10) + (next - 39)}</li>` : ''}
+                            ${next >= 50 ? '<li class="text-purple-400 font-bold">50轉特權：初心者可直接轉職四轉職業！</li>' : ''}
+                        </ul>
+                    </div>`;
+                document.getElementById('rebirth-info').innerHTML = html; this.openModal('modal-rebirth');
             },
             openJobChange: function() {
-                let p = GameState.player;
-                let c = GameDB.classes.find(x => x.c_id === p.classId); 
-                let opts = document.getElementById('job-options'); opts.innerHTML = '';
-                
+                let p = GameState.player; let c = GameDB.classes.find(x => x.c_id === p.classId); let opts = document.getElementById('job-options'); opts.innerHTML = '';
                 if (p.classId === 'novice' && (p.rebirthCount || 0) >= 50) {
                     document.getElementById('job-change-msg').innerText = '【50轉特權】您可直接選擇「四轉職業」！';
                     let fourthClasses = GameDB.classes.filter(x => SystemExt.getJobTier(x.c_id) === 4);
-                    fourthClasses.forEach(advC => {
-                        opts.innerHTML += `<button class="btn bg-purple-900/50 hover:bg-purple-800 border-purple-500 text-lg py-3 transition-colors" onclick="UI.doJobChange('${advC.c_id}', true)">${advC.c_icon} ${advC.c_name}</button>`;
-                    });
+                    fourthClasses.forEach(advC => { opts.innerHTML += `<button class="btn bg-purple-900/50 hover:bg-purple-800 border-purple-500 text-lg py-3 transition-colors" onclick="UI.doJobChange('${advC.c_id}', true)">${advC.c_icon} ${advC.c_name}</button>`; });
                 } else {
                     document.getElementById('job-change-msg').innerText = '請選擇您要轉職的路線：';
-                    c.c_advClasses.forEach(advId => {
-                        let advC = GameDB.classes.find(x => x.c_id === advId);
-                        if(advC) { opts.innerHTML += `<button class="btn bg-blue-900/50 hover:bg-blue-800 border-blue-500 text-lg py-3 transition-colors" onclick="UI.doJobChange('${advId}', false)">${advC.c_icon} ${advC.c_name}</button>`; }
-                    });
+                    c.c_advClasses.forEach(advId => { let advC = GameDB.classes.find(x => x.c_id === advId); if(advC) { opts.innerHTML += `<button class="btn bg-blue-900/50 hover:bg-blue-800 border-blue-500 text-lg py-3 transition-colors" onclick="UI.doJobChange('${advId}', false)">${advC.c_icon} ${advC.c_name}</button>`; } });
                 }
-                
                 this.openModal('modal-job');
             },
             doJobChange: function(newJobId, isFastForward) {
                 let p = GameState.player; let isFromNovice = p.classId === 'novice';
                 p.classId = newJobId; p.jobLv = 1; p.jobExp = 0;
-                
-                if (isFromNovice) {
-                    p.stats = { str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 };
-                    let totalPts = 48 + ((p.rebirthCount || 0) * 100);
-                    for (let i = 2; i <= p.baseLv; i++) { totalPts += Math.floor(i / 5) + 3; }
-                    p.statPts = totalPts;
-                } 
-                
+                if (isFromNovice) { p.stats = { str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 }; let totalPts = 48 + ((p.rebirthCount || 0) * 100); for (let i = 2; i <= p.baseLv; i++) { totalPts += Math.floor(i / 5) + 3; } p.statPts = totalPts; } 
                 if (isFastForward) {
                     let path = SystemExt.getClassPath(newJobId);
-                    path.forEach(jId => {
-                        if (jId === newJobId) return; 
-                        let skills = Object.values(GameDB.skills).filter(s => s.job === jId);
-                        skills.forEach(s => { GameState.skills[s.sk_id] = s.sk_maxLv; });
-                    });
+                    path.forEach(jId => { if (jId === newJobId) return; let skills = Object.values(GameDB.skills).filter(s => s.job === jId); skills.forEach(s => { GameState.skills[s.sk_id] = s.sk_maxLv; }); });
                     Log.add(`【直升四轉】已自動點滿前期所有技能！現在是 ${GameDB.classes.find(x=>x.c_id===newJobId).c_name}`, 'text-purple-400 font-bold', 'system');
-                } else {
-                    Log.add(`轉職成功！現在是 ${GameDB.classes.find(x=>x.c_id===newJobId).c_name}`, 'text-yellow-400 font-bold', 'system');
-                }
-
+                } else { Log.add(`轉職成功！現在是 ${GameDB.classes.find(x=>x.c_id===newJobId).c_name}`, 'text-yellow-400 font-bold', 'system'); }
                 Player.calcStats(); this.updateHeader(); this.checkJobChange(); this.closeModal('modal-job');
-                if(isFromNovice) Bag.addItem('w_001', 1, 'equip'); 
-                Skills.render();
+                if(isFromNovice) Bag.addItem('w_001', 1, 'equip'); Skills.render();
             }
         };
 
-        const Visuals = {
-            showDamage: function(amount, isCrit, targetId) {
-                const target = document.getElementById(targetId); const container = document.getElementById('dmg-container');
-                if(!target || !container) return;
-                const rect = target.getBoundingClientRect(); const appRect = container.getBoundingClientRect();
-                let div = document.createElement('div'); div.className = 'dmg-text'; div.innerText = amount;
-                div.style.left = `${rect.left - appRect.left + rect.width/2 + (Math.random()*40-20)}px`; div.style.top = `${rect.top - appRect.top + (Math.random()*20)}px`;
-                if(isCrit) { div.style.color = '#f87171'; div.style.fontSize = '1.5rem'; } 
-                else if (targetId === 'visual-player') { div.style.color = '#ef4444'; } 
-                else { div.style.color = 'white'; }
-                container.appendChild(div); setTimeout(() => div.remove(), 1000);
-            },
-            animHit: function(targetId) { const target = document.getElementById(targetId); if(target) { target.classList.remove('anim-hit'); void target.offsetWidth; target.classList.add('anim-hit'); } }
-        };
-
-        const Log = {
-            add: function(msg, colorClass='text-gray-300', type='system') {
-                if(type === 'dmgDealt' && !GameState.logFilters.dmgDealt) return;
-                if(type === 'dmgTaken' && !GameState.logFilters.dmgTaken) return;
-                if(type === 'exp' && !GameState.logFilters.exp) return;
-                if(type === 'drops' && !GameState.logFilters.drops) return;
-                const log = document.getElementById('combat-log'); const div = document.createElement('div');
-                div.className = colorClass + ' py-0.5 border-b border-gray-800/50 last:border-0'; div.innerText = msg;
-                log.appendChild(div); if(log.childNodes.length > 50) log.firstChild.remove(); log.scrollTop = log.scrollHeight;
-            }
-        };
-
-        function gameLoop() {
-            let now = Date.now();
+        function gameLoopTick(now) {
             if (!GameState.lastLoopTime) { GameState.lastLoopTime = now; GameState.lastRegenTime = now; }
             if (!GameState.lastAutoSaveTime) GameState.lastAutoSaveTime = now;
             if (now - GameState.lastAutoSaveTime >= 10000) { SaveLoad.autoSave(); GameState.lastAutoSaveTime = now; }
@@ -1858,25 +1334,30 @@
                 if (GameState.skills['m_zen']) spRegenBase += GameState.skills['m_zen'] * 3 + Math.floor(Player.derived.maxSp * GameState.skills['m_zen'] * 0.002);
                 Player.heal(hpRegenBase * ticks, spRegenBase * ticks);
             }
-            BuffManager.tick(now); Combat.tick(now); AutoSystem.tick(now); 
-            GameState.lastLoopTime = now; requestAnimationFrame(gameLoop);
+            BuffManager.tick(now); Combat.tick(now); AutoSystem.tick(now); GameState.lastLoopTime = now;
         }
 
+        // Web Worker for Background Processing
+        let workerBlob = new Blob([`
+            let timer = null;
+            self.onmessage = function(e) {
+                if (e.data === 'start') {
+                    if(!timer) timer = setInterval(() => { self.postMessage({type: 'tick', now: Date.now()}); }, 100); 
+                }
+            };
+        `], { type: 'application/javascript' });
+        
+        const gameWorker = new Worker(URL.createObjectURL(workerBlob));
+        gameWorker.onmessage = function(e) { if (e.data.type === 'tick') { gameLoopTick(e.data.now); } };
+
         function setupEvents() {
-            document.querySelectorAll('.btn-stat-add').forEach(btn => { 
-                btn.addEventListener('click', (e) => { 
-                    e.stopPropagation(); 
-                    Player.addStat(e.target.dataset.stat, e.target.dataset.amt); 
-                }); 
-            });
+            document.querySelectorAll('.btn-stat-add').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); Player.addStat(e.target.dataset.stat, e.target.dataset.amt); }); });
             document.getElementById('map-select').addEventListener('change', (e) => {
-                GameState.currentMap = e.target.value; GameState.currentMonster = null; 
-                Combat.initMapMonsters(e.target.value);
+                GameState.currentMap = e.target.value; GameState.currentMonster = null; Combat.initMapMonsters(e.target.value);
                 let mapDef = GameDB.maps.find(m => m.id === e.target.value);
                 if(mapDef) {
                     document.getElementById('combat-bg').className = `flex-1 relative overflow-hidden flex items-center justify-center transition-colors duration-1000 bg-gradient-to-b ${mapDef.bg}`;
-                    let audio = document.getElementById('bgm-player');
-                    if(document.getElementById('setting-bgm').checked) { audio.src = mapDef.music; audio.volume = document.getElementById('setting-vol').value / 100; audio.play().catch(e=>console.log("Audio play blocked.")); }
+                    let audio = document.getElementById('bgm-player'); if(document.getElementById('setting-bgm').checked) { audio.src = mapDef.music; audio.volume = document.getElementById('setting-vol').value / 100; audio.play().catch(e=>console.log("Audio blocked.")); }
                 }
             });
             ['hp', 'sp', 's1', 's2'].forEach(key => { let el = document.getElementById(`set-auto-${key}`); if(el) { el.addEventListener('change', (e) => { let val = parseInt(e.target.value) || 1; if(val < 1) val = 1; if(key === 'hp') GameState.autoConfig.hpPct = val; if(key === 'sp') GameState.autoConfig.spPct = val; if(key === 's1') GameState.autoConfig.s1Interval = val; if(key === 's2') GameState.autoConfig.s2Interval = val; }); } });
@@ -1887,22 +1368,17 @@
         }
 
         function initGame() {
-            window.UI = UI; window.Bag = Bag; window.Smith = Smith; window.Shop = Shop; window.Skills = Skills; window.Hotkeys = Hotkeys; window.Player = Player; window.Combat = Combat;
+            window.UI = UI; window.Bag = Bag; window.Smith = Smith; window.Shop = Shop; window.Skills = Skills; window.Hotkeys = Hotkeys; window.Player = Player; window.Combat = Combat; window.SaveLoad = SaveLoad;
             document.getElementById('loading-screen').classList.add('hide'); document.getElementById('app').classList.remove('hide');
             Player.init(); SaveLoad.autoLoad(); 
             if(GameState.inventory.item.length === 0 && GameState.inventory.equip.length === 0) { Bag.addItem('novicePotion', 50, 'item'); }
             
             if(!GameState.currentMap) GameState.currentMap = 'prontera';
-            UI.updateMapSelect(); 
-            let mapSel = document.getElementById('map-select');
-            if(mapSel.value) GameState.currentMap = mapSel.value;
+            UI.updateMapSelect(); let mapSel = document.getElementById('map-select'); if(mapSel.value) GameState.currentMap = mapSel.value;
+            if(!GameState.mapMonsters || GameState.mapMonsters.length === 0) { Combat.initMapMonsters(GameState.currentMap); }
             
-            if(!GameState.mapMonsters || GameState.mapMonsters.length === 0) {
-                Combat.initMapMonsters(GameState.currentMap);
-            }
-            
-            setupEvents(); UI.updateHeader(); UI.checkRebirth(); Hotkeys.render(); BuffManager.render(); Skills.render();
-            requestAnimationFrame(gameLoop);
+            setupEvents(); UI.updateHeader(); UI.checkRebirth(); UI.checkJobChange(); Hotkeys.render(); BuffManager.render(); Skills.render();
+            gameWorker.postMessage('start');
         }
 
         window.addEventListener('DOMContentLoaded', loadDatabases);
