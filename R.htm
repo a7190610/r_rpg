@@ -269,7 +269,7 @@
         <div class="bg-gray-800 p-4 rounded shadow-lg border border-gray-600 w-[90%] max-w-sm max-h-[90%] overflow-y-auto">
             <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2 text-yellow-400">系統設定</h2>
             
-            <!-- Cloud Save Section (登入/註冊) -->
+            <!-- Cloud Save Section -->
             <div class="mb-4 bg-gray-900/80 p-3 rounded border border-gray-700 flex flex-col gap-2 relative">
                 <div class="flex justify-between items-center border-b border-gray-700 pb-1 mb-1">
                     <div class="text-xs text-blue-300 font-bold">☁️ 雲端存檔同步</div>
@@ -277,7 +277,7 @@
                 </div>
                 
                 <div id="cloud-auth-panel" class="flex flex-col gap-2">
-                    <div class="text-[10px] text-gray-400 mb-1">登入即可跨裝置同步，無需再手動複製存檔碼！</div>
+                    <div class="text-[10px] text-gray-400 mb-1">登入即可跨裝置同步，系統每30秒自動存檔。</div>
                     <input type="email" id="cloud-email" placeholder="信箱 (如 example@mail.com)" class="bg-gray-800 border border-gray-600 rounded px-2 py-1.5 text-xs text-white outline-none focus:border-blue-500">
                     <input type="password" id="cloud-pass" placeholder="密碼 (至少 6 碼)" class="bg-gray-800 border border-gray-600 rounded px-2 py-1.5 text-xs text-white outline-none focus:border-blue-500">
                     <div class="flex gap-2 mt-1">
@@ -339,10 +339,8 @@
                 <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="log-drop" class="w-4 h-4 accent-yellow-500" checked> 顯示掉落物品</label>
             </div>
 
-            <!-- 單機檔案存檔 -->
             <div class="mt-6 pt-4 border-t border-gray-700 flex flex-col gap-2">
-                <div class="text-xs text-purple-300 mb-1">進度儲存/讀取 (單機實體檔案備份):</div>
-                <div class="text-[10px] text-gray-400 mb-2">系統每 10 秒會自動存檔於瀏覽器中。您也可以手動下載「.txt」存檔來備份。</div>
+                <div class="text-xs text-purple-300 mb-1">單機實體檔案備份:</div>
                 <div class="flex justify-between gap-2 mt-1">
                     <button class="btn bg-gray-700 hover:bg-gray-600 border-gray-500 flex-1 py-1 font-bold text-[11px]" onclick="SaveLoad.exportFile()">下載存檔 (.txt)</button>
                     <button class="btn bg-gray-700 hover:bg-gray-600 border-gray-500 flex-1 py-1 font-bold text-[11px]" onclick="SaveLoad.importFile()">選擇存檔讀取</button>
@@ -758,7 +756,26 @@
                     if(parsed.hotkeys) GameState.hotkeys = parsed.hotkeys; if(parsed.hotkeySize) GameState.hotkeySize = parsed.hotkeySize; if(parsed.currentMap) GameState.currentMap = parsed.currentMap;
                     if(parsed.autoConfig) { Object.assign(GameState.autoConfig, parsed.autoConfig); if(GameState.autoConfig.autoRevive === undefined) GameState.autoConfig.autoRevive = true; }
                     if(parsed.logFilters) Object.assign(GameState.logFilters, parsed.logFilters);
+                    
                     if(GameState.player.rebirthCount === undefined) GameState.player.rebirthCount = 0; if(GameState.player.cash === undefined) GameState.player.cash = 0;
+                    
+                    // --- 效能修復：處理背包上限與超量捨棄 (自適應舊存檔) ---
+                    let p = GameState.player;
+                    let itemCap = Math.min(375, 100 + (p.baseLv || 1));
+                    let equipCap = Math.min(375, 100 + (p.baseLv || 1)) + ((p.rebirthCount || 0) * 10);
+                    
+                    if (GameState.inventory.item.length > itemCap) {
+                        GameState.inventory.item = GameState.inventory.item.slice(0, itemCap);
+                        console.log(`[系統清理] 道具超過上限，已自動清理至 ${itemCap} 件。`);
+                    }
+                    if (GameState.inventory.equip.length > equipCap) {
+                        // 裝備清理前，確保精煉過的高價值裝備排在最前面保留
+                        GameState.inventory.equip.sort((a, b) => b.refine - a.refine);
+                        GameState.inventory.equip = GameState.inventory.equip.slice(0, equipCap);
+                        console.log(`[系統清理] 裝備超過上限，已自動清理至 ${equipCap} 件 (優先保留高精煉)。`);
+                    }
+                    // -----------------------------------------------------
+
                     let now = Date.now(); GameState.lastLoopTime = now; GameState.autoAttackTimer = now; GameState.monsterAttackTimer = now; GameState.lastRegenTime = now; GameState.currentMonster = null; 
                     Player.calcStats(); UI.updateHeader(); UI.updateMapSelect(); UI.updateStatus(); UI.checkJobChange(); UI.checkRebirth(); Hotkeys.render(); BuffManager.render(); Skills.render();
                     Combat.initMapMonsters(GameState.currentMap || 'prontera');
@@ -1097,9 +1114,25 @@
             },
             rollDrop: function(m, isSim = false) {
                 let realDropRate = m.dropRate * Player.derived.dropMulti;
-                if(Math.random() < realDropRate) { let dropPool = GameDB.items.filter(i => i.i2_cost < 1000); if(dropPool.length > 0) { let item = dropPool[Math.floor(Math.random() * dropPool.length)]; Bag.addItem(item.i2_id, 1, 'item', isSim); if(!isSim) Log.add(`獲得物品: ${item.i2_name}`, 'text-blue-300', 'drops'); } }
+                if(Math.random() < realDropRate) { 
+                    let dropPool = GameDB.items.filter(i => i.i2_cost < 1000); 
+                    if(dropPool.length > 0) { 
+                        let item = dropPool[Math.floor(Math.random() * dropPool.length)]; 
+                        let added = Bag.addItem(item.i2_id, 1, 'item', isSim); 
+                        if(!isSim && added) Log.add(`獲得物品: ${item.i2_name}`, 'text-blue-300', 'drops'); 
+                    } 
+                }
                 let equipDropChance = m.name.includes('MVP') ? 1.0 : (0.15 + realDropRate * 0.5);
-                if (Math.random() < equipDropChance) { let mLevel = m.lv || 1; let eqPool = Object.values(GameDB.equipFlat).filter(eq => Math.abs(eq.i1_reqLevel - mLevel) <= 20 || eq.i1_reqLevel <= mLevel); if (eqPool.length === 0) eqPool = Object.values(GameDB.equipFlat); if(eqPool.length > 0) { let eq = eqPool[Math.floor(Math.random() * eqPool.length)]; Bag.addItem(eq.i1_id, 1, 'equip', isSim); if(!isSim) Log.add(`獲得裝備: ${eq.i1_name}`, 'text-fuchsia-400 font-bold', 'drops'); } }
+                if (Math.random() < equipDropChance) { 
+                    let mLevel = m.lv || 1; 
+                    let eqPool = Object.values(GameDB.equipFlat).filter(eq => Math.abs(eq.i1_reqLevel - mLevel) <= 20 || eq.i1_reqLevel <= mLevel); 
+                    if (eqPool.length === 0) eqPool = Object.values(GameDB.equipFlat); 
+                    if(eqPool.length > 0) { 
+                        let eq = eqPool[Math.floor(Math.random() * eqPool.length)]; 
+                        let added = Bag.addItem(eq.i1_id, 1, 'equip', isSim); 
+                        if(!isSim && added) Log.add(`獲得裝備: ${eq.i1_name}`, 'text-fuchsia-400 font-bold', 'drops'); 
+                    } 
+                }
             }
         };
 
@@ -1130,14 +1163,81 @@
 
         const Bag = {
             currentTab: 'equip',
+            fullWarned: false,
+            _renderTimeout: null,
+            
+            getMaxSlots: function(type) {
+                let rb = GameState.player?.rebirthCount || 0;
+                let baseLv = Math.min(275, GameState.player?.baseLv || 1);
+                let baseSlots = 100 + baseLv; // 初始100, 滿級275時為375
+                if (type === 'equip') {
+                    return Math.min(500, baseSlots + (rb * 10)); // 裝備背包每轉生+10格，絕對上限500
+                }
+                return Math.min(375, baseSlots); // 道具背包上限 375
+            },
+            
+            canAdd: function(id, type) {
+                if (type === 'item' && GameState.inventory.item.some(i => i.id === id)) return true;
+                return GameState.inventory[type].length < this.getMaxSlots(type);
+            },
+            
+            scheduleRender: function() {
+                if (this._renderTimeout) return;
+                this._renderTimeout = setTimeout(() => {
+                    this.render();
+                    this._renderTimeout = null;
+                }, 200); 
+            },
+
             addItem: function(id, amount = 1, type = 'item', isSim = false) {
                 let slot = GameState.inventory[type].find(i => i.id === id);
-                if(slot && type === 'item') { slot.amount += amount; } else { if(type === 'equip') GameState.inventory.equip.push({ uid: Date.now()+Math.random(), id: id, refine: 0 }); else GameState.inventory.item.push({ id: id, amount: amount }); }
-                if(!isSim && !document.getElementById('modal-bag').classList.contains('hide')) this.render();
+                let maxSlots = this.getMaxSlots(type);
+                
+                if(slot && type === 'item') { 
+                    slot.amount += amount; 
+                } else { 
+                    if (GameState.inventory[type].length >= maxSlots) {
+                        if (!isSim && !this.fullWarned) {
+                            Log.add(`【警告】${type === 'equip' ? '裝備' : '道具'}背包已滿！無法獲得新物品。`, 'text-red-500 font-bold', 'system');
+                            this.fullWarned = true;
+                            setTimeout(() => { this.fullWarned = false; }, 5000); 
+                        }
+                        return false; 
+                    }
+                    
+                    if(type === 'equip') {
+                        GameState.inventory.equip.push({ uid: Date.now() + Math.random(), id: id, refine: 0 }); 
+                    } else { 
+                        GameState.inventory.item.push({ id: id, amount: amount }); 
+                    } 
+                }
+                
+                if(!isSim && !document.getElementById('modal-bag').classList.contains('hide')) {
+                    this.scheduleRender();
+                }
+                return true;
             },
-            removeItemByUid: function(uid, type='equip') { GameState.inventory[type] = GameState.inventory[type].filter(i => String(i.uid) !== String(uid)); if(!document.getElementById('modal-bag').classList.contains('hide')) this.render(); },
-            removeItemById: function(id, amt=1, type='item', isSim = false) { let slot = GameState.inventory[type].find(i => i.id === id); if(slot) { slot.amount -= amt; if(slot.amount <= 0) GameState.inventory[type] = GameState.inventory[type].filter(i => i.id !== id); } if(!isSim && !document.getElementById('modal-bag').classList.contains('hide')) this.render(); },
-            switchTab: function(tab) { this.currentTab = tab; document.getElementById('tab-equip').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab'); document.getElementById('tab-item').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab'); document.getElementById(`tab-${tab}`).classList.add('bg-blue-900/50', 'border-blue-700', 'active-tab'); document.getElementById('bag-actions-equip').style.display = tab === 'equip' ? 'flex' : 'none'; document.getElementById('bag-current-equips').style.display = tab === 'equip' ? 'flex' : 'none'; this.render(); },
+            removeItemByUid: function(uid, type='equip') { 
+                GameState.inventory[type] = GameState.inventory[type].filter(i => String(i.uid) !== String(uid)); 
+                if(!document.getElementById('modal-bag').classList.contains('hide')) this.scheduleRender(); 
+            },
+            removeItemById: function(id, amt=1, type='item', isSim = false) { 
+                let slot = GameState.inventory[type].find(i => i.id === id); 
+                if(slot) { 
+                    slot.amount -= amt; 
+                    if(slot.amount <= 0) GameState.inventory[type] = GameState.inventory[type].filter(i => i.id !== id); 
+                } 
+                if(!isSim && !document.getElementById('modal-bag').classList.contains('hide')) this.scheduleRender(); 
+            },
+            switchTab: function(tab) { 
+                this.currentTab = tab; 
+                document.getElementById('tab-equip').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab'); 
+                document.getElementById('tab-item').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab'); 
+                document.getElementById(`tab-${tab}`).classList.add('bg-blue-900/50', 'border-blue-700', 'active-tab'); 
+                document.getElementById('bag-actions-equip').style.display = tab === 'equip' ? 'flex' : 'none'; 
+                document.getElementById('bag-current-equips').style.display = tab === 'equip' ? 'flex' : 'none'; 
+                this.render(); 
+            },
             openEquipAction: function(slot) {
                 let eq = GameState.equipped[slot]; if(!eq) return;
                 let def = GameDB.equipFlat[eq.id]; let rarity = SystemExt.getEquipRarity(def.i1_reqLevel); let rbSys = SystemExt.getRebirthBonuses(GameState.player.rebirthCount);
@@ -1150,7 +1250,11 @@
                 UI.openModal('modal-equip-action');
             },
             render: function() {
-                let total = GameState.inventory.equip.length + GameState.inventory.item.length; document.getElementById('txt-bag-count').innerText = `(${total}/${GameDB.system.SETTINGS.INVENTORY_SLOTS})`;
+                let maxSlots = this.getMaxSlots(this.currentTab);
+                let currentCount = GameState.inventory[this.currentTab].length;
+                let tabName = this.currentTab === 'equip' ? '裝備' : '道具';
+                document.getElementById('txt-bag-count').innerText = `(${tabName} ${currentCount}/${maxSlots})`;
+                
                 if(this.currentTab === 'equip') {
                     const leftSlots = ['helm', 'armor', 'weapon', 'shield']; const rightSlots = ['garment', 'shoes', 'acc1', 'acc2'];
                     const renderSlot = (slot, containerId) => {
@@ -1163,20 +1267,40 @@
                     };
                     document.getElementById('equip-left').innerHTML = ''; document.getElementById('equip-right').innerHTML = ''; leftSlots.forEach(s => renderSlot(s, 'equip-left')); rightSlots.forEach(s => renderSlot(s, 'equip-right'));
                 }
-                const grid = document.getElementById('bag-grid'); grid.innerHTML = ''; const items = GameState.inventory[this.currentTab];
+                
+                const grid = document.getElementById('bag-grid'); 
+                let htmlStr = ''; 
+                const items = GameState.inventory[this.currentTab];
+                
+                items.sort((a, b) => {
+                    if (this.currentTab === 'equip') {
+                        if (b.refine !== a.refine) return b.refine - a.refine; 
+                        let defA = GameDB.equipFlat[a.id], defB = GameDB.equipFlat[b.id];
+                        let lvA = defA ? defA.i1_reqLevel : 0, lvB = defB ? defB.i1_reqLevel : 0;
+                        if (lvB !== lvA) return lvB - lvA; 
+                        return a.id.localeCompare(b.id);
+                    } else {
+                        let defA = GameDB.itemFlat[a.id] || {}, defB = GameDB.itemFlat[b.id] || {};
+                        let typeA = defA.i2_type || defA.i3_type || 'z', typeB = defB.i2_type || defB.i3_type || 'z';
+                        if (typeA !== typeB) return typeA.localeCompare(typeB); 
+                        return a.id.localeCompare(b.id);
+                    }
+                });
+
                 items.forEach((itemData) => {
-                    let def = this.currentTab === 'equip' ? GameDB.equipFlat[itemData.id] : GameDB.itemFlat[itemData.id]; if(!def) return; let div = document.createElement('div'); div.className = 'bg-gray-700 p-2 rounded border border-gray-600 flex justify-between items-center gap-2 hover:border-yellow-500 transition-colors';
+                    let def = this.currentTab === 'equip' ? GameDB.equipFlat[itemData.id] : GameDB.itemFlat[itemData.id]; if(!def) return; 
+                    
                     if(this.currentTab === 'equip') {
                         let nameStr = itemData.refine > 0 ? `+${itemData.refine} ${def.i1_name}` : def.i1_name; let descStr = `部位: ${def.i1_type} | 需求Lv: ${def.i1_reqLevel}<br>`; for(let k in def.i1_attr) descStr += `${k.toUpperCase()}: ${formatNumber(def.i1_attr[k])} `;
                         let path = SystemExt.getClassPath(GameState.player.classId); let canEquipLevel = GameState.player.baseLv >= def.i1_reqLevel; let canEquipClass = def.i1_reqClass.includes('all') || path.some(c => def.i1_reqClass.includes(c)); let canEquip = canEquipLevel && canEquipClass;
                         let equipBtnClass = canEquip ? 'bg-blue-900 border-blue-600 hover:bg-blue-800' : 'bg-gray-800 border-gray-600 text-gray-500 opacity-50 cursor-not-allowed'; let warningHtml = ''; if (!canEquipLevel) warningHtml += `<div class="text-[10px] text-red-400 mt-0.5 font-bold">⚠️ 等級不足 (需 Lv.${def.i1_reqLevel})</div>`; if (!canEquipClass) warningHtml += `<div class="text-[10px] text-red-400 mt-0.5 font-bold">⚠️ 職業不符</div>`;
-                        div.innerHTML = `<div class="flex items-center gap-2 flex-1"><span class="text-3xl shrink-0">${this.getEquipIcon(def.i1_type)}</span><div class="flex-1 overflow-hidden"><div class="font-bold text-sm text-yellow-100">${nameStr}</div><div class="text-[10px] text-gray-300 mt-0.5 leading-tight">${descStr}</div>${warningHtml}</div></div><div class="flex flex-col gap-1 shrink-0"><button class="btn ${equipBtnClass} text-xs py-1" onclick="Bag.equipItem('${itemData.uid}')">穿著</button><button class="btn bg-red-900 border-red-600 text-xs py-1" onclick="Bag.sellItem('${itemData.uid}', 'equip')">出售</button></div>`;
+                        htmlStr += `<div class="bg-gray-700 p-2 rounded border border-gray-600 flex justify-between items-center gap-2 hover:border-yellow-500 transition-colors"><div class="flex items-center gap-2 flex-1"><span class="text-3xl shrink-0">${this.getEquipIcon(def.i1_type)}</span><div class="flex-1 overflow-hidden"><div class="font-bold text-sm text-yellow-100">${nameStr}</div><div class="text-[10px] text-gray-300 mt-0.5 leading-tight">${descStr}</div>${warningHtml}</div></div><div class="flex flex-col gap-1 shrink-0"><button class="btn ${equipBtnClass} text-xs py-1" onclick="Bag.equipItem('${itemData.uid}')">穿著</button><button class="btn bg-red-900 border-red-600 text-xs py-1" onclick="Bag.sellItem('${itemData.uid}', 'equip')">出售</button></div></div>`;
                     } else {
                         let nameStr = def.i2_name || def.i3_name; let descStr = def.i2_desc || def.i3_desc || ''; let canUse = (def.i2_type === 'consumable' || def.i3_type === 'consumable' || def.i2_type === 'buff' || def.i3_type === 'buff');
-                        div.innerHTML = `<div class="flex items-center gap-2 flex-1"><span class="text-3xl shrink-0">${def.i2_icon || def.i3_icon || '📦'}</span><div class="flex-1 overflow-hidden"><div class="font-bold text-sm text-yellow-100 flex justify-between"><span>${nameStr}</span><span class="text-gray-300 font-mono pr-2">x${formatNumber(itemData.amount)}</span></div><div class="text-[10px] text-gray-300 mt-0.5 leading-tight truncate">${descStr}</div></div></div><div class="flex flex-col gap-1 shrink-0">${canUse ? `<button class="btn bg-green-900 border-green-600 text-xs py-1 mb-1" onclick="Bag.useItem('${itemData.id}')">使用</button>` : ''}<div class="flex gap-1"><button class="btn bg-red-900 border-red-600 text-[10px] py-1 px-1 flex-1" onclick="Bag.sellItem('${itemData.id}', 'item')">賣1</button><button class="btn bg-red-950 border-red-800 text-[10px] py-1 px-1 flex-1 text-red-300" onclick="Bag.sellItemAll('${itemData.id}')">全賣</button></div></div>`;
+                        htmlStr += `<div class="bg-gray-700 p-2 rounded border border-gray-600 flex justify-between items-center gap-2 hover:border-yellow-500 transition-colors"><div class="flex items-center gap-2 flex-1"><span class="text-3xl shrink-0">${def.i2_icon || def.i3_icon || '📦'}</span><div class="flex-1 overflow-hidden"><div class="font-bold text-sm text-yellow-100 flex justify-between"><span>${nameStr}</span><span class="text-gray-300 font-mono pr-2">x${formatNumber(itemData.amount)}</span></div><div class="text-[10px] text-gray-300 mt-0.5 leading-tight truncate">${descStr}</div></div></div><div class="flex flex-col gap-1 shrink-0">${canUse ? `<button class="btn bg-green-900 border-green-600 text-xs py-1 mb-1" onclick="Bag.useItem('${itemData.id}')">使用</button>` : ''}<div class="flex gap-1"><button class="btn bg-red-900 border-red-600 text-[10px] py-1 px-1 flex-1" onclick="Bag.sellItem('${itemData.id}', 'item')">賣1</button><button class="btn bg-red-950 border-red-800 text-[10px] py-1 px-1 flex-1 text-red-300" onclick="Bag.sellItemAll('${itemData.id}')">全賣</button></div></div></div>`;
                     }
-                    grid.appendChild(div);
                 });
+                grid.innerHTML = htmlStr;
             },
             getEquipIcon: function(type) { const m = { weapon:'🗡️', helm:'🪖', armor:'👕', shield:'🛡️', garment:'🧥', shoes:'👞', acc:'💍' }; return m[type] || '🎒'; },
             equipItem: function(uid) {
@@ -1187,7 +1311,18 @@
                 if(GameState.equipped[targetSlot]) { this.unequipItem(targetSlot, false); }
                 GameState.equipped[targetSlot] = item; this.removeItemByUid(uid, 'equip'); Player.calcStats(); this.render();
             },
-            unequipItem: function(slot, recalc=true) { if(GameState.equipped[slot]) { GameState.inventory.equip.push(GameState.equipped[slot]); GameState.equipped[slot] = null; if(recalc) Player.calcStats(); this.render(); } },
+            unequipItem: function(slot, recalc=true) { 
+                if(GameState.equipped[slot]) { 
+                    if (GameState.inventory.equip.length >= this.getMaxSlots('equip')) {
+                        UI.showToast('裝備背包已滿，無法卸下！請先清理空間。', 'bg-red-600 text-white');
+                        return;
+                    }
+                    GameState.inventory.equip.push(GameState.equipped[slot]); 
+                    GameState.equipped[slot] = null; 
+                    if(recalc) Player.calcStats(); 
+                    this.render(); 
+                } 
+            },
             useItem: function(id, isSim = false) {
                 let itemData = GameState.inventory.item.find(i => i.id === id); if(!itemData || itemData.amount <= 0) return; let def = GameDB.itemFlat[id]; if(!def) return;
                 if (id === 'flyWing') {
@@ -1205,7 +1340,7 @@
             sellItemAll: function(id) { let slot = GameState.inventory.item.find(i => i.id === id); if(!slot) return; let amt = slot.amount; this.removeItemById(id, amt, 'item'); GameState.player.zeny += (amt * 10); UI.updateHeader(); Hotkeys.render(); UI.showToast(`已全部出售，獲得 ${formatNumber(amt*10)} Zeny`, 'bg-yellow-600 text-white'); },
             autoSell: function() { let rarityMap = { common: 20, uncommon: 50, rare: 80 }; let sel = document.getElementById('auto-sell-rarity').value; let lvCap = rarityMap[sel] || 20; let toSell = GameState.inventory.equip.filter(eq => { let def = GameDB.equipFlat[eq.id]; return def && def.i1_reqLevel <= lvCap && eq.refine === 0; }); let totalZeny = toSell.length * 50; GameState.inventory.equip = GameState.inventory.equip.filter(eq => !toSell.includes(eq)); GameState.player.zeny += totalZeny; Log.add(`自動出售了 ${toSell.length} 件裝備，獲得 ${formatNumber(totalZeny)} Z`, 'text-yellow-300', 'system'); UI.updateHeader(); this.render(); },
             autoEquip: function() {
-                const slots = GameDB.system.SETTINGS.EQUIPMENT_SLOTS; let changed = false;
+                const slots = ['helm', 'armor', 'weapon', 'shield', 'garment', 'shoes', 'acc1', 'acc2']; let changed = false;
                 slots.forEach(slot => {
                     let currentEq = GameState.equipped[slot]; let currentLv = currentEq ? GameDB.equipFlat[currentEq.id].i1_reqLevel : -1; let slotType = slot.includes('acc') ? 'acc' : slot; let bestCandidate = null; let bestLv = currentLv; let path = SystemExt.getClassPath(GameState.player.classId);
                     GameState.inventory.equip.forEach(eq => { let def = GameDB.equipFlat[eq.id]; let canWearClass = def.i1_reqClass.includes('all') || path.some(c => def.i1_reqClass.includes(c)); if(def.i1_type === slotType && def.i1_reqLevel > bestLv && def.i1_reqLevel <= GameState.player.baseLv && canWearClass) { bestCandidate = eq; bestLv = def.i1_reqLevel; } });
@@ -1224,7 +1359,13 @@
                 itemsToShow.forEach(it => { let cost = it.i2_cost || it.i3_cost || 9999; let icon = it.i2_icon || it.i3_icon || '📦'; let name = it.i2_name || it.i3_name; let desc = it.i2_desc || it.i3_desc || ''; let id = it.i2_id || it.i3_id; let currencyStr = isCash ? 'Cash' : 'Z'; let currencyColor = isCash ? 'text-blue-300' : 'text-yellow-400'; let div = document.createElement('div'); div.className = 'bg-gray-700 p-2 rounded flex justify-between items-center gap-2 hover:border-yellow-500 border border-transparent transition-colors'; div.innerHTML = `<div class="flex items-center gap-2 flex-1 pr-2 overflow-hidden"><span class="text-3xl shrink-0">${icon}</span><div class="flex-1 overflow-hidden"><div class="font-bold text-sm text-yellow-100">${name}</div><div class="text-[10px] text-gray-300 mt-0.5 leading-tight">${desc}</div><div class="text-xs ${currencyColor} mt-1 font-mono font-bold">售價: ${formatNumber(cost)} ${currencyStr}</div></div></div><div class="flex flex-col gap-1 items-end shrink-0"><input type="number" id="shop-qty-${id}" value="1" min="1" class="w-14 bg-gray-900 border border-gray-500 rounded text-center text-xs py-1 text-white outline-none focus:border-yellow-500"><button class="btn text-xs bg-green-900 hover:bg-green-800 border-green-600 w-14 py-1 font-bold" onclick="Shop.buy('${id}', ${cost})">購買</button></div>`; list.appendChild(div); });
             },
             buy: function(id, unitCost) {
+                if (!Bag.canAdd(id, 'item')) {
+                    UI.showToast('道具背包已滿！請先清理背包。', 'bg-red-600 text-white');
+                    return;
+                }
+                
                 let qtyInput = document.getElementById(`shop-qty-${id}`); let qty = parseInt(qtyInput.value) || 1; if(qty < 1) qty = 1; let totalCost = unitCost * qty;
+                
                 if (this.isCashShop) { GameState.player.cash = GameState.player.cash || 0; if(GameState.player.cash >= totalCost) { GameState.player.cash -= totalCost; Bag.addItem(id, qty, 'item'); document.getElementById('shop-cash').innerText = formatNumber(GameState.player.cash); UI.updateHeader(); UI.showToast(`成功購買 ${formatNumber(qty)} 個！`, 'bg-green-600 text-white'); Log.add(`商城購買成功，消耗 ${formatNumber(totalCost)} Cash`, 'text-blue-300', 'system'); Hotkeys.render(); } else { UI.showToast(`Cash 不足！需要 ${formatNumber(totalCost)} Cash`, 'bg-red-600 text-white'); } } 
                 else { if(GameState.player.zeny >= totalCost) { GameState.player.zeny -= totalCost; Bag.addItem(id, qty, 'item'); document.getElementById('shop-zeny').innerText = formatNumber(GameState.player.zeny); UI.updateHeader(); UI.showToast(`成功購買 ${formatNumber(qty)} 個！`, 'bg-green-600 text-white'); Log.add(`道具購買成功，消耗 ${formatNumber(totalCost)} Z`, 'text-green-300', 'system'); Hotkeys.render(); } else { UI.showToast(`Zeny 不足！需要 ${formatNumber(totalCost)} Z`, 'bg-red-600 text-white'); } }
             },
@@ -1445,7 +1586,7 @@
                 let p = GameState.player; if(p.baseLv < 120) return;
                 let curr = p.rebirthCount || 0; let next = curr + 1;
                 
-                const getCls = (req) => curr >= req ? 'text-white font-bold' : 'text-gray-500 line-through opacity-50';
+                const getCls = (req) => curr >= req ? 'text-white font-bold' : 'text-gray-500 opacity-50';
                 const getIcon = (req) => curr >= req ? '✅' : '🔒';
                 
                 let html = `
@@ -1453,16 +1594,17 @@
                     <div class="text-red-400 text-xs mb-2 text-center">警告：等級將回歸為初心者Lv.1，裝備可能會被卸下！</div>
                     
                     <div class="bg-gray-900 p-2 rounded border border-gray-700 text-xs mb-2">
-                        <div class="text-yellow-300 font-bold mb-1 border-b border-gray-700 pb-1">✨ 常駐加成狀態 (隨轉生次數提升)</div>
+                        <div class="text-yellow-300 font-bold mb-1 border-b border-gray-700 pb-1">✨ 常駐加成狀態 (每次轉生皆可獲得)</div>
                         <div class="text-white space-y-1 mt-1">
+                            <div>▶ 裝備容量上限：提升 <span class="text-green-400 font-bold">10</span> 格 <span class="text-gray-500 text-[10px]">(下階: 裝備格數+10)</span></div>
                             <div>▶ 全屬性倍率：提升為 <span class="text-green-400 font-bold">${1 + curr * 0.01}</span> 倍 <span class="text-gray-500 text-[10px]">(下階: ${1 + next * 0.01} 倍)</span></div>
                             <div>▶ 額外素質點數：獲得 <span class="text-green-400 font-bold">${curr * 100}</span> 點 <span class="text-gray-500 text-[10px]">(下階: ${next * 100} 點)</span></div>
-                            <div>▶ 每轉生皆可獲得 <span class="text-blue-300 font-bold">1,000 Cash</span> 獎勵</div>
+                            <div>▶ 獲得獎勵：<span class="text-blue-300 font-bold">1,000 Cash</span></div>
                         </div>
                     </div>
 
                     <div class="bg-gray-900 p-2 rounded border border-gray-700 text-xs">
-                        <div class="mb-1 border-b border-gray-700 pb-1 font-bold text-purple-300">🔓 解鎖特權福利：</div>
+                        <div class="mb-1 border-b border-gray-700 pb-1 font-bold text-purple-300">🔓 解鎖特權福利 (累積轉生次數)：</div>
                         <ul class="space-y-1 mt-1">
                             <li class="${getCls(1)}">${getIcon(1)} 1轉：解鎖「自動使用 HP 恢復藥水」</li>
                             <li class="${getCls(2)}">${getIcon(2)} 2轉：解鎖「自動使用 SP 恢復藥水」</li>
