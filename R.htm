@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>放置RO</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -76,18 +73,193 @@
         }
         .btn:active { transform: translateY(1px); background: #111827; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Classic RO UI Styles */
+        .classic-window {
+            background-color: #d4d0c8;
+            border-top: 2px solid #fff;
+            border-left: 2px solid #fff;
+            border-right: 2px solid #404040;
+            border-bottom: 2px solid #404040;
+            color: #000;
+            font-family: 'Tahoma', sans-serif;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+        .classic-title {
+            background: linear-gradient(to right, #0a246a, #a6caf0);
+            color: white;
+            font-weight: bold;
+            padding: 3px 5px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .classic-btn {
+            background-color: #d4d0c8;
+            border-top: 1px solid #fff;
+            border-left: 1px solid #fff;
+            border-right: 1px solid #404040;
+            border-bottom: 1px solid #404040;
+            padding: 2px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .classic-btn:active {
+            border-top: 1px solid #404040;
+            border-left: 1px solid #404040;
+            border-right: 1px solid #fff;
+            border-bottom: 1px solid #fff;
+            padding: 3px 9px 1px 11px;
+        }
+        .classic-input {
+            border-top: 1px solid #404040;
+            border-left: 1px solid #404040;
+            border-right: 1px solid #fff;
+            border-bottom: 1px solid #fff;
+            background: #fff;
+            padding: 2px 4px;
+            font-size: 12px;
+            outline: none;
+        }
+        .numpad-btn {
+            background: linear-gradient(to bottom, #f0f8ff, #a6caf0);
+            border: 1px solid #0a246a;
+            color: #0a246a;
+            font-weight: bold;
+            font-size: 20px;
+            height: 40px;
+            width: 100%;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+        .numpad-btn:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col relative text-sm sm:text-base">
+<body class="h-screen w-screen flex flex-col relative text-sm sm:text-base bg-gray-900">
 
     <!-- Toast Container -->
-    <div id="toast-container" class="fixed top-12 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toast-container" class="fixed top-12 left-1/2 -translate-x-1/2 z-[150] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Disconnect Modal (異地登入踢除) -->
+    <div id="modal-disconnect" class="classic-window w-64 shadow-2xl fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] hide">
+        <div class="classic-title">
+            <span>系統訊息</span>
+        </div>
+        <div class="p-4 text-center">
+            <div class="bg-white border-inset border border-gray-400 border-t-gray-600 border-l-gray-600 p-4 text-xs mb-3 text-black leading-relaxed font-bold">
+                與伺服器的連結中斷。<br>可能有人由其他地方登入。
+            </div>
+            <button class="classic-btn font-bold px-6" onclick="location.reload()">確認</button>
+        </div>
+    </div>
+
+    <!-- Login Audio -->
+    <audio id="login-bgm" src="00.mp3" loop autoplay></audio>
+
+    <!-- Classic Login Overlay -->
+    <div id="classic-login-overlay" class="fixed inset-0 z-[120] flex items-center justify-center bg-[#87CEEB] bg-gradient-to-b from-[#87CEEB] to-[#4682B4]">
+        
+        <!-- Step 1: Agreement -->
+        <div id="login-step-1" class="classic-window w-11/12 max-w-lg shadow-xl">
+            <div class="classic-title">
+                <span>Ragnarok Online - 歡迎光臨</span>
+                <span class="cursor-pointer">X</span>
+            </div>
+            <div class="p-4 text-xs">
+                <div class="bg-white border-inset p-3 h-48 overflow-y-auto border border-gray-400 border-t-gray-600 border-l-gray-600">
+                    <strong>【歡迎光臨 放置RO 測試伺服器】</strong><br><br>
+                    為了保障您的遊戲體驗，本遊戲使用雲端存檔功能。<br>
+                    請您在下一步註冊或登入帳號。<br><br>
+                    * 本遊戲為個人開發放置網頁版，與官方無關。<br>
+                    * 點擊下方同意進入登入畫面。<br>
+                    <br><br>請享受遊戲！
+                </div>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button class="classic-btn" id="btn-agree">同意</button>
+                    <button class="classic-btn" onclick="LoginFlow.showAlert('必須同意才能進行遊戲！')">不同意</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Login / Register -->
+        <div id="login-step-2" class="classic-window w-80 shadow-xl hide">
+            <div class="classic-title">
+                <span>登入帳號</span>
+                <span class="cursor-pointer">X</span>
+            </div>
+            <div class="p-4 flex flex-col gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-16 text-right text-xs font-bold">Email ID</span>
+                    <input type="email" id="login-id" class="classic-input flex-1" placeholder="輸入信箱">
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-16 text-right text-xs font-bold">Password</span>
+                    <input type="password" id="login-pwd" class="classic-input flex-1" placeholder="輸入密碼">
+                </div>
+                <div class="flex justify-between mt-2 pt-2 border-t border-gray-400">
+                    <button class="classic-btn text-blue-800 font-bold" id="btn-register">註冊新帳號</button>
+                    <button class="classic-btn font-bold px-6" id="btn-login">登入</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Server Selection -->
+        <div id="login-step-3" class="classic-window w-64 shadow-xl hide">
+            <div class="classic-title">
+                <span>選擇遊戲服務</span>
+                <span class="cursor-pointer">X</span>
+            </div>
+            <div class="p-4">
+                <div class="bg-white border-inset h-32 border border-gray-400 border-t-gray-600 border-l-gray-600 mb-4 p-1">
+                    <div class="cursor-pointer bg-blue-600 text-white px-1 font-bold">波利</div>
+                    <div class="cursor-pointer px-1 text-gray-400 opacity-50 cursor-not-allowed">巴風特 (維護中)</div>
+                    <div class="cursor-pointer px-1 text-gray-400 opacity-50 cursor-not-allowed">查爾斯 (維護中)</div>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button class="classic-btn font-bold px-6" id="btn-server-ok">確定</button>
+                    <button class="classic-btn" onclick="location.reload()">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Secondary Password -->
+        <div id="login-step-4" class="classic-window w-80 shadow-xl hide">
+            <div class="classic-title">
+                <span>二次密碼</span>
+                <span class="cursor-pointer">X</span>
+            </div>
+            <div class="p-4 text-center">
+                <div id="secpwd-msg" class="text-xs mb-3 text-blue-900 font-bold">
+                    讀取中...
+                </div>
+                
+                <div class="bg-white border-inset border border-gray-400 border-t-gray-600 border-l-gray-600 py-1 mb-3 text-lg font-bold tracking-[0.5em] text-red-600 h-8" id="secpwd-display">
+                    
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 px-8 mb-4">
+                    <!-- Numpad injected by JS to scramble -->
+                </div>
+
+                <div class="flex justify-center gap-2">
+                    <button class="classic-btn" id="btn-secpwd-reset">Reset</button>
+                    <button class="classic-btn font-bold px-4" id="btn-secpwd-ok">確認</button>
+                    <button class="classic-btn" onclick="location.reload()">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Loading Screen -->
-    <div id="loading-screen" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-gray-900">
+    <div id="loading-screen" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-gray-900 hide">
         <div class="text-4xl mb-4 anim-float">🥚</div>
         <h1 class="text-2xl font-bold text-yellow-400 mb-2">放置RO 載入中...</h1>
-        <p id="loading-text" class="text-gray-400">正在連接資料庫...</p>
+        <p id="loading-text" class="text-gray-400">正在準備遊戲資源...</p>
         <div class="w-64 h-2 bg-gray-800 rounded mt-4 overflow-hidden">
             <div id="loading-bar" class="h-full bg-yellow-500 w-0 transition-all duration-300"></div>
         </div>
@@ -126,7 +298,7 @@
                     <span id="player-cash" class="font-mono text-blue-100">0</span>
                 </div>
                 <button onclick="if(SystemExt.getRebirthBonuses(GameState.player?.rebirthCount).chatUnlocked) UI.openModal('modal-chat'); else UI.showToast('世界頻道需達到 6 轉生後解鎖！', 'bg-red-600 text-white');" class="text-lg sm:text-xl hover:scale-110 transition-transform bg-gray-700 rounded-full w-8 h-8 flex items-center justify-center border border-gray-500">💬</button>
-                <button onclick="UI.openSettings()" class="text-lg sm:text-xl hover:scale-110 transition-transform relative">⚙️<span id="header-cloud-dot" class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span></button>
+                <button onclick="UI.openSettings()" class="text-lg sm:text-xl hover:scale-110 transition-transform">⚙️</button>
             </div>
         </header>
 
@@ -214,7 +386,7 @@
                 </select>
             </div>
             
-            <!-- Monster Info (Top Center - Adjusted position) -->
+            <!-- Monster Info (Top Center) -->
             <div class="absolute top-2 left-1/2 -translate-x-1/2 z-20 bg-gray-900/80 p-2 rounded border border-gray-700 text-center min-w-[120px] sm:min-w-[160px] shadow-md hidden" id="monster-info">
                 <div class="font-bold text-red-400 text-sm" id="mon-name">Monster</div>
                 <div class="text-[10px] text-gray-300"><span id="mon-element">Element</span> | <span id="mon-race">Race</span></div>
@@ -224,7 +396,7 @@
                 <div class="text-[10px] text-gray-400 mt-0.5" id="mon-hp-txt">0 / 0</div>
             </div>
 
-            <!-- Map Monsters Preview / Interactive List (Top Right - Adjusted position) -->
+            <!-- Map Monsters Preview (Top Right) -->
             <div class="absolute top-2 right-2 z-30 bg-gray-900/90 p-2 rounded border border-gray-700 text-xs shadow-md min-w-[120px] max-w-[150px] sm:min-w-[160px] sm:max-w-[200px] pointer-events-auto backdrop-blur-sm" id="map-monsters-preview">
                 <!-- Monsters injected here -->
             </div>
@@ -259,7 +431,6 @@
                 <button class="absolute right-0 top-0 btn px-3 py-2 text-xl rounded-full shadow shrink-0" onclick="UI.cycleHotkeySize()">+</button>
             </div>
         </section>
-
     </div> <!-- End App -->
 
     <!-- MODALS -->
@@ -269,41 +440,14 @@
         <div class="bg-gray-800 p-4 rounded shadow-lg border border-gray-600 w-[90%] max-w-sm max-h-[90%] overflow-y-auto">
             <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2 text-yellow-400">系統設定</h2>
             
-            <!-- Cloud Save Section -->
-            <div class="mb-4 bg-gray-900/80 p-3 rounded border border-gray-700 flex flex-col gap-2 relative">
-                <div class="flex justify-between items-center border-b border-gray-700 pb-1 mb-1">
-                    <div class="text-xs text-blue-300 font-bold">☁️ 雲端存檔同步</div>
-                    <div id="settings-cloud-status" class="text-[10px] bg-red-900/50 text-red-400 px-2 py-0.5 rounded border border-red-700">🔴 未登入</div>
-                </div>
-                
-                <div id="cloud-auth-panel" class="flex flex-col gap-2">
-                    <div class="text-[10px] text-gray-400 mb-1">登入即可跨裝置同步，系統每30秒自動存檔。</div>
-                    <input type="email" id="cloud-email" placeholder="信箱 (如 example@mail.com)" class="bg-gray-800 border border-gray-600 rounded px-2 py-1.5 text-xs text-white outline-none focus:border-blue-500">
-                    <input type="password" id="cloud-pass" placeholder="密碼 (至少 6 碼)" class="bg-gray-800 border border-gray-600 rounded px-2 py-1.5 text-xs text-white outline-none focus:border-blue-500">
-                    <div class="flex gap-2 mt-1">
-                        <button class="btn bg-blue-900/80 hover:bg-blue-800 border-blue-600 flex-1 py-1.5 font-bold text-xs" onclick="SaveLoad.login()">登入</button>
-                        <button class="btn bg-gray-700 hover:bg-gray-600 border-gray-500 flex-1 py-1.5 font-bold text-xs" onclick="SaveLoad.register()">免費註冊</button>
-                    </div>
-                </div>
-
-                <div id="cloud-action-panel" class="hidden flex-col gap-2">
-                    <div class="text-[10px] text-gray-400 leading-tight">系統每 30 秒會自動於背景將進度備份至雲端。</div>
-                    <div class="flex justify-between gap-2 mt-1">
-                        <button class="btn bg-blue-900/80 hover:bg-blue-800 border-blue-600 flex-1 py-1.5 font-bold text-xs" onclick="SaveLoad.cloudSave(false)">強制覆蓋上傳</button>
-                        <button class="btn bg-green-900/80 hover:bg-green-800 border-green-600 flex-1 py-1.5 font-bold text-xs" onclick="SaveLoad.cloudLoad(false)">強制下載讀取</button>
-                    </div>
-                    <button class="btn bg-red-900/50 hover:bg-red-800 border-red-700 w-full py-1 font-bold text-xs mt-1" onclick="SaveLoad.logout()">登出帳號</button>
-                </div>
-            </div>
-
             <div class="space-y-4 mb-4">
                 <div class="flex items-center justify-between">
                     <span>背景音樂</span>
-                    <input type="checkbox" id="setting-bgm" class="w-5 h-5 accent-yellow-500">
+                    <input type="checkbox" id="setting-bgm" class="w-5 h-5 accent-yellow-500" checked>
                 </div>
                 <div class="flex items-center justify-between">
                     <span>音量</span>
-                    <input type="range" id="setting-vol" min="0" max="100" value="5" class="w-2/3 accent-yellow-500">
+                    <input type="range" id="setting-vol" min="0" max="100" value="30" class="w-2/3 accent-yellow-500">
                 </div>
             </div>
 
@@ -339,15 +483,8 @@
                 <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="log-drop" class="w-4 h-4 accent-yellow-500" checked> 顯示掉落物品</label>
             </div>
 
-            <div class="mt-6 pt-4 border-t border-gray-700 flex flex-col gap-2">
-                <div class="text-xs text-purple-300 mb-1">單機實體檔案備份:</div>
-                <div class="flex justify-between gap-2 mt-1">
-                    <button class="btn bg-gray-700 hover:bg-gray-600 border-gray-500 flex-1 py-1 font-bold text-[11px]" onclick="SaveLoad.exportFile()">下載存檔 (.txt)</button>
-                    <button class="btn bg-gray-700 hover:bg-gray-600 border-gray-500 flex-1 py-1 font-bold text-[11px]" onclick="SaveLoad.importFile()">選擇存檔讀取</button>
-                </div>
-            </div>
-
-            <div class="mt-4 flex justify-end">
+            <div class="mt-4 flex justify-end gap-2 border-t border-gray-700 pt-4">
+                <button class="btn bg-red-900/50 hover:bg-red-800 border-red-600" onclick="if(confirm('確定要登出當前帳號並回到登入畫面嗎？')){ auth.signOut().then(()=>location.reload()); }">切換帳號 (登出)</button>
                 <button class="btn" onclick="UI.closeModal('modal-settings')">關閉設定</button>
             </div>
         </div>
@@ -505,11 +642,13 @@
         </div>
     </div>
 
-    <audio id="bgm-player" loop></audio>
-
+    <!-- Scripts Area -->
     <script type="module">
-        window.formatNumber = function(num) { return Number(num).toLocaleString('en-US'); };
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyD76Z1YihKxTwyg_bKfqxab6xKph6BRx20",
             authDomain: "rpg-isekai.firebaseapp.com",
@@ -518,42 +657,203 @@
             messagingSenderId: "532976656033",
             appId: "1:532976656033:web:d4c59086fc113cc39a5ae0"
         };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        let currentUserId = null;
-        
-        auth.onAuthStateChanged(user => {
-            let statusEl = document.getElementById('settings-cloud-status');
-            let dotEl = document.getElementById('header-cloud-dot');
-            let authPanel = document.getElementById('cloud-auth-panel');
-            let actionPanel = document.getElementById('cloud-action-panel');
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Global Variables
+        window.currentUserId = null;
+        window.currentSessionId = null;
+        window.tempSecPwd = null; 
+        let sessionUnsubscribe = null;
+        window.formatNumber = function(num) { return Number(num).toLocaleString('en-US'); };
+
+        // === Login Flow Control ===
+        const LoginFlow = {
+            expectedSecPwd: '',
+            isSettingMode: true,
+            secPwdInput: '',
             
-            if (user) {
-                currentUserId = user.uid;
-                if (statusEl) {
-                    statusEl.innerText = `🟢 已連線 (${user.email})`;
-                    statusEl.className = 'text-[10px] bg-green-900/50 text-green-400 px-2 py-0.5 rounded border border-green-700 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]';
-                }
-                if (dotEl) { dotEl.className = 'absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full shadow-[0_0_5px_#22c55e]'; }
-                if (authPanel) { authPanel.classList.add('hidden'); authPanel.classList.remove('flex'); }
-                if (actionPanel) { actionPanel.classList.remove('hidden'); actionPanel.classList.add('flex'); }
+            init: function() {
+                const bgm = document.getElementById('login-bgm');
+                bgm.volume = 0.3;
+                const tryPlayBGM = () => {
+                    bgm.play().catch(e => console.log("BGM pending interaction..."));
+                    document.removeEventListener('click', tryPlayBGM);
+                    document.removeEventListener('keydown', tryPlayBGM);
+                    document.removeEventListener('touchstart', tryPlayBGM);
+                };
+                document.addEventListener('click', tryPlayBGM);
+                document.addEventListener('keydown', tryPlayBGM);
+                document.addEventListener('touchstart', tryPlayBGM);
+                tryPlayBGM();
+
+                document.getElementById('btn-agree').onclick = () => {
+                    document.getElementById('login-step-1').classList.add('hide');
+                    document.getElementById('login-step-2').classList.remove('hide');
+                };
+
+                document.getElementById('btn-login').onclick = () => this.login();
+                document.getElementById('btn-register').onclick = () => this.register();
                 
-                if(!window.hasInitialCloudLoaded) {
-                    SaveLoad.cloudLoad(true);
-                    window.hasInitialCloudLoaded = true;
+                document.getElementById('btn-server-ok').onclick = () => {
+                    document.getElementById('login-step-3').classList.add('hide');
+                    document.getElementById('login-step-4').classList.remove('hide');
+                    this.initNumpad();
+                    this.checkSecPwdStatus();
+                };
+
+                document.getElementById('btn-secpwd-reset').onclick = () => this.clearSecPwd();
+                document.getElementById('btn-secpwd-ok').onclick = () => this.submitSecPwd();
+            },
+
+            showAlert: function(msg) {
+                let alertModal = document.getElementById('retro-alert-modal');
+                if (!alertModal) {
+                    alertModal = document.createElement('div');
+                    alertModal.id = 'retro-alert-modal';
+                    alertModal.className = 'fixed inset-0 z-[9999] flex items-center justify-center';
+                    alertModal.innerHTML = `
+                        <div class="absolute inset-0 bg-black/50" onclick="document.getElementById('retro-alert-modal').classList.add('hide')"></div>
+                        <div class="classic-window w-64 shadow-2xl relative z-10">
+                            <div class="classic-title"><span>系統訊息</span></div>
+                            <div class="p-4 text-center">
+                                <div id="retro-alert-msg" class="bg-white border-inset border border-gray-400 border-t-gray-600 border-l-gray-600 p-4 text-xs mb-3 text-black font-bold"></div>
+                                <button class="classic-btn font-bold px-6" onclick="document.getElementById('retro-alert-modal').classList.add('hide')">確認</button>
+                            </div>
+                        </div>`;
+                    document.body.appendChild(alertModal);
                 }
-            } else {
-                currentUserId = null;
-                if (statusEl) {
-                    statusEl.innerText = '🔴 未登入';
-                    statusEl.className = 'text-[10px] bg-red-900/50 text-red-400 px-2 py-0.5 rounded border border-red-700';
+                document.getElementById('retro-alert-msg').innerText = msg;
+                alertModal.classList.remove('hide');
+            },
+
+            login: async function() {
+                let email = document.getElementById('login-id').value;
+                let pwd = document.getElementById('login-pwd').value;
+                if(!email || !pwd) { this.showAlert('請輸入帳號和密碼'); return; }
+                try {
+                    await signInWithEmailAndPassword(auth, email, pwd);
+                    document.getElementById('login-step-2').classList.add('hide');
+                    document.getElementById('login-step-3').classList.remove('hide');
+                } catch(e) { this.showAlert('登入失敗: ' + e.message); }
+            },
+
+            register: async function() {
+                let email = document.getElementById('login-id').value;
+                let pwd = document.getElementById('login-pwd').value;
+                if(!email || !pwd) { this.showAlert('請輸入帳號和密碼'); return; }
+                try {
+                    await createUserWithEmailAndPassword(auth, email, pwd);
+                    this.showAlert('註冊成功！');
+                    document.getElementById('login-step-2').classList.add('hide');
+                    document.getElementById('login-step-3').classList.remove('hide');
+                } catch(e) { this.showAlert('註冊失敗: ' + e.message); }
+            },
+
+            checkSecPwdStatus: async function() {
+                let pwd = '';
+                
+                let localData = localStorage.getItem('idleRo_autoSave');
+                if (localData) {
+                    try {
+                        let parsed = localData.startsWith('{') ? JSON.parse(localData) : JSON.parse(decodeURIComponent(atob(localData)));
+                        if (parsed && parsed.player && parsed.player.secPwd) pwd = parsed.player.secPwd;
+                    } catch(e) {}
                 }
-                if (dotEl) { dotEl.className = 'absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_5px_#ef4444]'; }
-                if (authPanel) { authPanel.classList.remove('hidden'); authPanel.classList.add('flex'); }
-                if (actionPanel) { actionPanel.classList.add('hidden'); actionPanel.classList.remove('flex'); }
+
+                if(window.currentUserId) {
+                    try {
+                        const docRef = doc(db, "users", window.currentUserId);
+                        const d = await getDoc(docRef);
+                        if(d.exists()) {
+                            let data = d.data();
+                            let cloudStr = data.gameData; // 嚴格限制只能抓放置RO的專屬資料
+                            if(cloudStr) {
+                                let parsed = cloudStr.startsWith('{') ? JSON.parse(cloudStr) : JSON.parse(decodeURIComponent(atob(cloudStr)));
+                                if (parsed && parsed.player && parsed.player.secPwd) pwd = parsed.player.secPwd;
+                            }
+                        }
+                    } catch(e) {
+                        console.log("[雲端讀取] 權限或網路異常，使用本地密碼:", e.message);
+                    }
+                }
+
+                if(pwd && pwd.length === 4) {
+                    this.isSettingMode = false;
+                    this.expectedSecPwd = pwd;
+                    document.getElementById('secpwd-msg').innerHTML = "請輸入您的四位數二次密碼";
+                } else {
+                    this.isSettingMode = true;
+                    this.expectedSecPwd = '';
+                    document.getElementById('secpwd-msg').innerHTML = "為了保護帳號，請額外設定四位數字密碼：";
+                }
+            },
+
+            initNumpad: function() {
+                let container = document.querySelector('#login-step-4 .grid'); container.innerHTML = '';
+                let nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; nums.sort(() => Math.random() - 0.5);
+                nums.forEach(n => {
+                    let btn = document.createElement('button');
+                    btn.className = 'numpad-btn'; btn.innerText = n;
+                    btn.onclick = () => this.pressKey(n);
+                    container.appendChild(btn);
+                });
+            },
+
+            pressKey: function(k) {
+                if(this.secPwdInput.length < 4) { this.secPwdInput += k; this.updateSecPwdDisplay(); }
+            },
+
+            clearSecPwd: function() {
+                this.secPwdInput = ''; this.updateSecPwdDisplay();
+            },
+
+            updateSecPwdDisplay: function() {
+                document.getElementById('secpwd-display').innerText = '*'.repeat(this.secPwdInput.length);
+            },
+
+            submitSecPwd: async function() {
+                if(this.secPwdInput.length !== 4) { this.showAlert('請輸入四位數密碼'); return; }
+                if (this.isSettingMode) {
+                    window.tempSecPwd = this.secPwdInput;
+                    this.enterGame();
+                } else {
+                    if (this.secPwdInput === this.expectedSecPwd) { this.enterGame(); } 
+                    else { this.showAlert('密碼錯誤！'); this.clearSecPwd(); }
+                }
+            },
+
+            enterGame: async function() {
+                document.getElementById('login-bgm').pause();
+                document.getElementById('classic-login-overlay').classList.add('hide');
+                document.getElementById('loading-screen').classList.remove('hide');
+
+                if (window.currentUserId) {
+                    window.currentSessionId = Date.now().toString() + Math.random().toString();
+                    try {
+                        await setDoc(doc(db, "users", window.currentUserId), { sessionId: window.currentSessionId }, { merge: true });
+                        sessionUnsubscribe = onSnapshot(doc(db, "users", window.currentUserId), (docSnap) => {
+                            if (docSnap.exists()) {
+                                let data = docSnap.data();
+                                if (data.sessionId && data.sessionId !== window.currentSessionId) {
+                                    document.getElementById('modal-disconnect').classList.remove('hide');
+                                    GameState.player.isDead = true; 
+                                    if(sessionUnsubscribe) sessionUnsubscribe(); 
+                                }
+                            }
+                        });
+                    } catch(e) {
+                        console.log("Session tracking suppressed:", e.message);
+                    }
+                }
+
+                loadDatabases();
             }
-        });
+        };
+
+        onAuthStateChanged(auth, user => { if(user) window.currentUserId = user.uid; });
 
         window.SystemExt = {
             getJobTier: function(classId) {
@@ -599,7 +899,7 @@
             player: null, inventory: { equip: [], item: [] }, equipped: { helm: null, armor: null, weapon: null, shield: null, garment: null, shoes: null, acc1: null, acc2: null },
             skills: {}, hotkeys: [], hotkeySize: 12, currentMap: '', mapMonsters: [], currentMonster: null, buffs: [],
             logFilters: { dmgDealt: true, dmgTaken: true, exp: true, drops: true },
-            lastLoopTime: 0, autoAttackTimer: 0, monsterAttackTimer: 0, lastRegenTime: 0, lastCloudSaveTime: 0,
+            lastLoopTime: 0, autoAttackTimer: 0, monsterAttackTimer: 0, lastRegenTime: 0, lastAutoSaveTime: 0,
             autoConfig: { hpPct: 50, spPct: 50, s1Interval: 10, s2Interval: 10, autoRevive: true }, autoTimers: { hp: 0, sp: 0, s1: 0, s2: 0 }
         };
         
@@ -628,43 +928,24 @@
             try {
                 updateLoad(10, '載入系統設定...');
                 GameDB.system = await fetchDB(DB_URLS.system, 'RO_DATABASE_SYSTEM');
-
                 updateLoad(25, '載入職業與技能...');
                 const clsMod = await fetchDB(DB_URLS.classes, 'RO_DATABASE_CLASSES'); GameDB.classes = parseDbObj(clsMod.keys, clsMod.data);
                 GameDB.classParents = {}; GameDB.classes.forEach(c => { if(c.c_advClasses) { c.c_advClasses.forEach(adv => GameDB.classParents[adv] = c.c_id); } });
-                
-                const sklMod = await fetchDB(DB_URLS.skills, 'RO_DATABASE_SKILLS');
-                if (sklMod) GameDB.skillsRaw = sklMod.data;
-
+                const sklMod = await fetchDB(DB_URLS.skills, 'RO_DATABASE_SKILLS'); if (sklMod) GameDB.skillsRaw = sklMod.data;
                 updateLoad(50, '載入裝備與道具...');
                 const itmMod = await fetchDB(DB_URLS.items, 'RO_DATABASE_ITEMS'); GameDB.equips = {}; for (let type in itmMod.data) { GameDB.equips[type] = parseDbObj(itmMod.keys, itmMod.data[type]); }
                 const consMod = await fetchDB(DB_URLS.consumables, 'RO_DATABASE_ITEMS2'); GameDB.items = parseDbObj(consMod.keys, consMod.data.consumables);
-
                 updateLoad(75, '載入地圖與怪物...');
                 const mapDb = await fetchDB(DB_URLS.maps, 'RO_DATABASE_MAPS'); GameDB.maps = parseDbObj(mapDb.keys, mapDb.data);
                 const monMod = await fetchDB(DB_URLS.monsters, 'RO_DATABASE_MONSTERS'); GameDB.monsters = parseDbObj(monMod.keys, monMod.data);
                 const mapmonMod = await fetchDB(DB_URLS.mapmon, 'RO_DATABASE_MAPMON'); GameDB.mapmon = mapmonMod.data;
-
                 updateLoad(100, '初始化遊戲...');
                 GameDB.skills = {};
-                if (GameDB.skillsRaw) {
-                    for (let job in GameDB.skillsRaw) {
-                        let parsed = parseDbObj(sklMod.keys, GameDB.skillsRaw[job]);
-                        parsed.forEach(s => { s.job = job; GameDB.skills[s.sk_id] = s; });
-                    }
-                }
-
+                if (GameDB.skillsRaw) { for (let job in GameDB.skillsRaw) { let parsed = parseDbObj(sklMod.keys, GameDB.skillsRaw[job]); parsed.forEach(s => { s.job = job; GameDB.skills[s.sk_id] = s; }); } }
                 GameDB.equipFlat = {}; for (let cat in GameDB.equips) { GameDB.equips[cat].forEach(eq => GameDB.equipFlat[eq.i1_id] = eq); }
                 GameDB.itemFlat = {}; GameDB.items.forEach(it => GameDB.itemFlat[it.i2_id] = it);
-                try {
-                     const cashMod = await fetchDB(DB_URLS.cash, 'RO_DATABASE_ITEMS3');
-                     if(cashMod) {
-                         let cashItems = parseDbObj(cashMod.keys, cashMod.data.consumables);
-                         cashItems.forEach(it => { it.isCash = true; GameDB.itemFlat[it.i3_id] = it; });
-                         GameDB.cashItems = cashItems;
-                     }
-                } catch(e) {}
-
+                try { const cashMod = await fetchDB(DB_URLS.cash, 'RO_DATABASE_ITEMS3'); if(cashMod) { let cashItems = parseDbObj(cashMod.keys, cashMod.data.consumables); cashItems.forEach(it => { it.isCash = true; GameDB.itemFlat[it.i3_id] = it; }); GameDB.cashItems = cashItems; } } catch(e) {}
+                
                 setTimeout(initGame, 500);
             } catch (err) {
                 document.getElementById('loading-text').innerText = '載入失敗，請重整網頁。' + err.message;
@@ -673,82 +954,58 @@
         }
 
         const SaveLoad = {
-            login: function() {
-                let e = document.getElementById('cloud-email').value;
-                let p = document.getElementById('cloud-pass').value;
-                if(!e || !p) { UI.showToast("請輸入信箱與密碼", "bg-red-600 text-white"); return; }
-                auth.signInWithEmailAndPassword(e, p).then(() => {
-                    UI.showToast("登入成功！", "bg-green-600 text-white");
-                }).catch(err => UI.showToast("登入失敗: " + err.message, "bg-red-600 text-white"));
-            },
-            register: function() {
-                let e = document.getElementById('cloud-email').value;
-                let p = document.getElementById('cloud-pass').value;
-                if(!e || !p) { UI.showToast("請輸入信箱與密碼", "bg-red-600 text-white"); return; }
-                auth.createUserWithEmailAndPassword(e, p).then(() => {
-                    UI.showToast("註冊成功！遊戲進度將開始綁定。", "bg-green-600 text-white");
-                    this.cloudSave(true);
-                }).catch(err => UI.showToast("註冊失敗: " + err.message, "bg-red-600 text-white"));
-            },
-            logout: function() {
-                auth.signOut().then(() => UI.showToast("已登出雲端帳號", "bg-gray-700 text-white"));
-            },
-            cloudSave: async function(isAuto = false) {
-                if (!currentUserId || !db) return;
+            autoSave: async function() {
                 try {
-                    if(!isAuto) UI.showToast('正在上傳雲端...', 'bg-blue-600 text-white');
-                    let dataStr = btoa(encodeURIComponent(JSON.stringify(GameState)));
-                    await db.collection("ro_saves").doc(currentUserId).set({
-                        saveData: dataStr,
-                        timestamp: Date.now()
-                    }, { merge: true });
-                    if(!isAuto) UI.showToast('✅ 已強制覆蓋雲端存檔', 'bg-green-600 text-white');
-                } catch(e) { console.error("Cloud save error:", e); if(!isAuto) UI.showToast('雲端存檔失敗', 'bg-red-600 text-white'); }
+                    let dataStr = JSON.stringify(GameState);
+                    localStorage.setItem('idleRo_autoSave', dataStr);
+                    if(window.currentUserId) { await setDoc(doc(db, "users", window.currentUserId), { gameData: dataStr }, { merge: true }); }
+                } catch(e) { console.log("AutoSave Failed:", e.message); }
             },
-            cloudLoad: async function(isAuto = false) {
-                if (!currentUserId || !db) { if(!isAuto) UI.showToast('尚未登入雲端帳號', 'bg-red-600 text-white'); return; }
-                try {
-                    if(!isAuto) UI.showToast('正在下載雲端進度...', 'bg-blue-600 text-white');
-                    const docSnap = await db.collection("ro_saves").doc(currentUserId).get();
-                    if (docSnap.exists) {
-                        let cloudData = docSnap.data();
-                        if(cloudData.saveData) {
-                            this.loadFromData(cloudData.saveData, !isAuto);
-                            if(isAuto) {
-                                UI.showToast('☁️ 已自動讀取雲端進度', 'bg-blue-600 text-white');
-                                Log.add('系統：已自動同步您的雲端遊戲進度。', 'text-blue-300 font-bold', 'system');
+            autoLoad: async function() { 
+                let cloudDataStr = null;
+                let localDataStr = localStorage.getItem('idleRo_autoSave');
+
+                if (window.currentUserId) {
+                    try {
+                        const d = await getDoc(doc(db, "users", window.currentUserId));
+                        if (d.exists()) {
+                            // 嚴格確保只讀取放置RO的存檔 (gameData)，忽略 saveData (那是異世界傳說的)
+                            if (d.data().gameData) {
+                                cloudDataStr = d.data().gameData;
                             }
-                            else UI.showToast('✅ 讀取雲端進度成功', 'bg-green-600 text-white');
                         }
-                    } else {
-                        if(!isAuto) UI.showToast('雲端尚無存檔', 'bg-yellow-600 text-white');
-                    }
-                } catch(e) { console.error(e); if(!isAuto) UI.showToast('雲端讀取失敗', 'bg-red-600 text-white'); }
+                    } catch(e) { console.log("[Cloud] fetch error", e.message); }
+                }
+
+                let targetDataStr = cloudDataStr || localDataStr;
+
+                // 智慧判斷：如果雲端讀到的是 1 等新手 (可能是被錯誤覆蓋的)，但本地端有更高等的紀錄，優先使用本地端舊有紀錄！
+                if (cloudDataStr && localDataStr) {
+                    try {
+                        let cData = cloudDataStr.startsWith('{') ? JSON.parse(cloudDataStr) : JSON.parse(decodeURIComponent(atob(cloudDataStr)));
+                        let lData = localDataStr.startsWith('{') ? JSON.parse(localDataStr) : JSON.parse(decodeURIComponent(atob(localDataStr)));
+                        
+                        let cLv = cData?.player?.baseLv || 1;
+                        let lLv = lData?.player?.baseLv || 1;
+                        
+                        if (cLv <= 1 && lLv > 1) {
+                            targetDataStr = localDataStr; // 本地端比較高等，採用本地端
+                            console.log("[修復機制] 發現雲端為新手存檔，已自動優先採用您的本地高階舊紀錄！");
+                        }
+                    } catch(e) {}
+                }
+
+                if (targetDataStr) {
+                    this.loadFromData(targetDataStr);
+                }
             },
-            exportFile: function() {
+            loadFromData: function(dataStr) {
                 try {
-                    let data = btoa(encodeURIComponent(JSON.stringify(GameState)));
-                    let blob = new Blob([data], { type: 'text/plain' }); let url = URL.createObjectURL(blob); let a = document.createElement('a'); a.href = url;
-                    let d = new Date(); let dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
-                    a.download = `IdleRO_Save_${dateStr}.txt`;
-                    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-                    UI.showToast('存檔已下載至您的電腦！', 'bg-green-600 text-white');
-                } catch(e) { UI.showToast('匯出失敗', 'bg-red-600 text-white'); }
-            },
-            importFile: function() {
-                let input = document.createElement('input'); input.type = 'file'; input.accept = '.txt';
-                input.onchange = e => {
-                    let file = e.target.files[0]; if (!file) return; let reader = new FileReader();
-                    reader.onload = (event) => { let dataStr = event.target.result.trim(); this.loadFromData(dataStr, true); };
-                    reader.readAsText(file);
-                };
-                input.click();
-            },
-            autoSave: function() { try { localStorage.setItem('idleRo_autoSave', btoa(encodeURIComponent(JSON.stringify(GameState)))); } catch(e) {} },
-            autoLoad: function() { let dataStr = localStorage.getItem('idleRo_autoSave'); if(dataStr) this.loadFromData(dataStr, false); },
-            loadFromData: function(dataStr, isManual) {
-                try {
-                    let parsed = JSON.parse(decodeURIComponent(atob(dataStr)));
+                    let parsed;
+                    let cleanStr = dataStr.trim();
+                    if (cleanStr.startsWith('{')) { parsed = JSON.parse(cleanStr); } 
+                    else { try { parsed = JSON.parse(decodeURIComponent(atob(cleanStr))); } catch(e) { parsed = JSON.parse(cleanStr); } }
+
                     if(parsed.player) { Object.keys(parsed.player).forEach(k => { if (k === 'stats' && parsed.player.stats) Object.assign(GameState.player.stats, parsed.player.stats); else GameState.player[k] = parsed.player[k]; }); }
                     if(parsed.inventory) { if(parsed.inventory.equip) GameState.inventory.equip = parsed.inventory.equip; if(parsed.inventory.item) GameState.inventory.item = parsed.inventory.item; }
                     if(parsed.equipped) Object.assign(GameState.equipped, parsed.equipped);
@@ -759,28 +1016,20 @@
                     
                     if(GameState.player.rebirthCount === undefined) GameState.player.rebirthCount = 0; if(GameState.player.cash === undefined) GameState.player.cash = 0;
                     
-                    // --- 效能修復：處理背包上限與超量捨棄 (自適應舊存檔) ---
                     let p = GameState.player;
-                    let itemCap = Math.min(375, 100 + (p.baseLv || 1));
-                    let equipCap = Math.min(375, 100 + (p.baseLv || 1)) + ((p.rebirthCount || 0) * 10);
+                    let itemCap = 100;
+                    let equipCap = Math.min(375, 100 + ((p.rebirthCount || 0) * 10));
                     
-                    if (GameState.inventory.item.length > itemCap) {
-                        GameState.inventory.item = GameState.inventory.item.slice(0, itemCap);
-                        console.log(`[系統清理] 道具超過上限，已自動清理至 ${itemCap} 件。`);
+                    if (GameState.inventory.item.length > itemCap) { GameState.inventory.item = GameState.inventory.item.slice(0, itemCap); }
+                    if (GameState.inventory.equip.length > equipCap) { 
+                        GameState.inventory.equip.sort((a, b) => b.refine - a.refine); 
+                        GameState.inventory.equip = GameState.inventory.equip.slice(0, equipCap); 
                     }
-                    if (GameState.inventory.equip.length > equipCap) {
-                        // 裝備清理前，確保精煉過的高價值裝備排在最前面保留
-                        GameState.inventory.equip.sort((a, b) => b.refine - a.refine);
-                        GameState.inventory.equip = GameState.inventory.equip.slice(0, equipCap);
-                        console.log(`[系統清理] 裝備超過上限，已自動清理至 ${equipCap} 件 (優先保留高精煉)。`);
-                    }
-                    // -----------------------------------------------------
 
                     let now = Date.now(); GameState.lastLoopTime = now; GameState.autoAttackTimer = now; GameState.monsterAttackTimer = now; GameState.lastRegenTime = now; GameState.currentMonster = null; 
                     Player.calcStats(); UI.updateHeader(); UI.updateMapSelect(); UI.updateStatus(); UI.checkJobChange(); UI.checkRebirth(); Hotkeys.render(); BuffManager.render(); Skills.render();
                     Combat.initMapMonsters(GameState.currentMap || 'prontera');
-                    if(isManual) { UI.showToast('系統提示：遊戲進度已成功讀取！', 'bg-green-600 text-white'); UI.closeModal('modal-settings'); }
-                } catch(e) { if(isManual) UI.showToast('讀取失敗：存檔錯誤', 'bg-red-600 text-white'); }
+                } catch(e) { console.log("Load Save Error (Invalid Format)", e.message); }
             }
         };
 
@@ -790,11 +1039,7 @@
                 let now = Date.now();
                 if (existing) {
                     existing.expires = now + durationMs;
-                    if (stackId && existing.stacks < maxStacks) {
-                        existing.stacks++;
-                        let newAttr = {}; for(let k in attrObj) newAttr[k] = attrObj[k] * existing.stacks;
-                        existing.attr = newAttr;
-                    }
+                    if (stackId && existing.stacks < maxStacks) { existing.stacks++; let newAttr = {}; for(let k in attrObj) newAttr[k] = attrObj[k] * existing.stacks; existing.attr = newAttr; }
                 } else {
                     let newBuff = { uid: now + Math.random(), name: name, icon: icon, expires: now + durationMs, attr: attrObj };
                     if (stackId) { newBuff.stackId = stackId; newBuff.stacks = 1; newBuff.maxStacks = maxStacks; newBuff.baseAttr = Object.assign({}, attrObj); }
@@ -805,8 +1050,7 @@
             tick: function(now, isSim = false) {
                 let changed = false;
                 GameState.buffs = GameState.buffs.filter(b => {
-                    if (now >= b.expires) { changed = true; if (!isSim) Log.add(`狀態解除：${b.name}`, 'text-gray-500', 'system'); return false; }
-                    return true;
+                    if (now >= b.expires) { changed = true; if (!isSim) Log.add(`狀態解除：${b.name}`, 'text-gray-500', 'system'); return false; } return true;
                 });
                 if(changed) { if (!isSim) { Player.calcStats(); this.render(); } } 
                 else if (GameState.buffs.length > 0 && Math.floor(now / 1000) !== Math.floor(GameState.lastLoopTime / 1000)) { if (!isSim) this.render(); }
@@ -825,7 +1069,7 @@
 
         const Player = {
             init: function() {
-                GameState.player = { name: '冒險者', classId: 'novice', baseLv: 1, baseExp: 0, jobLv: 1, jobExp: 0, zeny: 0, cash: 0, hp: 50, sp: 10, stats: { str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 }, statPts: 48, skillPts: 0, rebirthCount: 0, isDead: false };
+                GameState.player = { name: '冒險者', classId: 'novice', baseLv: 1, baseExp: 0, jobLv: 1, jobExp: 0, zeny: 0, cash: 0, hp: 50, sp: 10, stats: { str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 }, statPts: 48, skillPts: 0, rebirthCount: 0, isDead: false, secPwd: '' };
                 GameState.skills['n_basic'] = 1; GameState.skills['n_playdead'] = 1; GameState.skills['n_firstaid'] = 1;
                 GameState.hotkeys = Array(36).fill(null); GameState.hotkeys[0] = { type: 'ui', id: 'ui_skill' }; GameState.hotkeys[1] = { type: 'ui', id: 'ui_bag' }; GameState.hotkeys[2] = { type: 'ui', id: 'ui_shop' }; GameState.hotkeys[3] = { type: 'ui', id: 'ui_mall' }; GameState.hotkeys[4] = { type: 'item', id: 'novicePotion' }; GameState.hotkeys[6] = { type: 'skill', id: 'n_firstaid' }; GameState.hotkeys[7] = { type: 'skill', id: 'n_playdead' }; 
                 GameState.equipped = { helm: null, armor: null, weapon: null, shield: null, garment: null, shoes: null, acc1: null, acc2: null };
@@ -851,8 +1095,7 @@
                         let weaponOk = true;
                         if(pAttr.weaponReq) {
                             let currWeap = GameState.equipped.weapon ? GameDB.equipFlat[GameState.equipped.weapon.id].i1_type : 'barehand';
-                            if(Array.isArray(pAttr.weaponReq)) { if(!pAttr.weaponReq.includes(currWeap)) weaponOk = false; } 
-                            else { if(currWeap !== pAttr.weaponReq) weaponOk = false; }
+                            if(Array.isArray(pAttr.weaponReq)) { if(!pAttr.weaponReq.includes(currWeap)) weaponOk = false; } else { if(currWeap !== pAttr.weaponReq) weaponOk = false; }
                         }
                         if(weaponOk) { for(let k in pAttr) { if (bonus[k] !== undefined) bonus[k] += pAttr[k]; else bonus[k] = pAttr[k]; } }
                     }
@@ -912,29 +1155,16 @@
                     while (p.jobExp >= reqJ && p.jobLv < c.c_maxJob) { p.jobExp -= reqJ; p.jobLv++; p.skillPts++; reqJ = sys.getJobExpReq(p.jobLv, tier); if (!isSim) Log.add(`Job Level 提升至 ${p.jobLv}!`, 'text-green-400 font-bold', 'system'); leveledUp = true; }
                     if (p.jobLv >= c.c_maxJob) p.jobExp = 0;
                 }
-                if (leveledUp) { 
-                    if (!isSim) { UI.updateMapSelect(); UI.checkJobChange(); UI.checkRebirth(); Skills.render(); }
-                    p.hp = 999999; p.sp = 999999; this.calcStats(isSim); 
-                } else { 
-                    if (!isSim) UI.updateStatus(); 
-                }
+                if (leveledUp) { if (!isSim) { UI.updateMapSelect(); UI.checkJobChange(); UI.checkRebirth(); Skills.render(); } p.hp = 999999; p.sp = 999999; this.calcStats(isSim); } else { if (!isSim) UI.updateStatus(); }
             },
-            heal: function(hpAmt, spAmt, isSim = false) { 
-                if(this.isDead) return; 
-                let p = GameState.player; 
-                if(hpAmt) p.hp = Math.min(this.derived.maxHp, p.hp + hpAmt); 
-                if(spAmt) p.sp = Math.min(this.derived.maxSp, p.sp + spAmt); 
-                if (!isSim) UI.updateStatus(); 
-            },
+            heal: function(hpAmt, spAmt, isSim = false) { if(this.isDead) return; let p = GameState.player; if(hpAmt) p.hp = Math.min(this.derived.maxHp, p.hp + hpAmt); if(spAmt) p.sp = Math.min(this.derived.maxSp, p.sp + spAmt); if (!isSim) UI.updateStatus(); },
             takeDamage: function(amt, isSim = false) {
                 let p = GameState.player; p.hp -= amt;
                 if(p.hp <= 0) {
-                    p.hp = 0; p.isDead = true; 
-                    if (!isSim) Log.add('你已經死亡，等待復活...', 'text-red-500 font-bold', 'system');
+                    p.hp = 0; p.isDead = true; if (!isSim) Log.add('你已經死亡，等待復活...', 'text-red-500 font-bold', 'system');
                     let rbSys = SystemExt.getRebirthBonuses(p.rebirthCount); let leaf = GameState.inventory.item.find(i => i.id === 'hinalleLeaflet');
                     if (rbSys.autoRevive && GameState.autoConfig.autoRevive && leaf && leaf.amount > 0) {
-                        Bag.removeItemById('hinalleLeaflet', 1, 'item', isSim); 
-                        if (!isSim) Log.add('發動自動復活！消耗 1 片天地樹葉子。', 'text-green-400 font-bold', 'system');
+                        Bag.removeItemById('hinalleLeaflet', 1, 'item', isSim); if (!isSim) Log.add('發動自動復活！消耗 1 片天地樹葉子。', 'text-green-400 font-bold', 'system');
                         setTimeout(() => { p.isDead = false; p.hp = this.derived.maxHp; p.sp = this.derived.maxSp; if(!isSim) { Log.add('原地滿血復活！繼續戰鬥！', 'text-yellow-200', 'system'); UI.updateStatus(); } }, 3000);
                     } else {
                         setTimeout(() => { p.isDead = false; p.hp = Math.floor(this.derived.maxHp * 0.5); p.sp = Math.floor(this.derived.maxSp * 0.5); if(!isSim) { Log.add('復活了！已退回普隆德拉。', 'text-yellow-200', 'system'); GameState.currentMap = 'prontera'; GameState.currentMonster = null; let mapSel = document.getElementById('map-select'); mapSel.value = 'prontera'; mapSel.dispatchEvent(new Event('change')); UI.updateStatus(); } }, 5000);
@@ -950,9 +1180,7 @@
                 p.classId = 'novice'; p.baseLv = 1; p.baseExp = 0; p.jobLv = 1; p.jobExp = 0;
                 p.stats = { str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 }; p.statPts = 48 + (p.rebirthCount * 100); p.skillPts = 0;
                 GameState.skills = { 'n_basic': 1, 'n_playdead': 1, 'n_firstaid': 1 };
-                
                 GameDB.system.SETTINGS.EQUIPMENT_SLOTS.forEach(slot => { let eq = GameState.equipped[slot]; if(eq) { let def = GameDB.equipFlat[eq.id]; if(def.i1_reqLevel > 1 || (!def.i1_reqClass.includes('all') && !def.i1_reqClass.includes('novice'))) { Bag.unequipItem(slot, false); } } });
-                
                 this.calcStats(); p.hp = this.derived.maxHp; p.sp = this.derived.maxSp;
                 UI.updateHeader(); UI.checkJobChange(); UI.checkRebirth(); UI.updateMapSelect(); Skills.render(); Hotkeys.render(); UI.closeModal('modal-rebirth'); UI.showToast(`轉生成功！目前轉生次數：${p.rebirthCount}`, 'bg-purple-600 text-white');
                 if (p.rebirthCount >= 50) { setTimeout(() => { UI.openJobChange(); }, 500); } else if (p.rebirthCount >= 15) { p.jobLv = 10; GameState.skills['n_basic'] = 10; GameState.skills['n_playdead'] = 1; GameState.skills['n_firstaid'] = 1; setTimeout(() => { UI.openJobChange(); }, 500); }
@@ -981,88 +1209,61 @@
             },
             tick: function(now) {
                 if(GameState.player.isDead) return;
-                
                 if (GameState.mapMonsters.length < 5) {
                     let safeBreak = 0;
                     while (GameState.mapMonsters.length < 5 && safeBreak < 10) { let m = this.spawnMonster(GameState.currentMap); if (m) { m.uid = Date.now().toString() + '_' + Math.random().toString().slice(2) + '_' + GameState.mapMonsters.length; GameState.mapMonsters.push(m); } safeBreak++; }
                     if(now - GameState.lastLoopTime <= 500) UI.updateMapMonsters();
                 }
-
                 if(!GameState.currentMonster) {
                     let alive = GameState.mapMonsters.filter(m => m.hp > 0);
                     if (alive.length > 0) { GameState.currentMonster = alive[Math.floor(Math.random() * alive.length)]; if(now - GameState.lastLoopTime <= 500) { UI.updateMonster(); UI.updateMapMonsters(); } GameState.monsterAttackTimer = now + 1500; }
                 }
-                
                 if(!GameState.currentMonster) return;
                 
                 let pDelay = (200 - Player.derived.aspd) * 20; if (pDelay < 50) pDelay = 50; 
-                
                 let playerAttacks = 0;
                 while (now - GameState.autoAttackTimer > pDelay) {
                     if (GameState.player.isDead || !GameState.currentMonster) { GameState.autoAttackTimer = now; break; }
-                    let isSim = (now - GameState.autoAttackTimer > pDelay * 2); 
-                    this.processPlayerAttack(isSim); 
-                    GameState.autoAttackTimer += pDelay;
-                    playerAttacks++;
-                    if (playerAttacks > 500000) { GameState.autoAttackTimer = now; break; } // Safety break
+                    let isSim = (now - GameState.autoAttackTimer > pDelay * 2); this.processPlayerAttack(isSim); GameState.autoAttackTimer += pDelay; playerAttacks++;
+                    if (playerAttacks > 500) { GameState.autoAttackTimer = now; break; } 
                 }
                 
                 let monsterAttacks = 0;
                 while (now - GameState.monsterAttackTimer > 1500) { 
                     if (GameState.player.isDead || !GameState.currentMonster) { GameState.monsterAttackTimer = now; break; }
-                    let isSim = (now - GameState.monsterAttackTimer > 3000);
-                    this.processMonsterAttack(isSim); 
-                    GameState.monsterAttackTimer += 1500;
-                    monsterAttacks++;
-                    if (monsterAttacks > 200000) { GameState.monsterAttackTimer = now; break; } // Safety break
+                    let isSim = (now - GameState.monsterAttackTimer > 3000); this.processMonsterAttack(isSim); GameState.monsterAttackTimer += 1500; monsterAttacks++;
+                    if (monsterAttacks > 200) { GameState.monsterAttackTimer = now; break; } 
                 }
             },
             processPlayerAttack: function(isSim = false) {
                 let m = GameState.currentMonster; if (!m) return;
                 let hitChance = 80 + Player.derived.hit - m.flee; hitChance = Math.max(5, Math.min(100, hitChance));
                 let dmg = 0; let isCrit = false; let hits = 1; let isDouble = false;
-                
                 if (Player.bonuses.doubleHitChance && Math.random() * 100 < Player.bonuses.doubleHitChance) { isDouble = true; hits = 2; }
                 if (Player.bonuses.autoCombo1Chance && Math.random() * 100 < Player.bonuses.autoCombo1Chance) { hits = 3; BuffManager.add('連技-六合拳', '🤜', 5000, {}, 'combo1', 1, isSim); if(!isSim) Log.add(`發動六合拳 (3連擊)!`, 'text-purple-300 font-bold', 'system'); }
-                
                 if(Math.random() * 100 < Player.derived.crit) { isCrit = true; dmg = Player.derived.atk * 1.4; } else if (Math.random() * 100 <= hitChance) { dmg = Math.max(1, Player.derived.atk - (m.def * 0.5)); }
                 
                 if(dmg > 0) {
                     dmg = Math.floor(dmg);
-                    for(let i=0; i<hits; i++) {
-                        m.hp -= dmg;
-                        if (!isSim) setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(dmg), isCrit, 'visual-monster'); Visuals.animHit('visual-monster'); } }, i * 150);
-                    }
+                    for(let i=0; i<hits; i++) { m.hp -= dmg; if (!isSim) setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(dmg), isCrit, 'visual-monster'); Visuals.animHit('visual-monster'); } }, i * 150); }
                     if (!isSim) Log.add(`你對 ${m.name} 造成 ${formatNumber(dmg * hits)} 傷害${hits>1?' ('+hits+'連擊)':''}`, isCrit ? 'text-orange-400' : 'text-white', 'dmgDealt');
                     
                     if (Player.bonuses.autoWargChance && Math.random() * 100 < Player.bonuses.autoWargChance) {
                         let wDmg = Math.floor(Player.derived.atk * 2.0); m.hp -= wDmg;
-                        if (!isSim) {
-                            Log.add(`狼突擊對 ${m.name} 造成 ${formatNumber(wDmg)} 真實傷害!`, 'text-blue-300 font-bold', 'dmgDealt');
-                            setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(wDmg), true, 'visual-monster'); Visuals.animHit('visual-monster'); } }, hits * 150);
-                        }
+                        if (!isSim) { Log.add(`狼突擊對 ${m.name} 造成 ${formatNumber(wDmg)} 真實傷害!`, 'text-blue-300 font-bold', 'dmgDealt'); setTimeout(() => { if(GameState.currentMonster) { Visuals.showDamage(formatNumber(wDmg), true, 'visual-monster'); Visuals.animHit('visual-monster'); } }, hits * 150); }
                     }
-
                     if(m.hp <= 0) this.onMonsterKill(m, isSim);
-                } else { 
-                    if (!isSim) Visuals.showDamage('Miss', false, 'visual-monster'); 
-                }
+                } else { if (!isSim) Visuals.showDamage('Miss', false, 'visual-monster'); }
                 if (!isSim) UI.updateMonsterHp();
             },
             processMonsterAttack: function(isSim = false) {
                 let m = GameState.currentMonster; if (!m) return;
-                let def = Player.derived.def;
-                if (m.debuffs && m.debuffs.atkPct) m.atk = m.atk * (1 + m.debuffs.atkPct/100);
+                let def = Player.derived.def; if (m.debuffs && m.debuffs.atkPct) m.atk = m.atk * (1 + m.debuffs.atkPct/100);
                 let hitChance = 80 + m.hit - Player.derived.flee; hitChance = Math.max(5, Math.min(100, hitChance));
                 if(Math.random() * 100 <= hitChance) {
                     let dmg = Math.max(1, m.atk - (def * 0.5)); dmg = Math.floor(dmg); Player.takeDamage(dmg, isSim);
-                    if (!isSim) {
-                        Visuals.showDamage(formatNumber(dmg), false, 'visual-player'); Visuals.animHit('visual-player');
-                        Log.add(`${m.name} 對你造成 ${formatNumber(dmg)} 傷害`, 'text-red-400', 'dmgTaken');
-                    }
-                } else { 
-                    if (!isSim) Visuals.showDamage('Miss', false, 'visual-player'); 
-                }
+                    if (!isSim) { Visuals.showDamage(formatNumber(dmg), false, 'visual-player'); Visuals.animHit('visual-player'); Log.add(`${m.name} 對你造成 ${formatNumber(dmg)} 傷害`, 'text-red-400', 'dmgTaken'); }
+                } else { if (!isSim) Visuals.showDamage('Miss', false, 'visual-player'); }
             },
             processSkillAttack: function(sDef, lv, isSim = false) {
                 let m = GameState.currentMonster; if (!m) return; let extras = sDef.sk_extras;
@@ -1072,11 +1273,9 @@
                 let desc = sDef.sk_desc(lv); if (desc.includes('魔法') || desc.includes('屬性傷害')) { if(!desc.includes('物理')) baseDmg = Player.derived.matk; }
                 
                 if (extras?.hpSpScalingDmg) { baseDmg += Math.floor(Player.derived.maxHp * 0.1 + Player.derived.maxSp * 0.5); }
-                if (extras?.apCost) { baseDmg *= 3; } 
-                baseDmg *= dmgMulti;
+                if (extras?.apCost) { baseDmg *= 3; } baseDmg *= dmgMulti;
                 
-                let targetDef = m.def; 
-                if (m.debuffs && m.debuffs.defPct) targetDef = targetDef * (1 + m.debuffs.defPct/100);
+                let targetDef = m.def; if (m.debuffs && m.debuffs.defPct) targetDef = targetDef * (1 + m.debuffs.defPct/100);
                 if (extras?.ignoreDef || (extras?.ignoreDefPct && Math.random()*100 < extras.ignoreDefPct)) targetDef = 0;
 
                 let totalDmgDone = 0; let isCrit = extras?.canCrit || extras?.autoCrit ? true : false;
@@ -1089,50 +1288,22 @@
                 
                 m.hp -= totalDmgDone;
                 if (!isSim) Log.add(`使用 ${sDef.sk_name} 對 ${m.name} 造成 ${formatNumber(totalDmgDone)} 傷害! (${hits}連擊)`, 'text-purple-400 font-bold', 'dmgDealt');
-                
-                if (extras?.debuffAttr) {
-                    let debuffObj = typeof extras.debuffAttr === 'function' ? extras.debuffAttr(lv) : extras.debuffAttr;
-                    if (!m.debuffs) m.debuffs = {}; Object.assign(m.debuffs, debuffObj);
-                    if (!isSim) Log.add(`${m.name} 受到狀態影響！`, 'text-gray-400', 'system');
-                }
-
-                if(m.hp <= 0) this.onMonsterKill(m, isSim); 
-                if (!isSim) UI.updateMonsterHp();
+                if (extras?.debuffAttr) { let debuffObj = typeof extras.debuffAttr === 'function' ? extras.debuffAttr(lv) : extras.debuffAttr; if (!m.debuffs) m.debuffs = {}; Object.assign(m.debuffs, debuffObj); if (!isSim) Log.add(`${m.name} 受到狀態影響！`, 'text-gray-400', 'system'); }
+                if(m.hp <= 0) this.onMonsterKill(m, isSim); if (!isSim) UI.updateMonsterHp();
             },
             onMonsterKill: function(m, isSim = false) {
                 if (!isSim) Log.add(`擊敗了 ${m.name}! 獲得 ${formatNumber(m.zeny)} Z`, 'text-yellow-400 font-bold', 'system');
                 Player.gainExp(m.bExp, m.jExp, isSim); GameState.player.zeny += m.zeny; this.rollDrop(m, isSim);
                 if (m.name.includes('MVP')) { let cashDrop = Math.round((m.lv / 10 * 0.5) * (0.1 + Math.random() * 0.8)); if (cashDrop > 0) { GameState.player.cash = (GameState.player.cash || 0) + cashDrop; if (!isSim) Log.add(`【MVP擊殺】額外獲得 ${formatNumber(cashDrop)} Cash！`, 'text-blue-300 font-bold', 'system'); } }
-
-                let idx = GameState.mapMonsters.findIndex(x => x.uid === m.uid);
-                if (idx !== -1) { GameState.mapMonsters.splice(idx, 1); }
-                GameState.currentMonster = null; 
-                let alive = GameState.mapMonsters.filter(x => x.hp > 0);
-                if(alive.length > 0) GameState.currentMonster = alive[Math.floor(Math.random() * alive.length)];
-                
+                let idx = GameState.mapMonsters.findIndex(x => x.uid === m.uid); if (idx !== -1) { GameState.mapMonsters.splice(idx, 1); }
+                GameState.currentMonster = null; let alive = GameState.mapMonsters.filter(x => x.hp > 0); if(alive.length > 0) GameState.currentMonster = alive[Math.floor(Math.random() * alive.length)];
                 if (!isSim) { UI.updateMonster(); UI.updateHeader(); UI.updateMapMonsters(); }
             },
             rollDrop: function(m, isSim = false) {
                 let realDropRate = m.dropRate * Player.derived.dropMulti;
-                if(Math.random() < realDropRate) { 
-                    let dropPool = GameDB.items.filter(i => i.i2_cost < 1000); 
-                    if(dropPool.length > 0) { 
-                        let item = dropPool[Math.floor(Math.random() * dropPool.length)]; 
-                        let added = Bag.addItem(item.i2_id, 1, 'item', isSim); 
-                        if(!isSim && added) Log.add(`獲得物品: ${item.i2_name}`, 'text-blue-300', 'drops'); 
-                    } 
-                }
+                if(Math.random() < realDropRate) { let dropPool = GameDB.items.filter(i => i.i2_cost < 1000); if(dropPool.length > 0) { let item = dropPool[Math.floor(Math.random() * dropPool.length)]; Bag.addItem(item.i2_id, 1, 'item', isSim); if(!isSim) Log.add(`獲得物品: ${item.i2_name}`, 'text-blue-300', 'drops'); } }
                 let equipDropChance = m.name.includes('MVP') ? 1.0 : (0.15 + realDropRate * 0.5);
-                if (Math.random() < equipDropChance) { 
-                    let mLevel = m.lv || 1; 
-                    let eqPool = Object.values(GameDB.equipFlat).filter(eq => Math.abs(eq.i1_reqLevel - mLevel) <= 20 || eq.i1_reqLevel <= mLevel); 
-                    if (eqPool.length === 0) eqPool = Object.values(GameDB.equipFlat); 
-                    if(eqPool.length > 0) { 
-                        let eq = eqPool[Math.floor(Math.random() * eqPool.length)]; 
-                        let added = Bag.addItem(eq.i1_id, 1, 'equip', isSim); 
-                        if(!isSim && added) Log.add(`獲得裝備: ${eq.i1_name}`, 'text-fuchsia-400 font-bold', 'drops'); 
-                    } 
-                }
+                if (Math.random() < equipDropChance) { let mLevel = m.lv || 1; let eqPool = Object.values(GameDB.equipFlat).filter(eq => Math.abs(eq.i1_reqLevel - mLevel) <= 20 || eq.i1_reqLevel <= mLevel); if (eqPool.length === 0) eqPool = Object.values(GameDB.equipFlat); if(eqPool.length > 0) { let eq = eqPool[Math.floor(Math.random() * eqPool.length)]; Bag.addItem(eq.i1_id, 1, 'equip', isSim); if(!isSim) Log.add(`獲得裝備: ${eq.i1_name}`, 'text-fuchsia-400 font-bold', 'drops'); } }
             }
         };
 
@@ -1165,79 +1336,20 @@
             currentTab: 'equip',
             fullWarned: false,
             _renderTimeout: null,
-            
-            getMaxSlots: function(type) {
-                let rb = GameState.player?.rebirthCount || 0;
-                let baseLv = Math.min(275, GameState.player?.baseLv || 1);
-                let baseSlots = 100 + baseLv; // 初始100, 滿級275時為375
-                if (type === 'equip') {
-                    return Math.min(500, baseSlots + (rb * 10)); // 裝備背包每轉生+10格，絕對上限500
-                }
-                return Math.min(375, baseSlots); // 道具背包上限 375
-            },
-            
-            canAdd: function(id, type) {
-                if (type === 'item' && GameState.inventory.item.some(i => i.id === id)) return true;
-                return GameState.inventory[type].length < this.getMaxSlots(type);
-            },
-            
-            scheduleRender: function() {
-                if (this._renderTimeout) return;
-                this._renderTimeout = setTimeout(() => {
-                    this.render();
-                    this._renderTimeout = null;
-                }, 200); 
-            },
-
+            getMaxSlots: function() { let rb = GameState.player?.rebirthCount || 0; return Math.min(375, 100 + (rb * 10)); },
+            canAdd: function(id, type) { if (type === 'item' && GameState.inventory.item.some(i => i.id === id)) return true; return GameState.inventory[type].length < this.getMaxSlots(); },
+            scheduleRender: function() { if (this._renderTimeout) return; this._renderTimeout = setTimeout(() => { this.render(); this._renderTimeout = null; }, 200); },
             addItem: function(id, amount = 1, type = 'item', isSim = false) {
-                let slot = GameState.inventory[type].find(i => i.id === id);
-                let maxSlots = this.getMaxSlots(type);
-                
-                if(slot && type === 'item') { 
-                    slot.amount += amount; 
-                } else { 
-                    if (GameState.inventory[type].length >= maxSlots) {
-                        if (!isSim && !this.fullWarned) {
-                            Log.add(`【警告】${type === 'equip' ? '裝備' : '道具'}背包已滿！無法獲得新物品。`, 'text-red-500 font-bold', 'system');
-                            this.fullWarned = true;
-                            setTimeout(() => { this.fullWarned = false; }, 5000); 
-                        }
-                        return false; 
-                    }
-                    
-                    if(type === 'equip') {
-                        GameState.inventory.equip.push({ uid: Date.now() + Math.random(), id: id, refine: 0 }); 
-                    } else { 
-                        GameState.inventory.item.push({ id: id, amount: amount }); 
-                    } 
+                let slot = GameState.inventory[type].find(i => i.id === id); let maxSlots = this.getMaxSlots();
+                if(slot && type === 'item') { slot.amount += amount; } else { 
+                    if (GameState.inventory[type].length >= maxSlots) { if (!isSim && !this.fullWarned) { Log.add(`【警告】${type === 'equip' ? '裝備' : '道具'}背包已滿！無法獲得新物品。`, 'text-red-500 font-bold', 'system'); this.fullWarned = true; setTimeout(() => { this.fullWarned = false; }, 5000); } return; }
+                    if(type === 'equip') GameState.inventory.equip.push({ uid: Date.now()+Math.random(), id: id, refine: 0 }); else GameState.inventory.item.push({ id: id, amount: amount }); 
                 }
-                
-                if(!isSim && !document.getElementById('modal-bag').classList.contains('hide')) {
-                    this.scheduleRender();
-                }
-                return true;
+                if(!isSim && !document.getElementById('modal-bag').classList.contains('hide')) this.scheduleRender();
             },
-            removeItemByUid: function(uid, type='equip') { 
-                GameState.inventory[type] = GameState.inventory[type].filter(i => String(i.uid) !== String(uid)); 
-                if(!document.getElementById('modal-bag').classList.contains('hide')) this.scheduleRender(); 
-            },
-            removeItemById: function(id, amt=1, type='item', isSim = false) { 
-                let slot = GameState.inventory[type].find(i => i.id === id); 
-                if(slot) { 
-                    slot.amount -= amt; 
-                    if(slot.amount <= 0) GameState.inventory[type] = GameState.inventory[type].filter(i => i.id !== id); 
-                } 
-                if(!isSim && !document.getElementById('modal-bag').classList.contains('hide')) this.scheduleRender(); 
-            },
-            switchTab: function(tab) { 
-                this.currentTab = tab; 
-                document.getElementById('tab-equip').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab'); 
-                document.getElementById('tab-item').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab'); 
-                document.getElementById(`tab-${tab}`).classList.add('bg-blue-900/50', 'border-blue-700', 'active-tab'); 
-                document.getElementById('bag-actions-equip').style.display = tab === 'equip' ? 'flex' : 'none'; 
-                document.getElementById('bag-current-equips').style.display = tab === 'equip' ? 'flex' : 'none'; 
-                this.render(); 
-            },
+            removeItemByUid: function(uid, type='equip') { GameState.inventory[type] = GameState.inventory[type].filter(i => String(i.uid) !== String(uid)); if(!document.getElementById('modal-bag').classList.contains('hide')) this.scheduleRender(); },
+            removeItemById: function(id, amt=1, type='item', isSim = false) { let slot = GameState.inventory[type].find(i => i.id === id); if(slot) { slot.amount -= amt; if(slot.amount <= 0) GameState.inventory[type] = GameState.inventory[type].filter(i => i.id !== id); } if(!isSim && !document.getElementById('modal-bag').classList.contains('hide')) this.scheduleRender(); },
+            switchTab: function(tab) { this.currentTab = tab; document.getElementById('tab-equip').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab'); document.getElementById('tab-item').classList.remove('bg-blue-900/50', 'border-blue-700', 'active-tab'); document.getElementById(`tab-${tab}`).classList.add('bg-blue-900/50', 'border-blue-700', 'active-tab'); document.getElementById('bag-actions-equip').style.display = tab === 'equip' ? 'flex' : 'none'; document.getElementById('bag-current-equips').style.display = tab === 'equip' ? 'flex' : 'none'; this.render(); },
             openEquipAction: function(slot) {
                 let eq = GameState.equipped[slot]; if(!eq) return;
                 let def = GameDB.equipFlat[eq.id]; let rarity = SystemExt.getEquipRarity(def.i1_reqLevel); let rbSys = SystemExt.getRebirthBonuses(GameState.player.rebirthCount);
@@ -1250,11 +1362,7 @@
                 UI.openModal('modal-equip-action');
             },
             render: function() {
-                let maxSlots = this.getMaxSlots(this.currentTab);
-                let currentCount = GameState.inventory[this.currentTab].length;
-                let tabName = this.currentTab === 'equip' ? '裝備' : '道具';
-                document.getElementById('txt-bag-count').innerText = `(${tabName} ${currentCount}/${maxSlots})`;
-                
+                let maxSlots = this.getMaxSlots(); let currentCount = GameState.inventory[this.currentTab].length; let tabName = this.currentTab === 'equip' ? '裝備' : '道具'; document.getElementById('txt-bag-count').innerText = `(${tabName} ${currentCount}/${this.currentTab === 'equip' ? maxSlots : 100})`;
                 if(this.currentTab === 'equip') {
                     const leftSlots = ['helm', 'armor', 'weapon', 'shield']; const rightSlots = ['garment', 'shoes', 'acc1', 'acc2'];
                     const renderSlot = (slot, containerId) => {
@@ -1267,29 +1375,10 @@
                     };
                     document.getElementById('equip-left').innerHTML = ''; document.getElementById('equip-right').innerHTML = ''; leftSlots.forEach(s => renderSlot(s, 'equip-left')); rightSlots.forEach(s => renderSlot(s, 'equip-right'));
                 }
-                
-                const grid = document.getElementById('bag-grid'); 
-                let htmlStr = ''; 
-                const items = GameState.inventory[this.currentTab];
-                
-                items.sort((a, b) => {
-                    if (this.currentTab === 'equip') {
-                        if (b.refine !== a.refine) return b.refine - a.refine; 
-                        let defA = GameDB.equipFlat[a.id], defB = GameDB.equipFlat[b.id];
-                        let lvA = defA ? defA.i1_reqLevel : 0, lvB = defB ? defB.i1_reqLevel : 0;
-                        if (lvB !== lvA) return lvB - lvA; 
-                        return a.id.localeCompare(b.id);
-                    } else {
-                        let defA = GameDB.itemFlat[a.id] || {}, defB = GameDB.itemFlat[b.id] || {};
-                        let typeA = defA.i2_type || defA.i3_type || 'z', typeB = defB.i2_type || defB.i3_type || 'z';
-                        if (typeA !== typeB) return typeA.localeCompare(typeB); 
-                        return a.id.localeCompare(b.id);
-                    }
-                });
-
+                const grid = document.getElementById('bag-grid'); let htmlStr = ''; const items = GameState.inventory[this.currentTab];
+                items.sort((a, b) => { if (this.currentTab === 'equip') { if (b.refine !== a.refine) return b.refine - a.refine; let defA = GameDB.equipFlat[a.id], defB = GameDB.equipFlat[b.id]; let lvA = defA ? defA.i1_reqLevel : 0, lvB = defB ? defB.i1_reqLevel : 0; if (lvB !== lvA) return lvB - lvA; return a.id.localeCompare(b.id); } else { let defA = GameDB.itemFlat[a.id] || {}, defB = GameDB.itemFlat[b.id] || {}; let typeA = defA.i2_type || defA.i3_type || 'z', typeB = defB.i2_type || defB.i3_type || 'z'; if (typeA !== typeB) return typeA.localeCompare(typeB); return a.id.localeCompare(b.id); } });
                 items.forEach((itemData) => {
                     let def = this.currentTab === 'equip' ? GameDB.equipFlat[itemData.id] : GameDB.itemFlat[itemData.id]; if(!def) return; 
-                    
                     if(this.currentTab === 'equip') {
                         let nameStr = itemData.refine > 0 ? `+${itemData.refine} ${def.i1_name}` : def.i1_name; let descStr = `部位: ${def.i1_type} | 需求Lv: ${def.i1_reqLevel}<br>`; for(let k in def.i1_attr) descStr += `${k.toUpperCase()}: ${formatNumber(def.i1_attr[k])} `;
                         let path = SystemExt.getClassPath(GameState.player.classId); let canEquipLevel = GameState.player.baseLv >= def.i1_reqLevel; let canEquipClass = def.i1_reqClass.includes('all') || path.some(c => def.i1_reqClass.includes(c)); let canEquip = canEquipLevel && canEquipClass;
@@ -1311,18 +1400,7 @@
                 if(GameState.equipped[targetSlot]) { this.unequipItem(targetSlot, false); }
                 GameState.equipped[targetSlot] = item; this.removeItemByUid(uid, 'equip'); Player.calcStats(); this.render();
             },
-            unequipItem: function(slot, recalc=true) { 
-                if(GameState.equipped[slot]) { 
-                    if (GameState.inventory.equip.length >= this.getMaxSlots('equip')) {
-                        UI.showToast('裝備背包已滿，無法卸下！請先清理空間。', 'bg-red-600 text-white');
-                        return;
-                    }
-                    GameState.inventory.equip.push(GameState.equipped[slot]); 
-                    GameState.equipped[slot] = null; 
-                    if(recalc) Player.calcStats(); 
-                    this.render(); 
-                } 
-            },
+            unequipItem: function(slot, recalc=true) { if(GameState.equipped[slot]) { if (GameState.inventory.equip.length >= this.getMaxSlots()) { UI.showToast('裝備背包已滿，無法卸下！請先清理空間。', 'bg-red-600 text-white'); return; } GameState.inventory.equip.push(GameState.equipped[slot]); GameState.equipped[slot] = null; if(recalc) Player.calcStats(); this.render(); } },
             useItem: function(id, isSim = false) {
                 let itemData = GameState.inventory.item.find(i => i.id === id); if(!itemData || itemData.amount <= 0) return; let def = GameDB.itemFlat[id]; if(!def) return;
                 if (id === 'flyWing') {
@@ -1340,7 +1418,7 @@
             sellItemAll: function(id) { let slot = GameState.inventory.item.find(i => i.id === id); if(!slot) return; let amt = slot.amount; this.removeItemById(id, amt, 'item'); GameState.player.zeny += (amt * 10); UI.updateHeader(); Hotkeys.render(); UI.showToast(`已全部出售，獲得 ${formatNumber(amt*10)} Zeny`, 'bg-yellow-600 text-white'); },
             autoSell: function() { let rarityMap = { common: 20, uncommon: 50, rare: 80 }; let sel = document.getElementById('auto-sell-rarity').value; let lvCap = rarityMap[sel] || 20; let toSell = GameState.inventory.equip.filter(eq => { let def = GameDB.equipFlat[eq.id]; return def && def.i1_reqLevel <= lvCap && eq.refine === 0; }); let totalZeny = toSell.length * 50; GameState.inventory.equip = GameState.inventory.equip.filter(eq => !toSell.includes(eq)); GameState.player.zeny += totalZeny; Log.add(`自動出售了 ${toSell.length} 件裝備，獲得 ${formatNumber(totalZeny)} Z`, 'text-yellow-300', 'system'); UI.updateHeader(); this.render(); },
             autoEquip: function() {
-                const slots = ['helm', 'armor', 'weapon', 'shield', 'garment', 'shoes', 'acc1', 'acc2']; let changed = false;
+                const slots = GameDB.system.SETTINGS.EQUIPMENT_SLOTS; let changed = false;
                 slots.forEach(slot => {
                     let currentEq = GameState.equipped[slot]; let currentLv = currentEq ? GameDB.equipFlat[currentEq.id].i1_reqLevel : -1; let slotType = slot.includes('acc') ? 'acc' : slot; let bestCandidate = null; let bestLv = currentLv; let path = SystemExt.getClassPath(GameState.player.classId);
                     GameState.inventory.equip.forEach(eq => { let def = GameDB.equipFlat[eq.id]; let canWearClass = def.i1_reqClass.includes('all') || path.some(c => def.i1_reqClass.includes(c)); if(def.i1_type === slotType && def.i1_reqLevel > bestLv && def.i1_reqLevel <= GameState.player.baseLv && canWearClass) { bestCandidate = eq; bestLv = def.i1_reqLevel; } });
@@ -1359,13 +1437,8 @@
                 itemsToShow.forEach(it => { let cost = it.i2_cost || it.i3_cost || 9999; let icon = it.i2_icon || it.i3_icon || '📦'; let name = it.i2_name || it.i3_name; let desc = it.i2_desc || it.i3_desc || ''; let id = it.i2_id || it.i3_id; let currencyStr = isCash ? 'Cash' : 'Z'; let currencyColor = isCash ? 'text-blue-300' : 'text-yellow-400'; let div = document.createElement('div'); div.className = 'bg-gray-700 p-2 rounded flex justify-between items-center gap-2 hover:border-yellow-500 border border-transparent transition-colors'; div.innerHTML = `<div class="flex items-center gap-2 flex-1 pr-2 overflow-hidden"><span class="text-3xl shrink-0">${icon}</span><div class="flex-1 overflow-hidden"><div class="font-bold text-sm text-yellow-100">${name}</div><div class="text-[10px] text-gray-300 mt-0.5 leading-tight">${desc}</div><div class="text-xs ${currencyColor} mt-1 font-mono font-bold">售價: ${formatNumber(cost)} ${currencyStr}</div></div></div><div class="flex flex-col gap-1 items-end shrink-0"><input type="number" id="shop-qty-${id}" value="1" min="1" class="w-14 bg-gray-900 border border-gray-500 rounded text-center text-xs py-1 text-white outline-none focus:border-yellow-500"><button class="btn text-xs bg-green-900 hover:bg-green-800 border-green-600 w-14 py-1 font-bold" onclick="Shop.buy('${id}', ${cost})">購買</button></div>`; list.appendChild(div); });
             },
             buy: function(id, unitCost) {
-                if (!Bag.canAdd(id, 'item')) {
-                    UI.showToast('道具背包已滿！請先清理背包。', 'bg-red-600 text-white');
-                    return;
-                }
-                
+                if (!Bag.canAdd(id, 'item')) { UI.showToast('道具背包已滿！無法購買。', 'bg-red-600 text-white'); return; }
                 let qtyInput = document.getElementById(`shop-qty-${id}`); let qty = parseInt(qtyInput.value) || 1; if(qty < 1) qty = 1; let totalCost = unitCost * qty;
-                
                 if (this.isCashShop) { GameState.player.cash = GameState.player.cash || 0; if(GameState.player.cash >= totalCost) { GameState.player.cash -= totalCost; Bag.addItem(id, qty, 'item'); document.getElementById('shop-cash').innerText = formatNumber(GameState.player.cash); UI.updateHeader(); UI.showToast(`成功購買 ${formatNumber(qty)} 個！`, 'bg-green-600 text-white'); Log.add(`商城購買成功，消耗 ${formatNumber(totalCost)} Cash`, 'text-blue-300', 'system'); Hotkeys.render(); } else { UI.showToast(`Cash 不足！需要 ${formatNumber(totalCost)} Cash`, 'bg-red-600 text-white'); } } 
                 else { if(GameState.player.zeny >= totalCost) { GameState.player.zeny -= totalCost; Bag.addItem(id, qty, 'item'); document.getElementById('shop-zeny').innerText = formatNumber(GameState.player.zeny); UI.updateHeader(); UI.showToast(`成功購買 ${formatNumber(qty)} 個！`, 'bg-green-600 text-white'); Log.add(`道具購買成功，消耗 ${formatNumber(totalCost)} Z`, 'text-green-300', 'system'); Hotkeys.render(); } else { UI.showToast(`Zeny 不足！需要 ${formatNumber(totalCost)} Z`, 'bg-red-600 text-white'); } }
             },
@@ -1586,7 +1659,7 @@
                 let p = GameState.player; if(p.baseLv < 120) return;
                 let curr = p.rebirthCount || 0; let next = curr + 1;
                 
-                const getCls = (req) => curr >= req ? 'text-white font-bold' : 'text-gray-500 opacity-50';
+                const getCls = (req) => curr >= req ? 'text-white font-bold' : 'text-gray-500 line-through opacity-50';
                 const getIcon = (req) => curr >= req ? '✅' : '🔒';
                 
                 let html = `
@@ -1594,17 +1667,16 @@
                     <div class="text-red-400 text-xs mb-2 text-center">警告：等級將回歸為初心者Lv.1，裝備可能會被卸下！</div>
                     
                     <div class="bg-gray-900 p-2 rounded border border-gray-700 text-xs mb-2">
-                        <div class="text-yellow-300 font-bold mb-1 border-b border-gray-700 pb-1">✨ 常駐加成狀態 (每次轉生皆可獲得)</div>
+                        <div class="text-yellow-300 font-bold mb-1 border-b border-gray-700 pb-1">✨ 常駐加成狀態 (隨轉生次數提升)</div>
                         <div class="text-white space-y-1 mt-1">
-                            <div>▶ 裝備容量上限：提升 <span class="text-green-400 font-bold">10</span> 格 <span class="text-gray-500 text-[10px]">(下階: 裝備格數+10)</span></div>
                             <div>▶ 全屬性倍率：提升為 <span class="text-green-400 font-bold">${1 + curr * 0.01}</span> 倍 <span class="text-gray-500 text-[10px]">(下階: ${1 + next * 0.01} 倍)</span></div>
                             <div>▶ 額外素質點數：獲得 <span class="text-green-400 font-bold">${curr * 100}</span> 點 <span class="text-gray-500 text-[10px]">(下階: ${next * 100} 點)</span></div>
-                            <div>▶ 獲得獎勵：<span class="text-blue-300 font-bold">1,000 Cash</span></div>
+                            <div>▶ 每轉生皆可獲得 <span class="text-blue-300 font-bold">1,000 Cash</span> 獎勵</div>
                         </div>
                     </div>
 
                     <div class="bg-gray-900 p-2 rounded border border-gray-700 text-xs">
-                        <div class="mb-1 border-b border-gray-700 pb-1 font-bold text-purple-300">🔓 解鎖特權福利 (累積轉生次數)：</div>
+                        <div class="mb-1 border-b border-gray-700 pb-1 font-bold text-purple-300">🔓 解鎖特權福利：</div>
                         <ul class="space-y-1 mt-1">
                             <li class="${getCls(1)}">${getIcon(1)} 1轉：解鎖「自動使用 HP 恢復藥水」</li>
                             <li class="${getCls(2)}">${getIcon(2)} 2轉：解鎖「自動使用 SP 恢復藥水」</li>
@@ -1647,19 +1719,13 @@
         };
 
         function gameLoopTick(now) {
-            if (!GameState.lastLoopTime) { GameState.lastLoopTime = now; GameState.lastRegenTime = now; GameState.lastCloudSaveTime = now; }
+            if (!GameState.lastLoopTime) { GameState.lastLoopTime = now; GameState.lastRegenTime = now; }
             if (!GameState.lastAutoSaveTime) GameState.lastAutoSaveTime = now;
             
             let delta = now - GameState.lastLoopTime;
             let isCatchUp = delta > 500;
             
             if (now - GameState.lastAutoSaveTime >= 10000) { SaveLoad.autoSave(); GameState.lastAutoSaveTime = now; }
-            
-            if (now - GameState.lastCloudSaveTime >= 30000) {
-                if(currentUserId) SaveLoad.cloudSave(true);
-                GameState.lastCloudSaveTime = now;
-            }
-
             if (now - GameState.lastRegenTime >= 5000) {
                 let ticks = Math.floor((now - GameState.lastRegenTime) / 5000); GameState.lastRegenTime += ticks * 5000;
                 let hpRegenBase = Math.floor(Player.derived.maxHp * 0.02 + GameState.player.stats.vit * 0.5);
@@ -1674,7 +1740,13 @@
             AutoSystem.tick(now, isCatchUp); 
             
             if (isCatchUp) {
-                Player.calcStats(); BuffManager.render(); UI.updateStatus(); UI.updateMapMonsters(); UI.updateMonster(); UI.updateHeader();
+                Player.calcStats();
+                BuffManager.render();
+                UI.updateStatus();
+                UI.updateMapMonsters();
+                UI.updateMonster();
+                UI.updateHeader();
+                console.log(`[系統提示] 背景追趕完成，跳過了 ${delta} 毫秒的動畫。`);
             }
             
             GameState.lastLoopTime = now;
@@ -1693,31 +1765,43 @@
                 let mapDef = GameDB.maps.find(m => m.id === e.target.value);
                 if(mapDef) {
                     document.getElementById('combat-bg').className = `flex-1 relative overflow-hidden flex items-center justify-center transition-colors duration-1000 bg-gradient-to-b ${mapDef.bg}`;
-                    let audio = document.getElementById('bgm-player'); if(document.getElementById('setting-bgm').checked) { audio.src = mapDef.music; audio.volume = document.getElementById('setting-vol').value / 100; audio.play().catch(e=>console.log("Audio blocked.")); }
+                    let audio = document.getElementById('login-bgm'); if(document.getElementById('setting-bgm').checked) { audio.src = mapDef.music || '00.mp3'; audio.play().catch(e=>console.log("Audio blocked.")); }
                 }
             });
             ['hp', 'sp', 's1', 's2'].forEach(key => { let el = document.getElementById(`set-auto-${key}`); if(el) { el.addEventListener('change', (e) => { let val = parseInt(e.target.value) || 1; if(val < 1) val = 1; if(key === 'hp') GameState.autoConfig.hpPct = val; if(key === 'sp') GameState.autoConfig.spPct = val; if(key === 's1') GameState.autoConfig.s1Interval = val; if(key === 's2') GameState.autoConfig.s2Interval = val; }); } });
             ['dmg-dealt', 'dmg-taken', 'exp', 'drop'].forEach(key => { let el = document.getElementById(`log-${key}`); if(el) { el.addEventListener('change', (e) => { let field = key.replace('-dealt', 'Dealt').replace('-taken', 'Taken'); if (field === 'drop') field = 'drops'; GameState.logFilters[field] = e.target.checked; }); } });
             document.getElementById('set-auto-revive').addEventListener('change', (e) => { GameState.autoConfig.autoRevive = e.target.checked; });
-            document.getElementById('setting-bgm').addEventListener('change', (e) => { let audio = document.getElementById('bgm-player'); if(e.target.checked && GameState.currentMap) { let mapDef = GameDB.maps.find(m => m.id === GameState.currentMap); audio.src = mapDef.music; audio.play(); } else { audio.pause(); } });
-            document.getElementById('setting-vol').addEventListener('input', (e) => { document.getElementById('bgm-player').volume = e.target.value / 100; });
+            document.getElementById('setting-bgm').addEventListener('change', (e) => { let audio = document.getElementById('login-bgm'); if(e.target.checked && GameState.currentMap) { let mapDef = GameDB.maps.find(m => m.id === GameState.currentMap); audio.src = mapDef.music || '00.mp3'; audio.play(); } else { audio.pause(); } });
+            document.getElementById('setting-vol').addEventListener('input', (e) => { document.getElementById('login-bgm').volume = e.target.value / 100; });
         }
 
         function initGame() {
-            window.UI = UI; window.Bag = Bag; window.Smith = Smith; window.Shop = Shop; window.Skills = Skills; window.Hotkeys = Hotkeys; window.Player = Player; window.Combat = Combat; window.SaveLoad = SaveLoad; window.Log = Log;
+            window.UI = UI; window.Bag = Bag; window.Smith = Smith; window.Shop = Shop; window.Skills = Skills; window.Hotkeys = Hotkeys; window.Player = Player; window.Combat = Combat; window.SaveLoad = SaveLoad;
             document.getElementById('loading-screen').classList.add('hide'); document.getElementById('app').classList.remove('hide');
-            Player.init(); SaveLoad.autoLoad(); 
-            if(GameState.inventory.item.length === 0 && GameState.inventory.equip.length === 0) { Bag.addItem('novicePotion', 50, 'item'); }
+            Player.init(); 
             
-            if(!GameState.currentMap) GameState.currentMap = 'prontera';
-            UI.updateMapSelect(); let mapSel = document.getElementById('map-select'); if(mapSel.value) GameState.currentMap = mapSel.value;
-            if(!GameState.mapMonsters || GameState.mapMonsters.length === 0) { Combat.initMapMonsters(GameState.currentMap); }
-            
-            setupEvents(); UI.updateHeader(); UI.checkRebirth(); UI.checkJobChange(); Hotkeys.render(); BuffManager.render(); Skills.render();
-            requestAnimationFrame(gameLoop);
+            SaveLoad.autoLoad().then(() => {
+                if(GameState.inventory.item.length === 0 && GameState.inventory.equip.length === 0) { Bag.addItem('novicePotion', 50, 'item'); }
+                
+                if(window.tempSecPwd) {
+                    GameState.player.secPwd = window.tempSecPwd;
+                    window.tempSecPwd = null;
+                    SaveLoad.autoSave();
+                }
+                
+                if(!GameState.currentMap) GameState.currentMap = 'prontera';
+                UI.updateMapSelect(); let mapSel = document.getElementById('map-select'); if(mapSel.value) GameState.currentMap = mapSel.value;
+                if(!GameState.mapMonsters || GameState.mapMonsters.length === 0) { Combat.initMapMonsters(GameState.currentMap); }
+                
+                setupEvents(); UI.updateHeader(); UI.checkRebirth(); UI.checkJobChange(); Hotkeys.render(); BuffManager.render(); Skills.render();
+                
+                requestAnimationFrame(gameLoop);
+            });
         }
 
-        window.addEventListener('DOMContentLoaded', loadDatabases);
+        window.addEventListener('DOMContentLoaded', () => {
+            LoginFlow.init();
+        });
     </script>
 </body>
 </html>
