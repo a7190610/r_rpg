@@ -159,7 +159,7 @@
     </div>
 
     <!-- Login Audio -->
-    <audio id="login-bgm" src="00.mp3" loop autoplay></audio>
+    <audio id="login-bgm" src="https://a7190610.github.io/r_rpg/00.mp3" loop autoplay></audio>
 
     <!-- Classic Login Overlay -->
     <div id="classic-login-overlay" class="fixed inset-0 z-[120] flex items-center justify-center bg-[#87CEEB] bg-gradient-to-b from-[#87CEEB] to-[#4682B4]">
@@ -201,6 +201,11 @@
                     <span class="w-16 text-right text-xs font-bold">Password</span>
                     <input type="password" id="login-pwd" class="classic-input flex-1" placeholder="輸入密碼">
                 </div>
+                <div class="flex items-center gap-2 mt-1">
+                    <label class="flex items-center gap-1 cursor-pointer text-xs font-bold text-gray-800 ml-[4.5rem]">
+                        <input type="checkbox" id="login-remember" class="w-4 h-4 accent-blue-600"> 記住帳號密碼
+                    </label>
+                </div>
                 <div class="flex justify-between mt-2 pt-2 border-t border-gray-400">
                     <button class="classic-btn text-blue-800 font-bold" id="btn-register">註冊新帳號</button>
                     <button class="classic-btn font-bold px-6" id="btn-login">登入</button>
@@ -217,8 +222,6 @@
             <div class="p-4">
                 <div class="bg-white border-inset h-32 border border-gray-400 border-t-gray-600 border-l-gray-600 mb-4 p-1">
                     <div class="cursor-pointer bg-blue-600 text-white px-1 font-bold">波利</div>
-                    <div class="cursor-pointer px-1 text-gray-400 opacity-50 cursor-not-allowed">巴風特 (維護中)</div>
-                    <div class="cursor-pointer px-1 text-gray-400 opacity-50 cursor-not-allowed">查爾斯 (維護中)</div>
                 </div>
                 <div class="flex justify-end gap-2">
                     <button class="classic-btn font-bold px-6" id="btn-server-ok">確定</button>
@@ -483,9 +486,31 @@
                 <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="log-drop" class="w-4 h-4 accent-yellow-500" checked> 顯示掉落物品</label>
             </div>
 
-            <div class="mt-4 flex justify-end gap-2 border-t border-gray-700 pt-4">
-                <button class="btn bg-red-900/50 hover:bg-red-800 border-red-600" onclick="if(confirm('確定要登出當前帳號並回到登入畫面嗎？')){ auth.signOut().then(()=>location.reload()); }">切換帳號 (登出)</button>
-                <button class="btn" onclick="UI.closeModal('modal-settings')">關閉設定</button>
+            <div class="mt-4 flex flex-col gap-2 border-t border-gray-700 pt-4">
+                <button class="btn bg-blue-900/50 hover:bg-blue-800 border-blue-600 text-blue-200 py-2 font-bold" onclick="SecPwdManager.open()">變更二次密碼</button>
+                <div class="flex justify-end gap-2 mt-2">
+                    <button class="btn bg-red-900/50 hover:bg-red-800 border-red-600" onclick="if(confirm('確定要登出當前帳號並回到登入畫面嗎？')){ auth.signOut().then(()=>location.reload()); }">切換帳號 (登出)</button>
+                    <button class="btn" onclick="UI.closeModal('modal-settings')">關閉設定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Sec Pwd Modal -->
+    <div id="modal-change-secpwd" class="fixed inset-0 z-[60] modal-overlay flex items-center justify-center hide">
+        <div class="bg-gray-800 p-4 rounded shadow-lg border border-gray-600 w-80">
+            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2 text-yellow-400">變更二次密碼</h2>
+            <div class="text-center">
+                <div id="change-secpwd-msg" class="text-sm mb-3 text-blue-300 font-bold">請輸入【舊的】二次密碼</div>
+                <div class="bg-gray-900 border border-gray-700 py-2 mb-4 text-2xl font-bold tracking-[0.5em] text-red-500 h-10 flex items-center justify-center" id="change-secpwd-display"></div>
+                <div class="grid grid-cols-3 gap-2 px-4 mb-4" id="change-secpwd-numpad">
+                    <!-- injected by js -->
+                </div>
+                <div class="flex justify-center gap-2">
+                    <button class="btn bg-gray-700 px-4" onclick="SecPwdManager.clear()">重設</button>
+                    <button class="btn bg-green-900 hover:bg-green-800 border-green-600 px-6 font-bold text-white" onclick="SecPwdManager.submit()">確認</button>
+                    <button class="btn bg-red-900 border-red-600 px-4" onclick="UI.closeModal('modal-change-secpwd')">取消</button>
+                </div>
             </div>
         </div>
     </div>
@@ -689,9 +714,21 @@
                 document.addEventListener('touchstart', tryPlayBGM);
                 tryPlayBGM();
 
+                // 記住帳密讀取
+                let saved = localStorage.getItem('idleRo_remember');
+                if (saved) {
+                    try {
+                        let creds = JSON.parse(atob(saved));
+                        document.getElementById('login-id').value = creds.id || '';
+                        document.getElementById('login-pwd').value = creds.pwd || '';
+                        document.getElementById('login-remember').checked = true;
+                    } catch(e){}
+                }
+
                 document.getElementById('btn-agree').onclick = () => {
                     document.getElementById('login-step-1').classList.add('hide');
                     document.getElementById('login-step-2').classList.remove('hide');
+                    bgm.play().catch(e=>{}); // 使用者點擊同意時，強制啟動音樂播放
                 };
 
                 document.getElementById('btn-login').onclick = () => this.login();
@@ -733,6 +770,14 @@
                 let email = document.getElementById('login-id').value;
                 let pwd = document.getElementById('login-pwd').value;
                 if(!email || !pwd) { this.showAlert('請輸入帳號和密碼'); return; }
+                
+                // 記住帳密儲存邏輯
+                if (document.getElementById('login-remember').checked) {
+                    localStorage.setItem('idleRo_remember', btoa(JSON.stringify({id: email, pwd: pwd})));
+                } else {
+                    localStorage.removeItem('idleRo_remember');
+                }
+
                 try {
                     await signInWithEmailAndPassword(auth, email, pwd);
                     document.getElementById('login-step-2').classList.add('hide');
@@ -744,6 +789,14 @@
                 let email = document.getElementById('login-id').value;
                 let pwd = document.getElementById('login-pwd').value;
                 if(!email || !pwd) { this.showAlert('請輸入帳號和密碼'); return; }
+                
+                // 記住帳密儲存邏輯
+                if (document.getElementById('login-remember').checked) {
+                    localStorage.setItem('idleRo_remember', btoa(JSON.stringify({id: email, pwd: pwd})));
+                } else {
+                    localStorage.removeItem('idleRo_remember');
+                }
+
                 try {
                     await createUserWithEmailAndPassword(auth, email, pwd);
                     this.showAlert('註冊成功！');
@@ -821,7 +874,10 @@
                     this.enterGame();
                 } else {
                     if (this.secPwdInput === this.expectedSecPwd) { this.enterGame(); } 
-                    else { this.showAlert('密碼錯誤！'); this.clearSecPwd(); }
+                    else { 
+                        this.showAlert('密碼錯誤！請重新輸入。'); 
+                        this.clearSecPwd(); 
+                    }
                 }
             },
 
@@ -879,6 +935,67 @@
                     autoHp: r >= 1, autoSp: r >= 2, autoSkill1: r >= 3, autoSkill2: r >= 4, autoRevive: r >= 5, chatUnlocked: r >= 6, 
                     statCapBonus: r >= 40 ? (r - 39) : 0, aspdCap: r >= 20 ? Math.min(250, 193 + (r - 19)) : 193, refineBonus: r >= 30 ? Math.min(70, r - 29) * 0.01 : 0, statMulti: 1 + (r * 0.01)
                 };
+            }
+        };
+
+        // 二次密碼變更管理器
+        const SecPwdManager = {
+            step: 1,
+            input: '',
+            open: function() {
+                this.step = 1;
+                this.input = '';
+                document.getElementById('change-secpwd-msg').innerText = '請輸入【舊的】二次密碼';
+                document.getElementById('change-secpwd-msg').className = 'text-sm mb-3 text-blue-300 font-bold';
+                this.updateDisplay();
+                this.initNumpad();
+                UI.openModal('modal-change-secpwd');
+            },
+            initNumpad: function() {
+                let container = document.getElementById('change-secpwd-numpad');
+                container.innerHTML = '';
+                let nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; nums.sort(() => Math.random() - 0.5);
+                nums.forEach(n => {
+                    let btn = document.createElement('button');
+                    btn.className = 'btn bg-gray-700 hover:bg-gray-600 border-gray-500 text-xl font-bold h-12 rounded shadow transition-transform active:translate-y-1';
+                    btn.innerText = n;
+                    btn.onclick = () => this.pressKey(n);
+                    container.appendChild(btn);
+                });
+            },
+            pressKey: function(n) {
+                if (this.input.length < 4) {
+                    this.input += n;
+                    this.updateDisplay();
+                }
+            },
+            updateDisplay: function() {
+                document.getElementById('change-secpwd-display').innerText = '*'.repeat(this.input.length);
+            },
+            clear: function() {
+                this.input = '';
+                this.updateDisplay();
+            },
+            submit: function() {
+                if (this.input.length !== 4) { UI.showToast('請輸入四位數密碼', 'bg-red-600 text-white'); return; }
+                if (this.step === 1) {
+                    if (this.input === GameState.player.secPwd) {
+                        this.step = 2;
+                        this.input = '';
+                        this.updateDisplay();
+                        document.getElementById('change-secpwd-msg').innerText = '太棒了！請輸入【新的】二次密碼';
+                        document.getElementById('change-secpwd-msg').className = 'text-sm mb-3 text-green-400 font-bold';
+                        this.initNumpad(); // 重新打亂鍵盤
+                    } else {
+                        UI.showToast('舊密碼錯誤！請重新輸入', 'bg-red-600 text-white');
+                        this.clear();
+                    }
+                } else if (this.step === 2) {
+                    GameState.player.secPwd = this.input;
+                    SaveLoad.autoSave();
+                    UI.showToast('二次密碼變更成功！', 'bg-green-600 text-white');
+                    UI.closeModal('modal-change-secpwd');
+                }
             }
         };
 
@@ -1776,7 +1893,7 @@
         }
 
         function initGame() {
-            window.UI = UI; window.Bag = Bag; window.Smith = Smith; window.Shop = Shop; window.Skills = Skills; window.Hotkeys = Hotkeys; window.Player = Player; window.Combat = Combat; window.SaveLoad = SaveLoad;
+            window.UI = UI; window.Bag = Bag; window.Smith = Smith; window.Shop = Shop; window.Skills = Skills; window.Hotkeys = Hotkeys; window.Player = Player; window.Combat = Combat; window.SaveLoad = SaveLoad; window.SecPwdManager = SecPwdManager;
             document.getElementById('loading-screen').classList.add('hide'); document.getElementById('app').classList.remove('hide');
             Player.init(); 
             
