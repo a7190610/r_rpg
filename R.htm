@@ -494,7 +494,7 @@
         window.LoginFlow = LoginFlow;
 
         window.addEventListener('beforeunload', function (e) { if (isGameStarted && !GameState.player.isDead && !window.isKicked) { SaveLoad.autoSave(); e.preventDefault(); e.returnValue = '確定要離開遊戲嗎？'; } });
-function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {}; keys.forEach((k, i) => obj[k] = row[i]); return obj; }); }
+        function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {}; keys.forEach((k, i) => obj[k] = row[i]); return obj; }); }
         async function fetchDB(url, objectName) {
             try { let res = await fetch(url); let text = await res.text(); text = text.replace(/export\s+const\s+/g, 'var ').replace(/export\s+var\s+/g, 'var ').replace(/export\s+let\s+/g, 'var '); const fn = new Function(`${text}\nreturn typeof ${objectName} !== 'undefined' ? ${objectName} : null;`); return fn(); } catch (e) { return null; }
         }
@@ -735,13 +735,29 @@ function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {
                 if(mapId === 'prontera' || mapId === 'm_001') return null;
                 if(!mapId) return null; let spawnList = GameDB.mapmon[mapId]; 
                 if(!spawnList || spawnList.length === 0) { let fb = Object.keys(GameDB.mapmon)[0]; if(!fb) return null; spawnList = GameDB.mapmon[fb]; }
-                let hasBoss = GameState.mapMonsters.some(m => m.hp > 0 && (m.name.includes('MVP') || m.name.includes('BOSS'))); let availableSpawns = spawnList.filter(item => { let monTemplate = GameDB.monsters.find(m => m.mon_id === item[0]); if (!monTemplate) return false; let isBoss = monTemplate.mon_name.includes('MVP') || monTemplate.mon_name.includes('BOSS'); if (hasBoss && isBoss) return false; return true; }); if (availableSpawns.length === 0) availableSpawns = spawnList; 
-                let totalWeight = availableSpawns.reduce((sum, item) => sum + item[1], 0); let rnd = Math.random() * totalWeight; let sum = 0, monId = null; for(let item of availableSpawns) { sum += item[1]; if(rnd <= sum) { monId = item[0]; break; } }
-                let monTemplate = GameDB.monsters.find(m => m.mon_id === monId); if(!monTemplate) return null;
+                let hasBoss = GameState.mapMonsters.some(m => m.hp > 0 && (m.name.includes('MVP') || m.name.includes('BOSS'))); 
+                let availableSpawns = spawnList.filter(item => { 
+                    // 強制轉字串比對，防堵資料庫 ID 型別不一造成的配對失敗
+                    let monTemplate = GameDB.monsters.find(m => String(m.mon_id) === String(item[0])); 
+                    if (!monTemplate) return false; 
+                    let isBoss = monTemplate.mon_name.includes('MVP') || monTemplate.mon_name.includes('BOSS'); 
+                    if (hasBoss && isBoss) return false; return true; 
+                }); 
+                if (availableSpawns.length === 0) availableSpawns = spawnList; 
+                let totalWeight = availableSpawns.reduce((sum, item) => sum + item[1], 0); let rnd = Math.random() * totalWeight; let sum = 0, monId = null; 
+                for(let item of availableSpawns) { sum += item[1]; if(rnd <= sum) { monId = item[0]; break; } }
+                // 強制轉字串比對
+                let monTemplate = GameDB.monsters.find(m => String(m.mon_id) === String(monId)); 
+                if(!monTemplate) return null;
                 return { id: monTemplate.mon_id, name: monTemplate.mon_name, emoji: monTemplate.mon_emoji, lv: monTemplate.mon_lv, hp: monTemplate.mon_hp, maxHp: monTemplate.mon_hp, atk: monTemplate.mon_atk, def: monTemplate.mon_def, hit: monTemplate.mon_hit, flee: monTemplate.mon_flee, element: monTemplate.mon_element, size: monTemplate.mon_size, bExp: monTemplate.mon_baseExp, jExp: monTemplate.mon_jobExp, zeny: monTemplate.mon_gold, dropRate: monTemplate.mon_dropRate };
             },
             tick: function(now) {
                 if(GameState.player.isDead) return;
+
+                // 防呆死鎖機制：如果計時器變成 NaN 或跑到太遠的未來，強制重置
+                if (isNaN(GameState.autoAttackTimer) || GameState.autoAttackTimer > now + 5000) GameState.autoAttackTimer = now;
+                if (isNaN(GameState.monsterAttackTimer) || GameState.monsterAttackTimer > now + 5000) GameState.monsterAttackTimer = now;
+
                 if (GameState.currentMap !== 'prontera' && GameState.currentMap !== 'm_001') {
                     if (GameState.mapMonsters.length < 5) { let safeBreak = 0; while (GameState.mapMonsters.length < 5 && safeBreak < 10) { let m = this.spawnMonster(GameState.currentMap); if (m) { m.uid = Date.now().toString() + '_' + Math.random().toString().slice(2) + '_' + GameState.mapMonsters.length; GameState.mapMonsters.push(m); } safeBreak++; } if(now - GameState.lastLoopTime <= 500) UI.updateMapMonsters(); }
                     if(GameState.currentMonster && GameState.currentMonster.hp <= 0) { this.onMonsterKill(GameState.currentMonster, true); return; }
@@ -914,6 +930,7 @@ function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {
         window.UI = UI;
 
         function gameLoopTick(now) {
+            if (window.isKicked) return; // 確實停止所有運算
             if (!GameState.lastLoopTime) { GameState.lastLoopTime = now; GameState.lastRegenTime = now; }
             if (!GameState.lastAutoSaveTime) GameState.lastAutoSaveTime = now;
             let delta = now - GameState.lastLoopTime; let isCatchUp = delta > 500;
