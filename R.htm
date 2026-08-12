@@ -503,7 +503,7 @@
         window.LoginFlow = LoginFlow;
 
         window.addEventListener('beforeunload', function (e) { if (isGameStarted && !GameState.player.isDead && !window.isKicked) { SaveLoad.autoSave(); e.preventDefault(); e.returnValue = '確定要離開遊戲嗎？'; } });
-  function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {}; keys.forEach((k, i) => obj[k] = row[i]); return obj; }); }
+   function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {}; keys.forEach((k, i) => obj[k] = row[i]); return obj; }); }
         async function fetchDB(url, objectName) {
             try { let res = await fetch(url); let text = await res.text(); text = text.replace(/export\s+const\s+/g, 'var ').replace(/export\s+var\s+/g, 'var ').replace(/export\s+let\s+/g, 'var '); const fn = new Function(`${text}\nreturn typeof ${objectName} !== 'undefined' ? ${objectName} : null;`); return fn(); } catch (e) { return null; }
         }
@@ -530,57 +530,34 @@
 
         const SaveLoad = {
             saveToCloud: async function(isManual = false) {
-                if(!window.currentUserId || window.currentUserId === "local_user" || window.isKicked) return;
-                try { let dataStr = JSON.stringify(GameState); await db.collection("users").doc(window.currentUserId).set({ gameData: dataStr, activeSession: currentSessionId }, { merge: true }); if(isManual) UI.showToast('備份成功！', 'bg-green-600 text-white'); } catch(e) {}
+                // 如果已經被踢下線，絕對禁止上傳，防止死迴圈
+                if(!window.currentUserId || window.isKicked) return;
+                try { 
+                    let dataStr = JSON.stringify(GameState); 
+                    // 修正：絕對不能把 activeSession 寫進去，否則會把新登入者的金鑰蓋掉！
+                    await db.collection("users").doc(window.currentUserId).set({ gameData: dataStr }, { merge: true }); 
+                    if(isManual) UI.showToast('備份成功！', 'bg-green-600 text-white'); 
+                } catch(e) {}
             },
             loadFromCloud: async function(cloudDataStr) {
-                if(!window.currentUserId || window.currentUserId === "local_user") return false;
+                if(!window.currentUserId) return false;
                 try {
-                    let uid = window.currentUserId;
-                    let localStr = localStorage.getItem('idleRo_autoSave_' + uid);
-                    let isLegacy = false;
-                    if (!localStr) {
-                        localStr = localStorage.getItem('idleRo_autoSave');
-                        isLegacy = true;
-                    }
-
-                    let localParsed = null;
-                    if (localStr) { try { localParsed = JSON.parse(decodeURIComponent(atob(localStr))); } catch(e) { try { localParsed = JSON.parse(localStr); } catch(e2) {} } }
-
+                    // 絕對雲端優先：不再理會任何 localStorage，只吃傳進來的雲端資料
                     if (cloudDataStr) {
                         let parsedCloud; try { parsedCloud = JSON.parse(cloudDataStr); } catch(e) { try { parsedCloud = JSON.parse(decodeURIComponent(atob(cloudDataStr))); } catch(e2) {} }
-                        if(parsedCloud && !parsedCloud.player) { parsedCloud = null; } 
-                        
-                        let localLv = (localParsed && localParsed.player && !isNaN(localParsed.player.baseLv)) ? localParsed.player.baseLv : 0;
-                        let cloudLv = (parsedCloud && parsedCloud.player && !isNaN(parsedCloud.player.baseLv)) ? parsedCloud.player.baseLv : 0;
-                        
-                        // 絕對雲端優先：只要雲端有資料，一律以雲端為主
-                        if (parsedCloud) {
+                        if(parsedCloud && parsedCloud.player) {
                             this.loadFromData(JSON.stringify(parsedCloud));
-                            if (isLegacy) { localStorage.removeItem('idleRo_autoSave'); }
                             UI.showToast('已載入雲端紀錄！', 'bg-blue-600 text-white');
                             return true;
                         }
                     } 
-                    if (localParsed && localParsed.player) {
-                        this.loadFromData(JSON.stringify(localParsed));
-                        this.saveToCloud();
-                        if(isLegacy) { localStorage.setItem('idleRo_autoSave_' + uid, localStr); localStorage.removeItem('idleRo_autoSave'); }
-                        return true;
-                    }
                     return false;
                 } catch(e) { return false; }
             },
             autoSave: function() {
                 if (window.isKicked) return;
-                let uid = window.currentUserId || 'local_user';
-                try { localStorage.setItem('idleRo_autoSave_' + uid, btoa(encodeURIComponent(JSON.stringify(GameState)))); } catch(e) {}
+                // 徹底拔除 localStorage 本地存檔
                 this.saveToCloud();
-            },
-            autoLoad: function() {
-                let uid = window.currentUserId || 'local_user';
-                let dataStr = localStorage.getItem('idleRo_autoSave_' + uid) || localStorage.getItem('idleRo_autoSave');
-                if(dataStr) this.loadFromData(dataStr);
             },
             loadFromData: function(dataStr, isManualFeedback=false) {
                 try {
@@ -609,7 +586,7 @@
                     let mapSel = document.getElementById('map-select'); if(mapSel) mapSel.value = GameState.currentMap;
                     Combat.initMapMonsters(GameState.currentMap);
                     
-                    if(isManualFeedback) { SaveLoad.saveToCloud(true); SaveLoad.autoSave(); retroAlert("【系統提示】紀錄已強制覆蓋並寫入！"); UI.closeModal('modal-retro-prompt'); }
+                    if(isManualFeedback) { SaveLoad.saveToCloud(true); retroAlert("【系統提示】紀錄已強制覆蓋並寫入雲端！"); UI.closeModal('modal-retro-prompt'); }
                 } catch(e) { console.log(e); if(isManualFeedback) retroAlert("感謝您的反饋！您的意見已成功送出。"); }
             }
         };
@@ -735,7 +712,6 @@
                 let hasBoss = GameState.mapMonsters.some(m => m.hp > 0 && (m.name.includes('MVP') || m.name.includes('BOSS'))); 
                 
                 let availableSpawns = spawnList.filter(item => { 
-                    // 強制轉字串比對，防堵資料庫 ID 型別不一造成的配對失敗
                     let monTemplate = GameDB.monsters.find(m => String(m.mon_id) === String(item[0])); 
                     if (!monTemplate) return false; 
                     let isBoss = monTemplate.mon_name.includes('MVP') || monTemplate.mon_name.includes('BOSS'); 
@@ -746,7 +722,6 @@
                 let totalWeight = availableSpawns.reduce((sum, item) => sum + item[1], 0); let rnd = Math.random() * totalWeight; let sum = 0, monId = null; 
                 for(let item of availableSpawns) { sum += item[1]; if(rnd <= sum) { monId = item[0]; break; } }
                 
-                // 強制轉字串比對
                 let monTemplate = GameDB.monsters.find(m => String(m.mon_id) === String(monId)); 
                 if(!monTemplate) return null;
                 return { id: monTemplate.mon_id, name: monTemplate.mon_name, emoji: monTemplate.mon_emoji, lv: monTemplate.mon_lv, hp: monTemplate.mon_hp, maxHp: monTemplate.mon_hp, atk: monTemplate.mon_atk, def: monTemplate.mon_def, hit: monTemplate.mon_hit, flee: monTemplate.mon_flee, element: monTemplate.mon_element, size: monTemplate.mon_size, bExp: monTemplate.mon_baseExp, jExp: monTemplate.mon_jobExp, zeny: monTemplate.mon_gold, dropRate: monTemplate.mon_dropRate };
@@ -754,7 +729,6 @@
             tick: function(now) {
                 if(GameState.player.isDead) return;
 
-                // 防呆死鎖機制：如果計時器變成 NaN 或跑到太遠的未來，強制重置
                 if (isNaN(GameState.autoAttackTimer) || GameState.autoAttackTimer > now + 5000) GameState.autoAttackTimer = now;
                 if (isNaN(GameState.monsterAttackTimer) || GameState.monsterAttackTimer > now + 5000) GameState.monsterAttackTimer = now;
 
@@ -915,7 +889,6 @@
                     if (input === "RESET") {
                         Player.init(GameState.player ? GameState.player.secPwd : null);
                         SaveLoad.saveToCloud(true);
-                        SaveLoad.autoSave();
                         retroAlert("帳號已徹底重置為初始狀態！");
                         this.closeModal('modal-retro-prompt');
                         setTimeout(() => window.location.reload(), 1500);
@@ -975,11 +948,9 @@
             isGameStarted = true; document.getElementById('app').classList.remove('hide');
             Player.init(initialSecPwd); 
             
-            // 如果登入時有載入到雲端紀錄，就優先載入，否則載入本機端
+            // 絕對純雲端模式：只吃 Firebase，完全不再理會 localStorage
             if (cloudGameData) {
                 SaveLoad.loadFromCloud(cloudGameData);
-            } else {
-                SaveLoad.autoLoad(); 
             }
             
             if(GameState.inventory.item.length === 0 && GameState.inventory.equip.length === 0) { Bag.addItem('novicePotion', 50, 'item'); }
