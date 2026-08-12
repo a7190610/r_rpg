@@ -397,7 +397,7 @@
                     if (this.initialCheck) {
                         this.initialCheck = false;
                         if (user && !isGameStarted && keepLogin) {
-                            db.collection("ro_users").doc(user.uid).get().then(doc => {
+                            db.collection("users").doc(user.uid).get().then(doc => {
                                 let cloudGameData = (doc.exists && doc.data().gameData) ? doc.data().gameData : null;
                                 this.doStartGame(user.uid, null, cloudGameData); 
                                 document.addEventListener('click', function bgmStarter() { if(!isGameStarted) tryPlayBGM(); document.removeEventListener('click', bgmStarter); }, {once: true});
@@ -460,7 +460,7 @@
                 if (this.isChangingPwd) { GameState.player.secPwd = pwd; SaveLoad.saveToCloud(true); retroAlert("二次密碼變更成功！"); UI.closeModal('modal-secpwd'); this.isChangingPwd = false; return; }
 
                 let uid = auth.currentUser.uid;
-                db.collection("ro_users").doc(uid).get().then(doc => {
+                db.collection("users").doc(uid).get().then(doc => {
                     let cData = doc.exists ? doc.data() : null;
                     let rawData = cData ? cData.gameData : null;
                     if(rawData) {
@@ -482,10 +482,10 @@
                 window.isKicked = false; 
                 
                 if(uid !== "local_user") {
-                    db.collection("ro_users").doc(uid).set({ activeSession: currentSessionId }, {merge: true}).catch(e=>{});
+                    db.collection("users").doc(uid).set({ activeSession: currentSessionId }, {merge: true}).catch(e=>{});
                     
                     if (sessionListener) sessionListener(); 
-                    sessionListener = db.collection("ro_users").doc(uid).onSnapshot(doc => {
+                    sessionListener = db.collection("users").doc(uid).onSnapshot(doc => {
                         if(doc.exists && doc.data().activeSession && doc.data().activeSession !== currentSessionId) {
                             if (!window.isKicked) {
                                 window.isKicked = true; 
@@ -503,7 +503,7 @@
         window.LoginFlow = LoginFlow;
 
         window.addEventListener('beforeunload', function (e) { if (isGameStarted && !GameState.player.isDead && !window.isKicked) { SaveLoad.autoSave(); e.preventDefault(); e.returnValue = '確定要離開遊戲嗎？'; } });
-        function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {}; keys.forEach((k, i) => obj[k] = row[i]); return obj; }); }
+  function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {}; keys.forEach((k, i) => obj[k] = row[i]); return obj; }); }
         async function fetchDB(url, objectName) {
             try { let res = await fetch(url); let text = await res.text(); text = text.replace(/export\s+const\s+/g, 'var ').replace(/export\s+var\s+/g, 'var ').replace(/export\s+let\s+/g, 'var '); const fn = new Function(`${text}\nreturn typeof ${objectName} !== 'undefined' ? ${objectName} : null;`); return fn(); } catch (e) { return null; }
         }
@@ -531,7 +531,7 @@
         const SaveLoad = {
             saveToCloud: async function(isManual = false) {
                 if(!window.currentUserId || window.currentUserId === "local_user" || window.isKicked) return;
-                try { let dataStr = JSON.stringify(GameState); await db.collection("ro_users").doc(window.currentUserId).set({ gameData: dataStr, activeSession: currentSessionId }, { merge: true }); if(isManual) UI.showToast('備份成功！', 'bg-green-600 text-white'); } catch(e) {}
+                try { let dataStr = JSON.stringify(GameState); await db.collection("users").doc(window.currentUserId).set({ gameData: dataStr, activeSession: currentSessionId }, { merge: true }); if(isManual) UI.showToast('備份成功！', 'bg-green-600 text-white'); } catch(e) {}
             },
             loadFromCloud: async function(cloudDataStr) {
                 if(!window.currentUserId || window.currentUserId === "local_user") return false;
