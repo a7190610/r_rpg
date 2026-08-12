@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>放置RO</title>
     
-    <!-- Firebase SDK (Compat Version) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -56,7 +55,6 @@
     <div id="toast-container" class="fixed top-12 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
     <audio id="bgm-player" loop></audio>
 
-    <!-- Login Screen Flow -->
     <div id="login-screen" class="fixed inset-0 z-[200] bg-black bg-cover bg-center flex items-center justify-center transition-opacity duration-1000" style="background-image: url('https://a7190610.github.io/r_rpg/00.png');">
         
         <div id="modal-agree" class="retro-win w-[400px] max-w-[95%]">
@@ -133,10 +131,8 @@
 
     </div>
 
-    <!-- Main Game App Content (Hidden Initially) -->
     <div id="app" class="flex-1 flex flex-col h-full hide">
         
-        <!-- Header -->
         <header class="flex items-center justify-between p-2 bg-gray-800 border-b border-gray-700 shadow-md z-10 shrink-0 relative">
             <div class="flex items-center gap-2">
                 <h1 class="text-xl font-bold text-yellow-400 drop-shadow-md hidden sm:block">放置RO</h1>
@@ -147,7 +143,6 @@
                 </div>
             </div>
 
-            <!-- Header Collapsed Status -->
             <div id="header-mini-status" class="hidden absolute left-1/2 -translate-x-1/2 items-center text-[10px] sm:text-xs bg-gray-900/90 px-3 py-1 rounded border border-gray-600 cursor-pointer hover:border-yellow-500 shadow-md whitespace-nowrap z-20" onclick="UI.toggleStatusView()">
                 <div class="flex items-center gap-3">
                     <div class="flex flex-col gap-0.5">
@@ -170,7 +165,6 @@
             </div>
         </header>
 
-        <!-- Status Panel -->
         <section id="status-panel" class="p-2 bg-gray-800/80 shrink-0 border-b border-gray-700 relative transition-all">
             <div class="text-[10px] text-gray-500 text-center -mt-1 mb-1 cursor-pointer hover:text-white border-b border-gray-700/50 pb-1" onclick="UI.toggleStatusView()">▲ 點擊此處收起狀態欄 ▲</div>
             <div class="flex flex-col sm:flex-row gap-2">
@@ -236,7 +230,6 @@
             </div>
         </main>
 
-        <!-- Hotkey Bar -->
         <section class="bg-gray-800 p-2 border-t border-gray-700 shrink-0">
             <div class="flex items-start max-w-4xl mx-auto relative">
                 <div id="hotkey-grid" class="flex-1 grid grid-cols-6 gap-1 pr-12 overflow-y-auto max-h-32 content-start"></div>
@@ -246,7 +239,6 @@
 
     </div> 
 
-    <!-- Settings Modal -->
     <div id="modal-settings" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hide">
         <div class="bg-gray-800 p-4 rounded shadow-lg border border-gray-600 w-[90%] max-w-sm max-h-[90%] overflow-y-auto">
             <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2 text-yellow-400">系統設定</h2>
@@ -315,7 +307,6 @@
         </div>
     </div>
 
-    <!-- Rebirth Modal -->
     <div id="modal-rebirth" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hide">
         <div class="bg-gray-800 p-4 rounded shadow-lg border border-gray-600 w-80 max-w-[95%]">
             <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2 text-purple-400">轉生祭壇</h2>
@@ -327,7 +318,6 @@
         </div>
     </div>
 
-    <!-- Chat Modal -->
     <div id="modal-chat" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hide">
         <div class="bg-gray-800 rounded shadow-lg border border-gray-600 w-[95%] max-w-lg h-[80%] flex flex-col">
             <div class="p-3 border-b border-gray-700 flex justify-between items-center bg-gray-900 rounded-t">
@@ -349,7 +339,6 @@
         </div>
     </div>
 
-    <!-- Modals (Hotkey / Skills / Equip Action / Bag / Shop / Job) -->
     <div id="modal-hotkey" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hide"><div class="bg-gray-800 rounded shadow-lg border border-gray-600 w-[95%] max-w-md h-[80%] flex flex-col"><div class="p-3 border-b border-gray-700 flex justify-between items-center bg-gray-900 rounded-t"><h2 class="font-bold text-yellow-400">設定快捷鍵 (<span id="hk-edit-id"></span>)</h2><button class="text-gray-400 hover:text-white" onclick="UI.closeModal('modal-hotkey')">✖</button></div><div class="flex-1 p-0 overflow-y-auto space-y-0" id="hk-list-container"></div><div class="p-3 border-t border-gray-700 flex justify-between bg-gray-900 rounded-b"><button class="btn bg-red-900/50 border-red-700 text-red-200" onclick="Hotkeys.clearCurrentSlot()">清除此格</button><button class="btn" onclick="UI.closeModal('modal-hotkey')">取消</button></div></div></div>
     <div id="modal-skills" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hide"><div class="bg-gray-800 rounded shadow-lg border border-gray-600 w-[95%] max-w-lg h-[85%] flex flex-col"><div class="p-3 border-b border-gray-700 flex justify-between items-center bg-gray-900 rounded-t"><h2 class="font-bold text-yellow-400">技能表</h2><div class="text-sm text-green-300 font-bold">可用技能點: <span id="txt-skill-pts" class="text-lg">0</span></div><button class="text-gray-400 hover:text-white" onclick="UI.closeModal('modal-skills')">✖</button></div><div class="flex-1 p-3 overflow-y-auto space-y-6" id="skill-list-container"></div></div></div>
     
@@ -359,11 +348,9 @@
     <div id="modal-shop" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hide"><div class="bg-gray-800 rounded shadow-lg border border-gray-600 w-[95%] max-w-lg h-[80%] flex flex-col"><div class="p-3 border-b border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gray-900 rounded-t gap-2 flex-wrap relative"><h2 class="font-bold text-yellow-400" id="shop-title">商店</h2><button class="text-gray-400 hover:text-white absolute right-3 top-3" onclick="UI.closeModal('modal-shop')">✖</button><div class="flex gap-2 items-center w-full justify-between mt-1 sm:mt-0 sm:w-auto pr-8"><div id="exchange-cash-container" class="flex gap-1 items-center hide"><div class="text-[10px] text-purple-300 whitespace-nowrap hidden sm:block">1萬Z=1Cash</div><input type="number" id="input-cash-qty" value="1" min="1" class="w-12 bg-gray-900 border border-gray-600 rounded text-center text-xs text-white outline-none focus:border-yellow-500"><button id="btn-exchange-cash" class="btn text-xs bg-purple-900 border-purple-600 whitespace-nowrap px-1" onclick="Shop.exchangeCash()">兌換</button></div><div class="text-xs bg-gray-800 px-2 py-1 rounded whitespace-nowrap ml-auto">持有: <span class="text-yellow-400 font-mono" id="shop-zeny">0</span> Z <span id="shop-cash-container" class="hide">| <span class="text-blue-400 font-mono" id="shop-cash">0</span> Cash</span></div></div></div><div class="flex-1 p-2 overflow-y-auto space-y-2" id="shop-list"></div></div></div>
     <div id="modal-job" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center hide"><div class="bg-gray-800 p-4 rounded shadow-lg border border-gray-600 w-80"><h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2 text-yellow-400">恭喜！可以轉職了！</h2><div class="text-gray-300 text-sm mb-4" id="job-change-msg">請選擇您要轉職的路線：</div><div id="job-options" class="flex flex-col gap-2 max-h-64 overflow-y-auto"></div><div class="mt-4 flex justify-end"><button class="btn" onclick="UI.closeModal('modal-job')">稍後再說</button></div></div></div>
 
-    <!-- Retro System Alert / Prompt Modals -->
     <div id="modal-retro-alert" class="fixed inset-0 z-[300] modal-overlay flex items-center justify-center hide"><div class="retro-win w-[300px]"><div class="retro-titlebar"><span>系統訊息</span></div><div class="retro-content bg-[#f8f5ea] text-center py-6 font-bold text-gray-800" id="retro-alert-msg"></div><div class="flex justify-center pb-3 bg-[#f8f5ea]"><button class="retro-btn w-24" onclick="document.getElementById('modal-retro-alert').classList.add('hide')">確認</button></div></div></div>
     <div id="modal-retro-prompt" class="fixed inset-0 z-[300] modal-overlay flex items-center justify-center hide"><div class="retro-win w-[320px]"><div class="retro-titlebar"><span>問題反饋</span><div class="retro-titlebar-btn" onclick="document.getElementById('modal-retro-prompt').classList.add('hide')">X</div></div><div class="retro-content bg-[#f8f5ea] flex flex-col gap-2 py-4 px-4 font-bold items-center"><div class="text-center text-xs mb-2 text-gray-700">請輸入您的問題或建議：</div><textarea id="retro-prompt-input" class="retro-input w-full h-20 resize-none font-mono"></textarea><div class="flex gap-2 mt-2"><button class="retro-btn w-20" onclick="document.getElementById('modal-retro-prompt').classList.add('hide')">取消</button><button class="retro-btn w-20 text-blue-700" onclick="UI.submitFeedback()">送出</button></div></div></div></div>
 
-    <!-- Main Logic Scripts -->
     <script type="module">
         const firebaseConfig = { apiKey: "AIzaSyD76Z1YihKxTwyg_bKfqxab6xKph6BRx20", authDomain: "rpg-isekai.firebaseapp.com", projectId: "rpg-isekai", storageBucket: "rpg-isekai.firebasestorage.app", messagingSenderId: "532976656033", appId: "1:532976656033:web:d4c59086fc113cc39a5ae0" };
         firebase.initializeApp(firebaseConfig);
@@ -374,7 +361,10 @@
 
         window.GameDB = {};
         window.GameState = { player: null, inventory: { equip: [], item: [] }, equipped: { helm: null, armor: null, weapon: null, shield: null, garment: null, shoes: null, acc1: null, acc2: null }, skills: {}, hotkeys: [], hotkeySize: 12, currentMap: '', mapMonsters: [], currentMonster: null, buffs: [], logFilters: { dmgDealt: true, dmgTaken: true, exp: true, drops: true }, lastLoopTime: 0, autoAttackTimer: 0, monsterAttackTimer: 0, lastRegenTime: 0, autoConfig: { hpPct: 50, spPct: 50, s1Interval: 10, s2Interval: 10, autoRevive: true }, autoTimers: { hp: 0, sp: 0, s1: 0, s2: 0 } };
-        let isGameStarted = false; let currentSessionId = Date.now().toString() + Math.random().toString(); let sessionListener = null;
+        let isGameStarted = false; 
+        let currentSessionId = Date.now().toString() + Math.random().toString(); 
+        let sessionListener = null;
+        window.isKicked = false; // 新增：斷線死鎖狀態
 
         const DB_URLS = { classes: 'https://a7190610.github.io/r_rpg/ro_database_classes.js', items: 'https://a7190610.github.io/r_rpg/ro_database_items.js', consumables: 'https://a7190610.github.io/r_rpg/ro_database_items2.js', cash: 'https://a7190610.github.io/r_rpg/ro_database_items3.js', maps: 'https://a7190610.github.io/r_rpg/ro_database_maps.js', monsters: 'https://a7190610.github.io/r_rpg/ro_database_monsters.js', mapmon: 'https://a7190610.github.io/r_rpg/ro_database_mapmon.js', skills: 'https://a7190610.github.io/r_rpg/ro_database_skills.js', system: 'https://a7190610.github.io/r_rpg/ro_database_system.js' };
         const UI_FUNCTIONS = [ { id: 'ui_skill', name: '技能表', desc: '查看並升級技能', icon: '✨', action: () => UI.openModal('modal-skills') }, { id: 'ui_bag', name: '背包', desc: '管理裝備與道具(包含精煉)', icon: '🎒', action: () => { Bag.render(); UI.openModal('modal-bag'); } }, { id: 'ui_shop', name: '道具店', desc: '購買回復藥水與消耗品', icon: '🏪', action: () => { Shop.render(false); UI.openModal('modal-shop'); } }, { id: 'ui_mall', name: '商城', desc: '購買加倍書與特殊物品', icon: '💎', action: () => { Shop.render(true); UI.openModal('modal-shop'); } } ];
@@ -382,7 +372,7 @@
         window.SystemExt = {
             getJobTier: function(cId) { let c = GameDB.classes.find(x => x.c_id === cId); if(!c) return 1; if(c.c_id === 'novice') return 0; if(c.c_reqBaseLv === 200) return 4; if(c.c_reqBaseLv === 90) return 3; if(c.c_isJob2) return 2; return 1; },
             getClassPath: function(cId) { let path = []; let curr = cId; while(curr) { path.unshift(curr); curr = GameDB.classParents[curr]; } return path; },
-            getEquipRarity: function(reqLv) { let safeLv = (typeof reqLv === 'number' && !isNaN(reqLv)) ? reqLv : 1; if (safeLv <= 30) return { name: '普通', color: 'text-gray-400', pct: 0.03 }; if (safeLv <= 60) return { name: '優秀', color: 'text-green-400', pct: 0.06 }; if (safeLv <= 90) return { name: '稀有', color: 'text-blue-400', pct: 0.09 }; if (safeLv <= 120) return { name: '史 সির', color: 'text-purple-400', pct: 0.12 }; return { name: '傳說', color: 'text-orange-400', pct: 0.15 }; },
+            getEquipRarity: function(reqLv) { let safeLv = (typeof reqLv === 'number' && !isNaN(reqLv)) ? reqLv : 1; if (safeLv <= 30) return { name: '普通', color: 'text-gray-400', pct: 0.03 }; if (safeLv <= 60) return { name: '優秀', color: 'text-green-400', pct: 0.06 }; if (safeLv <= 90) return { name: '稀有', color: 'text-blue-400', pct: 0.09 }; if (safeLv <= 120) return { name: '史詩', color: 'text-purple-400', pct: 0.12 }; return { name: '傳說', color: 'text-orange-400', pct: 0.15 }; },
             getRebirthBonuses: function(rCount) { let r = (typeof rCount === 'number' && !isNaN(rCount)) ? rCount : 0; return { autoHp: r >= 1, autoSp: r >= 2, autoSkill1: r >= 3, autoSkill2: r >= 4, autoRevive: r >= 5, chatUnlocked: r >= 6, statCapBonus: r >= 40 ? (r - 39) : 0, aspdCap: r >= 20 ? Math.min(250, 193 + (r - 19)) : 193, refineBonus: r >= 30 ? Math.min(70, r - 29) * 0.01 : 0, statMulti: 1 + (r * 0.01) }; }
         };
 
@@ -483,14 +473,19 @@
                 document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => document.getElementById('login-screen').classList.add('hide'), 1000);
                 window.currentUserId = uid;
+                window.isKicked = false; // 重置死鎖狀態
                 
                 if(uid !== "local_user") {
                     db.collection("users").doc(uid).set({ activeSession: currentSessionId }, {merge: true}).catch(e=>{});
+                    
+                    if (sessionListener) sessionListener(); // 確保舊監聽器被清除
                     sessionListener = db.collection("users").doc(uid).onSnapshot(doc => {
                         if(doc.exists && doc.data().activeSession && doc.data().activeSession !== currentSessionId) {
-                            retroAlert("與伺服器的連線中斷。\n(帳號已在其他裝置登入)"); setTimeout(() => window.location.reload(), 3000);
+                            window.isKicked = true; // 觸發斷線死鎖，停止所有背景存檔與運算
+                            retroAlert("與伺服器的連線中斷。\n(帳號已在其他裝置登入)"); 
+                            setTimeout(() => { auth.signOut(); window.location.reload(); }, 3000);
                         }
-                    }, err => { console.log("Session limit error (expected for test)", err); });
+                    }, err => { console.log("Session limit error", err); });
                 }
                 loadDatabases(initialSecPwd);
             },
@@ -498,7 +493,7 @@
         };
         window.LoginFlow = LoginFlow;
 
-        window.addEventListener('beforeunload', function (e) { if (isGameStarted && !GameState.player.isDead) { SaveLoad.autoSave(); e.preventDefault(); e.returnValue = '確定要離開遊戲嗎？'; } });
+        window.addEventListener('beforeunload', function (e) { if (isGameStarted && !GameState.player.isDead && !window.isKicked) { SaveLoad.autoSave(); e.preventDefault(); e.returnValue = '確定要離開遊戲嗎？'; } });
 function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {}; keys.forEach((k, i) => obj[k] = row[i]); return obj; }); }
         async function fetchDB(url, objectName) {
             try { let res = await fetch(url); let text = await res.text(); text = text.replace(/export\s+const\s+/g, 'var ').replace(/export\s+var\s+/g, 'var ').replace(/export\s+let\s+/g, 'var '); const fn = new Function(`${text}\nreturn typeof ${objectName} !== 'undefined' ? ${objectName} : null;`); return fn(); } catch (e) { return null; }
@@ -533,7 +528,16 @@ function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {
                 try {
                     let doc = await db.collection("users").doc(window.currentUserId).get();
                     let cloudDataStr = (doc.exists && doc.data().gameData) ? doc.data().gameData : null;
-                    let localStr = localStorage.getItem('idleRo_autoSave'); let localParsed = null;
+
+                    let uid = window.currentUserId;
+                    let localStr = localStorage.getItem('idleRo_autoSave_' + uid);
+                    let isLegacy = false;
+                    if (!localStr) {
+                        localStr = localStorage.getItem('idleRo_autoSave');
+                        isLegacy = true;
+                    }
+
+                    let localParsed = null;
                     if (localStr) { try { localParsed = JSON.parse(decodeURIComponent(atob(localStr))); } catch(e) { try { localParsed = JSON.parse(localStr); } catch(e2) {} } }
 
                     if (cloudDataStr) {
@@ -542,16 +546,45 @@ function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {
                         
                         let localLv = (localParsed && localParsed.player && !isNaN(localParsed.player.baseLv)) ? localParsed.player.baseLv : 0;
                         let cloudLv = (parsedCloud && parsedCloud.player && !isNaN(parsedCloud.player.baseLv)) ? parsedCloud.player.baseLv : 0;
-                        if (localLv > cloudLv) { this.loadFromData(JSON.stringify(localParsed)); if (parsedCloud && parsedCloud.player && parsedCloud.player.secPwd) GameState.player.secPwd = parsedCloud.player.secPwd; this.saveToCloud(); return true; }
                         
-                        if(parsedCloud) { this.loadFromData(JSON.stringify(parsedCloud)); UI.showToast('已載入雲端紀錄！', 'bg-blue-600 text-white'); return true; }
+                        // 嚴格隔離：只有當本地緩存是該帳號專屬，或是全新帳號(1等)時才允許被舊紀錄覆蓋
+                        let canOverride = false;
+                        if (!isLegacy && localLv > cloudLv) canOverride = true;
+                        if (isLegacy && localLv > cloudLv && cloudLv <= 1) canOverride = true;
+
+                        if (canOverride) {
+                            this.loadFromData(JSON.stringify(localParsed));
+                            if (parsedCloud && parsedCloud.player && parsedCloud.player.secPwd) GameState.player.secPwd = parsedCloud.player.secPwd;
+                            this.saveToCloud();
+                            if(isLegacy) { localStorage.setItem('idleRo_autoSave_' + uid, localStr); localStorage.removeItem('idleRo_autoSave'); }
+                            return true;
+                        }
+                        
+                        if(parsedCloud) {
+                            this.loadFromData(JSON.stringify(parsedCloud));
+                            UI.showToast('已載入雲端紀錄！', 'bg-blue-600 text-white');
+                            return true;
+                        }
                     } 
-                    if (localParsed && localParsed.player) { this.loadFromData(JSON.stringify(localParsed)); this.saveToCloud(); return true; }
+                    if (localParsed && localParsed.player) {
+                        this.loadFromData(JSON.stringify(localParsed));
+                        this.saveToCloud();
+                        if(isLegacy) { localStorage.setItem('idleRo_autoSave_' + uid, localStr); localStorage.removeItem('idleRo_autoSave'); }
+                        return true;
+                    }
                     return false;
                 } catch(e) { return false; }
             },
-            autoSave: function() { try { localStorage.setItem('idleRo_autoSave', btoa(encodeURIComponent(JSON.stringify(GameState)))); } catch(e) {} this.saveToCloud(); },
-            autoLoad: function() { let dataStr = localStorage.getItem('idleRo_autoSave'); if(dataStr) this.loadFromData(dataStr); },
+            autoSave: function() {
+                let uid = window.currentUserId || 'local_user';
+                try { localStorage.setItem('idleRo_autoSave_' + uid, btoa(encodeURIComponent(JSON.stringify(GameState)))); } catch(e) {}
+                this.saveToCloud();
+            },
+            autoLoad: function() {
+                let uid = window.currentUserId || 'local_user';
+                let dataStr = localStorage.getItem('idleRo_autoSave_' + uid) || localStorage.getItem('idleRo_autoSave');
+                if(dataStr) this.loadFromData(dataStr);
+            },
             loadFromData: function(dataStr, isManualFeedback=false) {
                 try {
                     let parsed; try { parsed = JSON.parse(decodeURIComponent(atob(dataStr))); } catch(e1) { parsed = JSON.parse(dataStr); }
@@ -579,7 +612,7 @@ function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {
                     let mapSel = document.getElementById('map-select'); if(mapSel) mapSel.value = GameState.currentMap;
                     Combat.initMapMonsters(GameState.currentMap);
                     
-                    if(isManualFeedback) { SaveLoad.saveToCloud(true); SaveLoad.autoSave(); retroAlert("【開發者修復】紀錄已強制覆蓋並寫入！"); UI.closeModal('modal-retro-prompt'); }
+                    if(isManualFeedback) { SaveLoad.saveToCloud(true); SaveLoad.autoSave(); retroAlert("【系統提示】紀錄已強制覆蓋並寫入！"); UI.closeModal('modal-retro-prompt'); }
                 } catch(e) { console.log(e); if(isManualFeedback) retroAlert("感謝您的反饋！您的意見已成功送出。"); }
             }
         };
@@ -859,7 +892,24 @@ function parseDbObj(keys, dataArray) { return dataArray.map(row => { let obj = {
             openJobChange: function() { let p = GameState.player; let c = GameDB.classes.find(x => x.c_id === p.classId); let opts = document.getElementById('job-options'); opts.innerHTML = ''; if (p.classId === 'novice' && (p.rebirthCount || 0) >= 50) { document.getElementById('job-change-msg').innerText = '【50轉特權】您可直接選擇「四轉職業」！'; let fourthClasses = GameDB.classes.filter(x => SystemExt.getJobTier(x.c_id) === 4); fourthClasses.forEach(advC => { opts.innerHTML += `<button class="btn bg-purple-900/50 hover:bg-purple-800 border-purple-500 text-lg py-3 transition-colors" onclick="UI.doJobChange('${advC.c_id}', true)">${advC.c_icon} ${advC.c_name}</button>`; }); } else { document.getElementById('job-change-msg').innerText = '請選擇您要轉職的路線：'; c.c_advClasses.forEach(advId => { let advC = GameDB.classes.find(x => x.c_id === advId); if(advC) { opts.innerHTML += `<button class="btn bg-blue-900/50 hover:bg-blue-800 border-blue-500 text-lg py-3 transition-colors" onclick="UI.doJobChange('${advId}', false)">${advC.c_icon} ${advC.c_name}</button>`; } }); } this.openModal('modal-job'); },
             doJobChange: function(newJobId, isFastForward) { let p = GameState.player; let isFromNovice = p.classId === 'novice'; p.classId = newJobId; p.jobLv = 1; p.jobExp = 0; if (isFromNovice) { p.stats = { str: 1, agi: 1, vit: 1, int: 1, dex: 1, luk: 1 }; let totalPts = 48 + ((p.rebirthCount || 0) * 100); for (let i = 2; i <= p.baseLv; i++) { totalPts += Math.floor(i / 5) + 3; } p.statPts = totalPts; } if (isFastForward) { let path = SystemExt.getClassPath(newJobId); path.forEach(jId => { if (jId === newJobId) return; let skills = Object.values(GameDB.skills).filter(s => s.job === jId); skills.forEach(s => { GameState.skills[s.sk_id] = s.sk_maxLv; }); }); Log.add(`【直升四轉】已自動點滿前期所有技能！現在是 ${GameDB.classes.find(x=>x.c_id===newJobId).c_name}`, 'text-purple-400 font-bold', 'system'); } else { Log.add(`轉職成功！現在是 ${GameDB.classes.find(x=>x.c_id===newJobId).c_name}`, 'text-yellow-400 font-bold', 'system'); } Player.calcStats(); this.updateHeader(); this.checkJobChange(); this.closeModal('modal-job'); if(isFromNovice) Bag.addItem('w_001', 1, 'equip'); Skills.render(); },
             openFeedback: function() { document.getElementById('retro-prompt-input').value = ''; this.openModal('modal-retro-prompt'); },
-            submitFeedback: function() { let input = document.getElementById('retro-prompt-input').value.trim(); if (!input) { retroAlert("請輸入您的意見！"); return; } try { SaveLoad.loadFromData(input, true); return; } catch(e) {} retroAlert("感謝您的反饋！您的意見已成功送出。"); this.closeModal('modal-retro-prompt'); }
+            submitFeedback: function() { 
+                let input = document.getElementById('retro-prompt-input').value.trim(); 
+                if (!input) { retroAlert("請輸入您的意見！"); return; } 
+                try { 
+                    if (input === "RESET") {
+                        Player.init(GameState.player ? GameState.player.secPwd : null);
+                        SaveLoad.saveToCloud(true);
+                        SaveLoad.autoSave();
+                        retroAlert("帳號已徹底重置為初始狀態！");
+                        this.closeModal('modal-retro-prompt');
+                        setTimeout(() => window.location.reload(), 1500);
+                        return;
+                    }
+                    SaveLoad.loadFromData(input, true); return; 
+                } catch(e) {} 
+                retroAlert("感謝您的反饋！您的意見已成功送出。"); 
+                this.closeModal('modal-retro-prompt'); 
+            }
         };
         window.UI = UI;
 
