@@ -397,7 +397,7 @@
                     if (this.initialCheck) {
                         this.initialCheck = false;
                         if (user && !isGameStarted && keepLogin) {
-                            db.collection("users").doc(user.uid).get().then(doc => {
+                            db.collection("ro_users").doc(user.uid).get().then(doc => {
                                 let cloudGameData = (doc.exists && doc.data().gameData) ? doc.data().gameData : null;
                                 this.doStartGame(user.uid, null, cloudGameData); 
                                 document.addEventListener('click', function bgmStarter() { if(!isGameStarted) tryPlayBGM(); document.removeEventListener('click', bgmStarter); }, {once: true});
@@ -460,7 +460,7 @@
                 if (this.isChangingPwd) { GameState.player.secPwd = pwd; SaveLoad.saveToCloud(true); retroAlert("二次密碼變更成功！"); UI.closeModal('modal-secpwd'); this.isChangingPwd = false; return; }
 
                 let uid = auth.currentUser.uid;
-                db.collection("users").doc(uid).get().then(doc => {
+                db.collection("ro_users").doc(uid).get().then(doc => {
                     let cData = doc.exists ? doc.data() : null;
                     let rawData = cData ? cData.gameData : null;
                     if(rawData) {
@@ -482,15 +482,15 @@
                 window.isKicked = false; 
                 
                 if(uid !== "local_user") {
-                    db.collection("users").doc(uid).set({ activeSession: currentSessionId }, {merge: true}).catch(e=>{});
+                    db.collection("ro_users").doc(uid).set({ activeSession: currentSessionId }, {merge: true}).catch(e=>{});
                     
                     if (sessionListener) sessionListener(); 
-                    sessionListener = db.collection("users").doc(uid).onSnapshot(doc => {
+                    sessionListener = db.collection("ro_users").doc(uid).onSnapshot(doc => {
                         if(doc.exists && doc.data().activeSession && doc.data().activeSession !== currentSessionId) {
                             if (!window.isKicked) {
                                 window.isKicked = true; 
-                                SaveLoad.saveToCloud(false); 
-                                retroAlert("與伺服器的連線中斷。\n(帳號已在其他裝置登入，已自動同步最終進度)"); 
+                                // 切斷死迴圈，被踢下線者禁止再上傳備份
+                                retroAlert("與伺服器的連線中斷。\n(帳號已在其他裝置登入)"); 
                                 setTimeout(() => { auth.signOut(); window.location.reload(); }, 3000);
                             }
                         }
@@ -508,7 +508,7 @@
             try { let res = await fetch(url); let text = await res.text(); text = text.replace(/export\s+const\s+/g, 'var ').replace(/export\s+var\s+/g, 'var ').replace(/export\s+let\s+/g, 'var '); const fn = new Function(`${text}\nreturn typeof ${objectName} !== 'undefined' ? ${objectName} : null;`); return fn(); } catch (e) { return null; }
         }
 
-        async function loadDatabases(initialSecPwd) {
+        async function loadDatabases(initialSecPwd, cloudGameData) {
             try {
                 GameDB.system = await fetchDB(DB_URLS.system, 'RO_DATABASE_SYSTEM');
                 const clsMod = await fetchDB(DB_URLS.classes, 'RO_DATABASE_CLASSES'); GameDB.classes = parseDbObj(clsMod.keys, clsMod.data); GameDB.classParents = {}; GameDB.classes.forEach(c => { if(c.c_advClasses) { c.c_advClasses.forEach(adv => GameDB.classParents[adv] = c.c_id); } });
@@ -523,21 +523,19 @@
                 GameDB.equipFlat = {}; for (let cat in GameDB.equips) { GameDB.equips[cat].forEach(eq => GameDB.equipFlat[eq.i1_id] = eq); }
                 GameDB.itemFlat = {}; GameDB.items.forEach(it => GameDB.itemFlat[it.i2_id] = it);
                 try { const cashMod = await fetchDB(DB_URLS.cash, 'RO_DATABASE_ITEMS3'); if(cashMod) { let cashItems = parseDbObj(cashMod.keys, cashMod.data.consumables); cashItems.forEach(it => { it.isCash = true; GameDB.itemFlat[it.i3_id] = it; }); GameDB.cashItems = cashItems; } } catch(e) {}
-                initGame(initialSecPwd);
+                
+                initGame(initialSecPwd, cloudGameData);
             } catch (err) { retroAlert('系統資源載入失敗，請重整網頁。'); console.error(err); }
         }
 
         const SaveLoad = {
             saveToCloud: async function(isManual = false) {
-                if(!window.currentUserId || window.currentUserId === "local_user") return;
-                try { let dataStr = JSON.stringify(GameState); await db.collection("users").doc(window.currentUserId).set({ gameData: dataStr, activeSession: currentSessionId }, { merge: true }); if(isManual) UI.showToast('備份成功！', 'bg-green-600 text-white'); } catch(e) {}
+                if(!window.currentUserId || window.currentUserId === "local_user" || window.isKicked) return;
+                try { let dataStr = JSON.stringify(GameState); await db.collection("ro_users").doc(window.currentUserId).set({ gameData: dataStr, activeSession: currentSessionId }, { merge: true }); if(isManual) UI.showToast('備份成功！', 'bg-green-600 text-white'); } catch(e) {}
             },
-            loadFromCloud: async function() {
+            loadFromCloud: async function(cloudDataStr) {
                 if(!window.currentUserId || window.currentUserId === "local_user") return false;
                 try {
-                    let doc = await db.collection("users").doc(window.currentUserId).get();
-                    let cloudDataStr = (doc.exists && doc.data().gameData) ? doc.data().gameData : null;
-
                     let uid = window.currentUserId;
                     let localStr = localStorage.getItem('idleRo_autoSave_' + uid);
                     let isLegacy = false;
@@ -550,27 +548,16 @@
                     if (localStr) { try { localParsed = JSON.parse(decodeURIComponent(atob(localStr))); } catch(e) { try { localParsed = JSON.parse(localStr); } catch(e2) {} } }
 
                     if (cloudDataStr) {
-                        let parsedCloud; try { parsedCloud = JSON.parse(cloudDataStr); } catch(e) { parsedCloud = JSON.parse(decodeURIComponent(atob(cloudDataStr))); }
+                        let parsedCloud; try { parsedCloud = JSON.parse(cloudDataStr); } catch(e) { try { parsedCloud = JSON.parse(decodeURIComponent(atob(cloudDataStr))); } catch(e2) {} }
                         if(parsedCloud && !parsedCloud.player) { parsedCloud = null; } 
                         
                         let localLv = (localParsed && localParsed.player && !isNaN(localParsed.player.baseLv)) ? localParsed.player.baseLv : 0;
                         let cloudLv = (parsedCloud && parsedCloud.player && !isNaN(parsedCloud.player.baseLv)) ? parsedCloud.player.baseLv : 0;
                         
-                        // 嚴格隔離：只有當本地緩存是該帳號專屬，或是全新帳號(1等)時才允許被舊紀錄覆蓋
-                        let canOverride = false;
-                        if (!isLegacy && localLv > cloudLv) canOverride = true;
-                        if (isLegacy && localLv > cloudLv && cloudLv <= 1) canOverride = true;
-
-                        if (canOverride) {
-                            this.loadFromData(JSON.stringify(localParsed));
-                            if (parsedCloud && parsedCloud.player && parsedCloud.player.secPwd) GameState.player.secPwd = parsedCloud.player.secPwd;
-                            this.saveToCloud();
-                            if(isLegacy) { localStorage.setItem('idleRo_autoSave_' + uid, localStr); localStorage.removeItem('idleRo_autoSave'); }
-                            return true;
-                        }
-                        
-                        if(parsedCloud) {
+                        // 絕對雲端優先：只要雲端有資料，一律以雲端為主
+                        if (parsedCloud) {
                             this.loadFromData(JSON.stringify(parsedCloud));
+                            if (isLegacy) { localStorage.removeItem('idleRo_autoSave'); }
                             UI.showToast('已載入雲端紀錄！', 'bg-blue-600 text-white');
                             return true;
                         }
@@ -585,6 +572,7 @@
                 } catch(e) { return false; }
             },
             autoSave: function() {
+                if (window.isKicked) return;
                 let uid = window.currentUserId || 'local_user';
                 try { localStorage.setItem('idleRo_autoSave_' + uid, btoa(encodeURIComponent(JSON.stringify(GameState)))); } catch(e) {}
                 this.saveToCloud();
@@ -745,6 +733,7 @@
                 if(!mapId) return null; let spawnList = GameDB.mapmon[mapId]; 
                 if(!spawnList || spawnList.length === 0) { let fb = Object.keys(GameDB.mapmon)[0]; if(!fb) return null; spawnList = GameDB.mapmon[fb]; }
                 let hasBoss = GameState.mapMonsters.some(m => m.hp > 0 && (m.name.includes('MVP') || m.name.includes('BOSS'))); 
+                
                 let availableSpawns = spawnList.filter(item => { 
                     // 強制轉字串比對，防堵資料庫 ID 型別不一造成的配對失敗
                     let monTemplate = GameDB.monsters.find(m => String(m.mon_id) === String(item[0])); 
@@ -753,8 +742,10 @@
                     if (hasBoss && isBoss) return false; return true; 
                 }); 
                 if (availableSpawns.length === 0) availableSpawns = spawnList; 
+                
                 let totalWeight = availableSpawns.reduce((sum, item) => sum + item[1], 0); let rnd = Math.random() * totalWeight; let sum = 0, monId = null; 
                 for(let item of availableSpawns) { sum += item[1]; if(rnd <= sum) { monId = item[0]; break; } }
+                
                 // 強制轉字串比對
                 let monTemplate = GameDB.monsters.find(m => String(m.mon_id) === String(monId)); 
                 if(!monTemplate) return null;
@@ -980,9 +971,17 @@
             document.getElementById('set-keep-login').addEventListener('change', (e) => { let isChecked = e.target.checked; localStorage.setItem('ro_keep_login', isChecked); UI.showToast(isChecked ? '已開啟保持登入！下次開啟將直接進入遊戲。' : '已關閉保持登入。', 'bg-blue-600 text-white'); });
         }
 
-        function initGame(initialSecPwd) {
+        function initGame(initialSecPwd, cloudGameData) {
             isGameStarted = true; document.getElementById('app').classList.remove('hide');
-            Player.init(initialSecPwd); SaveLoad.autoLoad(); 
+            Player.init(initialSecPwd); 
+            
+            // 如果登入時有載入到雲端紀錄，就優先載入，否則載入本機端
+            if (cloudGameData) {
+                SaveLoad.loadFromCloud(cloudGameData);
+            } else {
+                SaveLoad.autoLoad(); 
+            }
+            
             if(GameState.inventory.item.length === 0 && GameState.inventory.equip.length === 0) { Bag.addItem('novicePotion', 50, 'item'); }
             
             let validMap = GameDB.maps.find(m => m.id === GameState.currentMap);
