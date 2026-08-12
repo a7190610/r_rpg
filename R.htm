@@ -364,7 +364,7 @@
         let isGameStarted = false; 
         let currentSessionId = Date.now().toString() + Math.random().toString(); 
         let sessionListener = null;
-        window.isKicked = false; // 新增：斷線死鎖狀態
+        window.isKicked = false;
 
         const DB_URLS = { classes: 'https://a7190610.github.io/r_rpg/ro_database_classes.js', items: 'https://a7190610.github.io/r_rpg/ro_database_items.js', consumables: 'https://a7190610.github.io/r_rpg/ro_database_items2.js', cash: 'https://a7190610.github.io/r_rpg/ro_database_items3.js', maps: 'https://a7190610.github.io/r_rpg/ro_database_maps.js', monsters: 'https://a7190610.github.io/r_rpg/ro_database_monsters.js', mapmon: 'https://a7190610.github.io/r_rpg/ro_database_mapmon.js', skills: 'https://a7190610.github.io/r_rpg/ro_database_skills.js', system: 'https://a7190610.github.io/r_rpg/ro_database_system.js' };
         const UI_FUNCTIONS = [ { id: 'ui_skill', name: '技能表', desc: '查看並升級技能', icon: '✨', action: () => UI.openModal('modal-skills') }, { id: 'ui_bag', name: '背包', desc: '管理裝備與道具(包含精煉)', icon: '🎒', action: () => { Bag.render(); UI.openModal('modal-bag'); } }, { id: 'ui_shop', name: '道具店', desc: '購買回復藥水與消耗品', icon: '🏪', action: () => { Shop.render(false); UI.openModal('modal-shop'); } }, { id: 'ui_mall', name: '商城', desc: '購買加倍書與特殊物品', icon: '💎', action: () => { Shop.render(true); UI.openModal('modal-shop'); } } ];
@@ -397,8 +397,13 @@
                     if (this.initialCheck) {
                         this.initialCheck = false;
                         if (user && !isGameStarted && keepLogin) {
-                            this.doStartGame(user.uid); 
-                            document.addEventListener('click', function bgmStarter() { if(!isGameStarted) tryPlayBGM(); document.removeEventListener('click', bgmStarter); }, {once: true});
+                            db.collection("users").doc(user.uid).get().then(doc => {
+                                let cloudGameData = (doc.exists && doc.data().gameData) ? doc.data().gameData : null;
+                                this.doStartGame(user.uid, null, cloudGameData); 
+                                document.addEventListener('click', function bgmStarter() { if(!isGameStarted) tryPlayBGM(); document.removeEventListener('click', bgmStarter); }, {once: true});
+                            }).catch(() => {
+                                this.doStartGame(user.uid, null, null); 
+                            });
                         } else if (user && !keepLogin && !isGameStarted) {
                             auth.signOut();
                             this.show('modal-agree');
@@ -457,37 +462,41 @@
                 let uid = auth.currentUser.uid;
                 db.collection("users").doc(uid).get().then(doc => {
                     let cData = doc.exists ? doc.data() : null;
-                    if(cData && cData.gameData) {
-                        let parsed; try { parsed = JSON.parse(cData.gameData); } catch(e) { parsed = JSON.parse(decodeURIComponent(atob(cData.gameData))); }
+                    let rawData = cData ? cData.gameData : null;
+                    if(rawData) {
+                        let parsed; try { parsed = JSON.parse(rawData); } catch(e) { try { parsed = JSON.parse(decodeURIComponent(atob(rawData))); } catch(e2){} }
                         if (parsed && parsed.player) {
                             let correctPwd = parsed.player.secPwd;
-                            if(!correctPwd) { retroAlert("已為您綁定新的二次密碼！"); this.doStartGame(uid, pwd); }
-                            else if(correctPwd === pwd) { this.doStartGame(uid, pwd); }
+                            if(!correctPwd) { retroAlert("已為您綁定新的二次密碼！"); this.doStartGame(uid, pwd, rawData); }
+                            else if(correctPwd === pwd) { this.doStartGame(uid, pwd, rawData); }
                             else { retroAlert("二次密碼錯誤！請重新輸入。"); document.getElementById('secpwd-input').value = ''; }
-                        } else { retroAlert("舊存檔格式異常，放置RO已建立新進度與密碼！"); this.doStartGame(uid, pwd); }
-                    } else { retroAlert("已為您綁定全新的二次密碼並創建角色！"); this.doStartGame(uid, pwd); }
-                }).catch(e => { retroAlert("權限錯誤或無法連線，將轉為單機模式臨時登入。"); this.doStartGame("local_user", pwd); });
+                        } else { retroAlert("舊存檔格式異常，已為您重建紀錄與密碼！"); this.doStartGame(uid, pwd, null); }
+                    } else { retroAlert("已為您綁定全新的二次密碼並創建角色！"); this.doStartGame(uid, pwd, null); }
+                }).catch(e => { retroAlert("連線錯誤，轉為單機模式。"); this.doStartGame("local_user", pwd, null); });
             },
 
-            doStartGame: function(uid, initialSecPwd = null) {
+            doStartGame: function(uid, initialSecPwd = null, cloudGameData = null) {
                 document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => document.getElementById('login-screen').classList.add('hide'), 1000);
                 window.currentUserId = uid;
-                window.isKicked = false; // 重置死鎖狀態
+                window.isKicked = false; 
                 
                 if(uid !== "local_user") {
                     db.collection("users").doc(uid).set({ activeSession: currentSessionId }, {merge: true}).catch(e=>{});
                     
-                    if (sessionListener) sessionListener(); // 確保舊監聽器被清除
+                    if (sessionListener) sessionListener(); 
                     sessionListener = db.collection("users").doc(uid).onSnapshot(doc => {
                         if(doc.exists && doc.data().activeSession && doc.data().activeSession !== currentSessionId) {
-                            window.isKicked = true; // 觸發斷線死鎖，停止所有背景存檔與運算
-                            retroAlert("與伺服器的連線中斷。\n(帳號已在其他裝置登入)"); 
-                            setTimeout(() => { auth.signOut(); window.location.reload(); }, 3000);
+                            if (!window.isKicked) {
+                                window.isKicked = true; 
+                                SaveLoad.saveToCloud(false); 
+                                retroAlert("與伺服器的連線中斷。\n(帳號已在其他裝置登入，已自動同步最終進度)"); 
+                                setTimeout(() => { auth.signOut(); window.location.reload(); }, 3000);
+                            }
                         }
                     }, err => { console.log("Session limit error", err); });
                 }
-                loadDatabases(initialSecPwd);
+                loadDatabases(initialSecPwd, cloudGameData);
             },
             logout: function() { localStorage.removeItem('ro_keep_login'); auth.signOut().then(() => window.location.reload()); }
         };
